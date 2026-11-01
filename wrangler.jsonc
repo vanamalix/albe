@@ -1,0 +1,17 @@
+{
+  // albe.vananomad.com: interactive spacetime-curvature visualiser (named for Albert Einstein).
+  // Static-assets-only Worker: no server code, no bindings, no paid resources. The custom domain is
+  // the only public entry point, so the workers.dev URL and preview URLs are switched off.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "vananomad-albe",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist",
+    // Single-page app with one route: unknown paths get the branded 404 page (public/404.html).
+    "not_found_handling": "404-page"
+  },
+  "routes": [{ "pattern": "albe.vananomad.com", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": { "enabled": false }
+}
