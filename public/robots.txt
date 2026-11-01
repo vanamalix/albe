@@ -1,2 +1,3 @@
+# albe sits behind Cloudflare Access: nothing here to index.
 User-agent: *
-Allow: /
+Disallow: /

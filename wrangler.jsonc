@@ -1,7 +1,7 @@
 {
   // albe.vananomad.com: interactive spacetime-curvature visualiser (named for Albert Einstein).
-  // Static-assets-only Worker: no server code, no bindings, no paid resources. The custom domain is
-  // the only public entry point, so the workers.dev URL and preview URLs are switched off.
+  // Static-assets-only Worker: no server code, no bindings, no paid resources. The site sits behind
+  // Cloudflare Access (login at the edge), so the ungated workers.dev URL and preview URLs stay off.
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "vananomad-albe",
   "compatibility_date": "2026-10-01",
