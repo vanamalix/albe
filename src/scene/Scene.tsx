@@ -8,6 +8,7 @@ import { DEFAULT_NBODY } from '../physics/nbody';
 import { MAX_BODIES, MAX_PROBES, MAX_RAYS, VEL_SCALE, world } from '../sim/world';
 import { store, useStore } from '../state/store';
 import { Interaction, preview } from './Interaction';
+import { CORE_CELL, fitDistance, frameObjects, gridScale, MAX_CAMERA_DISTANCE, planeAxis, snapTo } from './plane';
 import {
   latticeFragment,
   latticeVertex,
@@ -20,6 +21,23 @@ import {
 
 const MODE_INDEX: Record<ViewMode, number> = { space: 0, time: 1, tidal: 2, lattice: 3 };
 const LIFT = 0.35;
+const FOCUS_Z = -12;
+const LATTICE_STEP = 15;
+
+type CameraRequest = 'home' | 'frame';
+let cameraRequest: CameraRequest | null = null;
+/** Ask the camera to fly home, or to frame everything in the scene. */
+export const requestCamera = (kind: CameraRequest): void => {
+  cameraRequest = kind;
+};
+
+/** Where the camera starts: pulled back on portrait screens so the system fits. */
+function homePosition(aspect: number): THREE.Vector3 {
+  const k = aspect < 1.2 ? Math.min(1.9, Math.pow(1.2 / aspect, 0.75)) : 1;
+  return new THREE.Vector3(0, -265 * k, 225 * k);
+}
+
+const controlsTarget = (controls: unknown): THREE.Vector3 | null => (controls as { target?: THREE.Vector3 } | null)?.target ?? null;
 
 let stepRequested = 0;
 /** Advance the paused simulation by one frame's worth of time. */
@@ -27,22 +45,66 @@ export const requestStep = (): void => {
   stepRequested++;
 };
 
+/** The stretched square mesh of plane.ts: fine in the middle, reaching the horizon at the edges. */
+function planeGeometry(): THREE.BufferGeometry {
+  const axis = planeAxis();
+  const n = axis.length;
+  const positions = new Float32Array(n * n * 3);
+  let k = 0;
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      positions[k++] = axis[i];
+      positions[k++] = axis[j];
+      positions[k++] = 0;
+    }
+  }
+  const index = new Uint32Array((n - 1) * (n - 1) * 6);
+  k = 0;
+  for (let j = 0; j < n - 1; j++) {
+    for (let i = 0; i < n - 1; i++) {
+      const a = j * n + i;
+      const b = a + 1;
+      const c = a + n;
+      const d = c + 1;
+      index[k++] = a;
+      index[k++] = b;
+      index[k++] = d;
+      index[k++] = a;
+      index[k++] = d;
+      index[k++] = c;
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  g.setIndex(new THREE.BufferAttribute(index, 1));
+  return g;
+}
+
 function Sheet() {
-  const seg = 256;
-  const size = DOMAIN * 2;
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
-        uniforms: { ...sharedUniforms, uCell: { value: size / seg } },
+        uniforms: { ...sharedUniforms, uCell: { value: CORE_CELL } },
         vertexShader: sheetVertex,
         fragmentShader: sheetFragment,
         transparent: true,
         side: THREE.DoubleSide,
         depthWrite: true,
       }),
-    [size],
+    [],
   );
-  const geometry = useMemo(() => new THREE.PlaneGeometry(size, size, seg, seg), [size]);
+  const geometry = useMemo(planeGeometry, []);
+  // The mesh travels with the camera focus; the surface it draws depends only on world position.
+  useFrame((state) => {
+    const t = controlsTarget(state.controls);
+    const x = t?.x ?? 0;
+    const y = t?.y ?? 0;
+    const scale = gridScale(t ? state.camera.position.distanceTo(t) : 400);
+    const cell = CORE_CELL * scale;
+    sharedUniforms.uScale.value = scale;
+    sharedUniforms.uOrigin.value.set(snapTo(x, cell), snapTo(y, cell));
+    sharedUniforms.uLatticeOrigin.value.set(snapTo(x, LATTICE_STEP), snapTo(y, LATTICE_STEP));
+  });
   return <mesh geometry={geometry} material={material} frustumCulled={false} renderOrder={0} />;
 }
 
@@ -186,6 +248,7 @@ function Dynamic() {
   const black = useMemo(() => new THREE.MeshBasicMaterial({ color: '#000000' }), []);
   const tmp = useMemo(() => new THREE.Object3D(), []);
   const lastStats = useRef(0);
+  const projected = useMemo(() => new THREE.Vector3(), []);
   const fps = useRef({ frames: 0, t: 0, value: 60 });
 
   useEffect(() => {
@@ -401,6 +464,14 @@ function Dynamic() {
     const now = state.clock.elapsedTime;
     if (now - lastStats.current > 0.25) {
       lastStats.current = now;
+      const isOff = (p: { x: number; y: number }) => {
+        projected.set(p.x, p.y, H(p.x, p.y)).project(camera);
+        return Math.abs(projected.x) > 1 || Math.abs(projected.y) > 1 || projected.z > 1;
+      };
+      const offBodies = bodies.filter(isOff).length;
+      const offProbes = world.probes.filter(isOff).length;
+      // A lone escaped particle is not worth a prompt; lost masses, or losing everything, are.
+      const offscreen = offBodies > 0 ? offBodies : bodies.length === 0 && offProbes === world.probes.length ? offProbes : 0;
       store.set({
         stats: {
           bodies: bodies.length,
@@ -409,6 +480,8 @@ function Dynamic() {
           simTime: world.simTime,
           throttled: world.throttled,
           fps: f.value,
+          offscreen,
+          offscreenKind: offBodies > 0 ? 'mass' : 'particle',
         },
       });
       if (s.selectedId != null && !world.bodyById(s.selectedId)) store.set({ selectedId: null });
@@ -431,6 +504,10 @@ function Dynamic() {
 function Controls() {
   const tool = useStore((s) => s.tool);
   const ref = useRef<OrbitControlsImpl>(null);
+  const flight = useRef<{ target: THREE.Vector3; position: THREE.Vector3 } | null>(null);
+  const lastTarget = useRef(new THREE.Vector3(0, 0, FOCUS_Z));
+  const lastCentre = useRef<{ x: number; y: number; n: number } | null>(null);
+
   useEffect(() => {
     const c = ref.current;
     if (!c) return;
@@ -442,27 +519,101 @@ function Controls() {
       ? { ONE: null as unknown as THREE.TOUCH, TWO: THREE.TOUCH.DOLLY_ROTATE }
       : { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
   }, [tool]);
+
+  useEffect(() => {
+    const c = ref.current;
+    if (!c) return;
+    const interrupt = () => {
+      flight.current = null; // the user took over
+    };
+    c.addEventListener('start', interrupt);
+    return () => c.removeEventListener('start', interrupt);
+  }, []);
+
+  useFrame((state, delta) => {
+    const c = ref.current;
+    if (!c) return;
+    const cam = state.camera as THREE.PerspectiveCamera;
+    const target = c.target;
+    const s = store.get();
+
+    // Panning means the user wants to look elsewhere, so stop following.
+    if (s.follow && !flight.current && Math.hypot(target.x - lastTarget.current.x, target.y - lastTarget.current.y) > 0.01) {
+      store.set({ follow: false });
+    }
+
+    if (cameraRequest) {
+      const aspect = state.size.width / Math.max(1, state.size.height);
+      if (cameraRequest === 'home') {
+        flight.current = { target: new THREE.Vector3(0, 0, FOCUS_Z), position: homePosition(aspect) };
+      } else {
+        const g = frameObjects(world.bodies, world.probes);
+        const goal = new THREE.Vector3(g.cx, g.cy, FOCUS_Z);
+        const dir = cam.position.clone().sub(target).normalize();
+        flight.current = { target: goal, position: goal.clone().addScaledVector(dir, fitDistance(g.radius, cam.fov, aspect)) };
+      }
+      cameraRequest = null;
+      lastCentre.current = null;
+      store.set({ follow: true });
+    }
+
+    const f = flight.current;
+    if (f) {
+      const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      const k = reduced ? 1 : 1 - Math.exp(-delta * 6);
+      target.lerp(f.target, k);
+      cam.position.lerp(f.position, k);
+      if (target.distanceTo(f.target) < 0.5 && cam.position.distanceTo(f.position) < 0.5) flight.current = null;
+    } else if (store.get().follow && world.bodies.length > 0 && !world.held) {
+      // Follow the masses' centre of mass, so a drifting system stays in view.
+      let x = 0;
+      let y = 0;
+      let m = 0;
+      for (const b of world.bodies) {
+        x += b.x * b.m;
+        y += b.y * b.m;
+        m += b.m;
+      }
+      x /= m;
+      y /= m;
+      const n = world.bodies.length;
+      const last = lastCentre.current;
+      if (last && last.n === n) {
+        const dx = x - last.x;
+        const dy = y - last.y;
+        target.x += dx;
+        target.y += dy;
+        cam.position.x += dx;
+        cam.position.y += dy;
+      }
+      lastCentre.current = { x, y, n };
+    } else {
+      lastCentre.current = null;
+    }
+    lastTarget.current.copy(target);
+  });
+
   return (
     <OrbitControls
       ref={ref}
       makeDefault
       enableDamping
       dampingFactor={0.08}
-      target={[0, 0, -12]}
+      target={[0, 0, FOCUS_Z]}
       minDistance={15}
-      maxDistance={1200}
+      maxDistance={MAX_CAMERA_DISTANCE}
+      maxPolarAngle={Math.PI * 0.49}
+      screenSpacePanning={false}
     />
   );
 }
 
-/** Pulls the camera back on narrow (portrait) screens so the whole domain fits. */
+/** Pulls the camera back on narrow (portrait) screens so the system fits. */
 function FitCamera() {
   const { camera, size } = useThree();
   useEffect(() => {
-    const aspect = size.width / Math.max(1, size.height);
-    const k = aspect < 1.2 ? Math.min(1.9, Math.pow(1.2 / aspect, 0.75)) : 1;
-    camera.position.set(0, -265 * k, 225 * k);
-    camera.lookAt(0, 0, -12);
+    camera.position.copy(homePosition(size.width / Math.max(1, size.height)));
+    camera.lookAt(0, 0, FOCUS_Z);
     // Only on mount: later resizes keep the user's camera.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -476,12 +627,12 @@ export function Scene() {
       flat
       dpr={[1, 2]}
       gl={{ antialias: true, powerPreference: 'high-performance' }}
-      camera={{ position: [0, -265, 225], up: [0, 0, 1], fov: 45, near: 0.5, far: 6000 }}
+      camera={{ position: [0, -265, 225], up: [0, 0, 1], fov: 45, near: 1, far: 60000 }}
       onCreated={({ gl }) => gl.setClearColor('#04050a')}
       aria-label="Spacetime manifold view"
     >
       <FitCamera />
-      <Stars radius={1600} depth={600} count={4000} factor={18} saturation={0} fade speed={0.3} />
+      <Stars radius={4000} depth={1200} count={4000} factor={40} saturation={0} fade speed={0.3} />
       <Sheet />
       <Lattice />
       <Dynamic />

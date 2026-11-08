@@ -1,13 +1,31 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { store } from '../state/store';
 import { IconClose } from './icons';
 
 export function About() {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
     ref.current?.focus();
+    return () => opener?.focus?.(); // hand focus back to whatever opened the panel
   }, []);
   const close = () => store.set({ aboutOpen: false });
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Escape') close();
+    if (e.key !== 'Tab' || !ref.current) return;
+    // Keep Tab inside the dialog.
+    const items = ref.current.querySelectorAll<HTMLElement>('button, [href]');
+    const first = items[0];
+    const last = items[items.length - 1];
+    const at = document.activeElement;
+    if (e.shiftKey && (at === first || at === ref.current)) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && at === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
   return (
     <div className="modal-backdrop" onClick={close}>
       <div
@@ -18,7 +36,7 @@ export function About() {
         tabIndex={-1}
         ref={ref}
         onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.key === 'Escape' && close()}
+        onKeyDown={onKeyDown}
       >
         <header className="modal-head">
           <h2 id="about-title">About the physics</h2>
@@ -27,6 +45,7 @@ export function About() {
           </button>
         </header>
         <div className="modal-body">
+          <p className="credit-line">Made for Wesley from NYU.</p>
           <p>
             Units are geometric: <b>G = c = 1</b>, so mass, length and time share one unit. A mass <i>M</i> has a
             Schwarzschild radius <b>r<sub>s</sub> = 2M</b>. Dynamics are computed in the 2D equatorial plane; the
@@ -42,7 +61,7 @@ export function About() {
           <p className="eq">z(r) = 2 √( r<sub>s</sub> (r − r<sub>s</sub>) )</p>
           <p>
             <span className="tag exact">exact for one mass</span> and drawn to true scale when the exaggeration is 1
-            (depth is measured from the domain edge, so the surface appears as a well). Inside r<sub>s</sub> the slice is not
+            (depth is measured from r = 225, beyond which the sheet is drawn flat, so the surface appears as a well on an endless plane). Inside r<sub>s</sub> the slice is not
             part of this exterior surface; the throat is drawn black. With several masses the per-mass profiles are added:{' '}
             <span className="tag approx">weak-field superposition</span>; it is not an embedding of any exact multi-black-hole
             spacetime.
@@ -123,7 +142,7 @@ export function About() {
             <li>D. A. Nichols et al. (2011), “Visualizing spacetime curvature via frame-drag vortexes and tidal tendexes”, Phys. Rev. D 84, 124014.</li>
             <li>C. A. Middleton &amp; M. Langston (2014), “Circular orbits on a warped spandex fabric”, Am. J. Phys. 82, 287.</li>
           </ol>
-          <p className="muted">Keyboard: Space pause · 1–6 tools · V cycle view · G toggle GR · . step · Delete remove selected · Esc close.</p>
+          <p className="muted">Keyboard: Space pause · 1–6 tools · V cycle view · F frame everything · G toggle GR · . step · Delete remove selected · Esc close.</p>
         </div>
       </div>
     </div>

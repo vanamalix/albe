@@ -17,9 +17,9 @@ export type ViewMode = 'space' | 'time' | 'tidal' | 'lattice';
 
 export const VIEW_MODES: ViewMode[] = ['space', 'time', 'tidal', 'lattice'];
 
-/** World half-size of the simulated domain (in units of G = c = 1 lengths). */
+/** Half-size of the region presets are built in (G = c = 1 lengths). The sheet itself has no edge. */
 export const DOMAIN = 150;
-/** Reference radius at which each Flamm well is pinned to height 0 ("the domain edge"). */
+/** Radius at which each Flamm well is pinned to height 0; the sheet is flat beyond it. */
 export const FLAMM_REF = DOMAIN * 1.5;
 /** Height units per unit of |Φ| in the time / tidal views (pure display scale). */
 export const PHI_HEIGHT = 70;

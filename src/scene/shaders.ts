@@ -15,6 +15,11 @@ export const sharedUniforms = {
   uPhiH: { value: PHI_HEIGHT },
   uDomain: { value: DOMAIN },
   uGrid: { value: 1 },
+  /** Where the mesh is centred, and how much it is scaled (see plane.ts). */
+  uOrigin: { value: new THREE.Vector2() },
+  uScale: { value: 1 },
+  /** Where the 3D lattice is centred (snapped to its own spacing). */
+  uLatticeOrigin: { value: new THREE.Vector2() },
   uTime: { value: 0 },
 };
 
@@ -52,13 +57,15 @@ const common = /* glsl */ `
 export const sheetVertex = /* glsl */ `
   ${common}
   uniform float uCell;
+  uniform vec2 uOrigin;
+  uniform float uScale;
   varying vec2 vXY;
   varying vec3 vN;
   varying float vH;
   void main() {
-    vec2 p = position.xy;
+    vec2 p = position.xy * uScale + uOrigin;
     float h = sheetHeight(p);
-    float e = uCell;
+    float e = uCell * uScale;
     float hx = sheetHeight(p + vec2(e, 0.0)) - sheetHeight(p - vec2(e, 0.0));
     float hy = sheetHeight(p + vec2(0.0, e)) - sheetHeight(p - vec2(0.0, e));
     vN = normalize(vec3(-hx, -hy, 2.0 * e));
@@ -82,10 +89,14 @@ export const sheetFragment = /* glsl */ `
     return mix(c, d, (t - 0.666) / 0.334);
   }
 
+  // Lines fade out once they get closer together than a few pixels, so the far plane stays calm
+  // instead of aliasing to solid colour. Each coarser level takes over from the one below it.
   float gridLine(vec2 p, float spacing, float width) {
     vec2 q = p / spacing;
-    vec2 g = abs(fract(q - 0.5) - 0.5) / max(fwidth(q), vec2(1e-5));
-    return 1.0 - min(min(g.x, g.y) / width, 1.0);
+    vec2 w = max(fwidth(q), vec2(1e-5));
+    vec2 g = abs(fract(q - 0.5) - 0.5) / w;
+    float line = 1.0 - min(min(g.x, g.y) / width, 1.0);
+    return line * (1.0 - smoothstep(0.08, 0.3, max(w.x, w.y)));
   }
 
   void main() {
@@ -126,8 +137,11 @@ export const sheetFragment = /* glsl */ `
     if (uGrid > 0.5) {
       float minor = gridLine(vXY, 10.0, 1.2);
       float major = gridLine(vXY, 50.0, 1.6);
+      float huge = gridLine(vXY, 250.0, 1.8);
+      float vast = gridLine(vXY, 1250.0, 1.8);
       vec3 gc = uMode == 2 ? vec3(0.75, 0.70, 0.95) : vec3(0.55, 0.80, 1.0);
-      col += gc * (minor * 0.22 + major * 0.38);
+      // max, not sum: where levels coincide (the axes) the line must not blow out to white.
+      col += gc * max(max(minor * 0.22, major * 0.38), max(huge * 0.46, vast * 0.46));
       alpha = max(alpha, minor * 0.6);
     }
     // Horizon: black inside r_s with a thin hot rim just outside.
@@ -137,18 +151,19 @@ export const sheetFragment = /* glsl */ `
     } else {
       col += vec3(1.0, 0.55, 0.2) * smoothstep(1.12, 1.0, minRatio) * 0.9;
     }
-    float edge = max(abs(vXY.x), abs(vXY.y)) / uDomain;
-    alpha *= 1.0 - smoothstep(0.82, 1.0, edge);
+    // The plane has no edge: it dissolves into the sky with distance from the camera.
+    alpha *= 1.0 - smoothstep(5000.0, 15000.0, length(vXY - cameraPosition.xy));
     gl_FragColor = vec4(col, alpha);
   }
 `;
 
 export const latticeVertex = /* glsl */ `
   ${common}
+  uniform vec2 uLatticeOrigin;
   varying float vPhi;
   varying float vFade;
   void main() {
-    vec3 p = position;
+    vec3 p = position + vec3(uLatticeOrigin, 0.0);
     vec3 disp = vec3(0.0);
     float phi = 0.0;
     for (int i = 0; i < MAXM; i++) {
@@ -162,7 +177,7 @@ export const latticeVertex = /* glsl */ `
       phi -= M / max(r, 2.0 * M);
     }
     vPhi = phi;
-    vFade = 1.0 - smoothstep(0.8, 1.0, max(abs(p.x), abs(p.y)) / uDomain);
+    vFade = 1.0 - smoothstep(0.8, 1.0, max(abs(position.x), abs(position.y)) / uDomain);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(p + disp, 1.0);
   }
 `;

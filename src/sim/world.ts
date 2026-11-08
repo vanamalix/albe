@@ -17,6 +17,10 @@ export const PROBE_TRAIL = 140;
 /** World units of drag per unit of velocity (v = drag / VEL_SCALE). */
 export const VEL_SCALE = 150;
 export const MAX_SPEED = 0.6;
+/** Masses and particles are only forgotten this far out: well past the farthest camera view. */
+export const ESCAPE_RADIUS = 18_000;
+/** A light ray counts as escaped this far beyond the masses and its own start. */
+export const RAY_MARGIN = 900;
 
 export class Trail {
   readonly buf: Float32Array;
@@ -184,7 +188,6 @@ export class World {
 
   step(dt: number, cfg: StepConfig, opts: NBodyOptions): void {
     if (dt <= 0) return;
-    const bound = DOMAIN * 4;
     const held = this.held;
     const res = advanceBodies(
       this.bodies,
@@ -205,18 +208,20 @@ export class World {
     if (held) this.pin(held);
     this.throttled = res.simulated < dt * 0.999;
     this.simTime += res.simulated;
-    // Escaped bodies and probes are dropped.
+    // Only objects that have left for good are dropped, far beyond anything the camera can show.
     this.bodies = this.bodies.filter((b) => {
-      const keep = Math.abs(b.x) < DOMAIN * 6 && Math.abs(b.y) < DOMAIN * 6;
+      const keep = Math.hypot(b.x, b.y) < ESCAPE_RADIUS;
       if (!keep) this.trails.delete(b.id);
       return keep;
     });
     this.probes = this.probes.filter((p) => {
-      const keep = Math.abs(p.x) < bound && Math.abs(p.y) < bound;
+      const keep = Math.hypot(p.x, p.y) < ESCAPE_RADIUS;
       if (!keep) this.trails.delete(p.id);
       return keep;
     });
-    for (const r of this.rays) advanceRay(r, res.simulated, this.bodies, DOMAIN * 1.2);
+    let reach = DOMAIN;
+    for (const b of this.bodies) reach = Math.max(reach, Math.abs(b.x), Math.abs(b.y));
+    for (const r of this.rays) advanceRay(r, res.simulated, this.bodies, reach + RAY_MARGIN);
     this.recordTrails();
   }
 

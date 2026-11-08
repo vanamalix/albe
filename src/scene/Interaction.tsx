@@ -7,7 +7,7 @@ import { useThree } from '@react-three/fiber';
 import { useEffect } from 'react';
 import * as THREE from 'three';
 import { heightAt, sampleFields } from '../physics/fields';
-import { MAX_BODIES, MAX_SPEED, VEL_SCALE, world } from '../sim/world';
+import { ESCAPE_RADIUS, MAX_BODIES, MAX_SPEED, VEL_SCALE, world } from '../sim/world';
 import { massFromLog, store, type Tool } from '../state/store';
 
 export const preview = {
@@ -36,6 +36,8 @@ export function pickSurface(ray: THREE.Ray): { x: number; y: number } | null {
     if (Math.abs(nh - h) < 0.01) break;
     h += 0.6 * (nh - h);
   }
+  // Near the horizon a tiny pointer move spans thousands of units: not a usable place to click.
+  if (Math.hypot(x, y) > ESCAPE_RADIUS * 0.5) return null;
   return { x, y };
 }
 
@@ -93,7 +95,8 @@ export function Interaction() {
       preview.x0 = preview.x1 = p.x;
       preview.y0 = preview.y1 = p.y;
       if (tool === 'select') {
-        const b = world.nearestBody(p.x, p.y, 8);
+        // Keep the grab radius about the same on screen however far away the camera is.
+        const b = world.nearestBody(p.x, p.y, 8 * Math.max(1, camera.position.distanceTo(new THREE.Vector3(p.x, p.y, 0)) / 350));
         store.set({ selectedId: b ? b.id : null });
         if (b) world.held = { id: b.id, x: b.x, y: b.y };
       }

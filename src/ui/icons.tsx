@@ -89,3 +89,20 @@ export const IconClose = () => (
     <path d="M6 6l12 12M18 6L6 18" />
   </S>
 );
+export const IconFrame = () => (
+  <S>
+    <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+    <circle cx="12" cy="12" r="2.4" fill="currentColor" />
+  </S>
+);
+export const IconChevron = () => (
+  <S>
+    <path d="M6 9l6 6 6-6" />
+  </S>
+);
+export const IconLayers = () => (
+  <S>
+    <path d="M12 3l9 5-9 5-9-5z" />
+    <path d="M3 13l9 5 9-5" />
+  </S>
+);

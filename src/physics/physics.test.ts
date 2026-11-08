@@ -5,6 +5,9 @@ import { advanceBodies, DEFAULT_NBODY, mergeBodies, totalEnergy, totalMass, tota
 import { circularSpeed, perihelionAdvance, probeDt, rk4ProbeStep } from './probes';
 import type { Body } from './types';
 import { figureEight } from './presets';
+import { fitDistance, frameObjects, gridScale, planeAxis, PLANE_HALF, snapTo } from '../scene/plane';
+import { ESCAPE_RADIUS, World } from '../sim/world';
+import { DEFAULT_NBODY as NB } from './nbody';
 
 const body = (id: number, x: number, y: number, vx: number, vy: number, m: number): Body => ({ id, x, y, vx, vy, m, ax: 0, ay: 0 });
 
@@ -154,5 +157,48 @@ describe('Light rays', () => {
   });
   it('are captured at small impact parameter', () => {
     expect(deflectionAngle(1, 1.5, 300)).toBeNaN();
+  });
+});
+
+describe('endless plane', () => {
+  it('axis is strictly increasing, symmetric, and reaches the far edge', () => {
+    const a = planeAxis();
+    for (let i = 1; i < a.length; i++) expect(a[i]).toBeGreaterThan(a[i - 1]);
+    expect(a[0]).toBeCloseTo(-PLANE_HALF, 6);
+    expect(a[a.length - 1]).toBeCloseTo(PLANE_HALF, 6);
+    a.forEach((v, i) => expect(v).toBeCloseTo(-a[a.length - 1 - i], 6));
+  });
+  it('grid scale doubles with distance and never drops below 1', () => {
+    expect(gridScale(100)).toBe(1);
+    expect(gridScale(500)).toBe(1);
+    expect(gridScale(501)).toBe(2);
+    expect(gridScale(3000)).toBe(8);
+    expect(snapTo(7.4, 3)).toBe(6);
+  });
+  it('frames the masses and ignores one escaped particle', () => {
+    const bodies = [{ x: 500, y: 0, m: 1 }, { x: 600, y: 0, m: 1 }];
+    const near = Array.from({ length: 40 }, (_, i) => ({ x: 550 + i, y: 10 }));
+    const g = frameObjects(bodies, [...near, { x: 15000, y: 0 }]);
+    expect(g.cx).toBeCloseTo(550, 6);
+    expect(g.radius).toBeLessThan(200);
+    expect(fitDistance(g.radius, 45, 1.6)).toBeGreaterThan(g.radius);
+    expect(frameObjects([], []).radius).toBe(60);
+  });
+  it('keeps objects simulated far beyond the old domain limits', () => {
+    const w = new World();
+    w.addBody(5000, 0, 0.1, 0, 1);
+    w.addProbe(4000, 0, 0, 0.05, 'newton');
+    w.fireRay(1, 40, 1, 0);
+    w.step(10, { gr: false, gw: false }, NB);
+    expect(w.bodies).toHaveLength(1);
+    expect(w.probes).toHaveLength(1);
+    expect(w.rays[0].state).toBe('flying');
+    expect(w.bodies[0].x).toBeGreaterThan(5000);
+  });
+  it('still forgets objects that have truly left', () => {
+    const w = new World();
+    w.addBody(ESCAPE_RADIUS + 10, 0, 0, 0, 1);
+    w.step(1, { gr: false, gw: false }, NB);
+    expect(w.bodies).toHaveLength(0);
   });
 });

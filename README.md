@@ -1,14 +1,18 @@
 # albe
 
 **albe** (for Albert Einstein) is an interactive visualiser of curved spacetime. You place masses, test
-particles and light rays, and the geometry updates live as you watch. It will be served at
-`albe.vananomad.com` (Cloudflare Workers + Static Assets, behind Cloudflare Access).
+particles and light rays, and the geometry updates live as you watch. It is served at
+`albe.vananomad.com` (Cloudflare Workers + Static Assets, open to anyone with the link). Made for Wesley
+from NYU.
 
 Stack: Vite + React 19 + TypeScript, three.js via @react-three/fiber and @react-three/drei, Vitest,
 Wrangler. Everything is bundled, so nothing loads from a CDN at runtime.
 
 ## What you can do
 
+- **An endless plane**: the sheet runs to the horizon and masses stay simulated wherever they drift. The
+  camera follows the masses' centre of mass until you pan; **Frame all** (key F) brings everything back,
+  and a prompt appears when a mass leaves the screen.
 - **Tools** (keys 1–6): View, Mass, Test particle, Light ray, Light fan, Select/move/delete.
   Click to place a mass on a circular orbit (or at rest in empty space); drag to aim its velocity.
 - **Views** (key V cycles them): Space (Flamm embedding), Time (lapse / g_tt), Tidal (Kretschmann
@@ -40,9 +44,9 @@ Wrangler. Everything is bundled, so nothing loads from a CDN at runtime.
 - `src/physics/`: pure, render-free physics (`nbody`, `probes`, `light`, `fields`, `presets`) and
   `physics.test.ts`.
 - `src/sim/world.ts`: the live simulation state (trails, caps, merges, captures).
-- `src/scene/`: the r3f scene. The sheet is a 256×256 grid that is displaced and coloured in GLSL,
-  with the masses passed as a uniform array (up to 32). `shaders.ts` mirrors `fields.ts`.
-- `src/ui/`, `src/App.tsx`: the toolbar, panels and keyboard handling.
+- `src/scene/`: the r3f scene. The sheet is one stretched mesh (`plane.ts`) that follows the camera focus and is displaced and
+  coloured in GLSL, with the masses passed as a uniform array (up to 32). `shaders.ts` mirrors `fields.ts`.
+- `src/ui/`, `src/App.tsx`: the dock, scene picker, panels and keyboard handling.
 
 ## Scripts
 
@@ -62,8 +66,8 @@ npm run deploy     # build + wrangler deploy (owner only)
 `wrangler.jsonc` sets up a static-assets-only Worker called `vananomad-albe`. Its custom domain is
 `albe.vananomad.com`, `workers_dev` and `preview_urls` are off, observability is off, and unknown paths
 get the branded `public/404.html`. Security headers (CSP `'self'` only, without `'unsafe-eval'`;
-HSTS, nosniff, frame-ancestors none, noindex) are in `public/_headers`. Logins are handled at the
-edge by Cloudflare Access, so the app itself has no auth code.
+HSTS, nosniff, frame-ancestors none, noindex) are in `public/_headers`. The site is public: there is no
+Cloudflare Access application in front of it, and no login.
 
 ## References
 
