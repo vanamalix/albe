@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { WARP_CAVEATS, WARP_REFERENCES } from '../physics/warp';
 import { store } from '../state/store';
 import { IconClose } from './icons';
+import { SiteFoot } from './SiteFoot';
 
 function Overview() {
   return (
@@ -64,7 +65,10 @@ function Overview() {
       </p>
 
       <h3>Your privacy</h3>
-      <p>Everything runs in your browser. There are no accounts, cookies or analytics.</p>
+      <p>
+        Everything runs in your browser. There are no accounts, cookies or analytics. If you press the Shielded button, your browser
+        loads Shielded’s page from their server, which sees your IP address. Nothing is sent before that.
+      </p>
     </>
   );
 }
@@ -123,6 +127,7 @@ export function About() {
         <div className="modal-body" id="about-panel" role="tabpanel" aria-labelledby={`tab-${tab}`} tabIndex={0}>
           {tab === 'overview' ? <Overview /> : <Physics />}
         </div>
+        <SiteFoot />
       </div>
     </div>
   );

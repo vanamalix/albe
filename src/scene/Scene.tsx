@@ -764,6 +764,7 @@ export function Scene() {
       gl={{ antialias: true, powerPreference: 'high-performance' }}
       camera={{ position: [0, -265, 225], up: [0, 0, 1], fov: 45, near: 1, far: 60000 }}
       onCreated={({ gl }) => gl.setClearColor('#010409')}
+      role="application"
       aria-label="Spacetime manifold view"
     >
       <FitCamera />

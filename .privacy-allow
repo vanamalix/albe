@@ -1,0 +1,14 @@
+# Reviewed false positives for `vn-privacy-scan --tracked` only. Never list a real secret here; fix the file instead.
+# One entry per line (comments and blank lines ignored):
+#   path<TAB>exact full line text   that line of that file, wherever it moves (the text must match exactly,
+#                                   so anything appended later is scanned again)
+#   path<TAB>*                      that whole file (a synthetic fixture), matched on the path only;
+#                                   if the file is gone it matches nothing (stale), never anything else
+# Older free-text entries (no tab) still work as substrings of "path:line:text" but print a deprecation warning,
+# and an entry that matches nothing prints a "stale" warning.
+# Published orbital constants and their sources: long decimals that look like phone numbers.
+reference/refs.json	*
+# Physics formula coefficients, not phone numbers (blackbody colour fit; erf approximation).
+src/physics/bodies.ts	  const g = t <= 66 ? 99.4708025861 * Math.log(t) - 161.1195681661 : 288.1221695283 * Math.pow(t - 60, -0.0755148492);
+src/physics/bodies.ts	  const b = t >= 66 ? 255 : t <= 19 ? 0 : 138.5177312231 * Math.log(t - 10) - 305.0447927307;
+src/physics/nbody.ts	  const y = 1 - ((((1.061405429 * t - 1.453152027) * t + 1.421413741) * t - 0.284496736) * t + 0.254829592) * t * Math.exp(-x * x);

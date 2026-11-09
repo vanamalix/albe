@@ -13,6 +13,7 @@ import { world } from './sim/world';
 import { massFromLog, store, TOOLS, useStore, type Settings, type Tool } from './state/store';
 import { About } from './ui/About';
 import { ExhibitPanel } from './ui/ExhibitPanel';
+import { SiteFoot } from './ui/SiteFoot';
 import { openExhibit, useExhibit } from './state/exhibit';
 import { IconChevron, IconClear, IconClose, IconFrame, IconInfo, IconLayers, IconPause, IconPlay, IconReset, IconSliders, IconStep, toolIcons } from './ui/icons';
 
@@ -713,6 +714,7 @@ export function App() {
       <main className="no-webgl">
         <h1>albe needs WebGL</h1>
         <p>This browser or device has WebGL turned off, so the spacetime sheet can’t be drawn. Try turning on hardware acceleration, or open albe in another browser.</p>
+        <SiteFoot />
       </main>
     );
   }

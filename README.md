@@ -80,7 +80,9 @@ npm install
 npm run dev        # Vite dev server
 npm run typecheck  # tsc
 npm test           # Vitest physics tests
-npm run check      # typecheck + test + build
+npm run check      # typecheck + test + build + JS budget
+npm run test:e2e   # Playwright and axe at 390px and 1280px, against wrangler
+npm run headers    # regenerate public/_headers from headers.config.ts
 npm run build      # -> dist/
 npx wrangler dev   # serve dist/ with _headers (CSP etc.) like production
 npm run deploy     # build + wrangler deploy (owner only)
@@ -90,8 +92,9 @@ npm run deploy     # build + wrangler deploy (owner only)
 
 `wrangler.jsonc` sets up a static-assets-only Worker called `vananomad-albe`. Its custom domain is
 `albe.vananomad.com`, `workers_dev` and `preview_urls` are off, observability is off, and unknown paths
-get the branded `public/404.html`. Security headers (CSP `'self'` only, without `'unsafe-eval'`;
-HSTS, nosniff, frame-ancestors none, noindex) are in `public/_headers`. The site is public: there is no
+get the branded `public/404.html`. Security headers (CSP `'self'` only, without `'unsafe-eval'`, except a frame for the Shielded button;
+HSTS, nosniff, frame-ancestors none, noindex) are in `public/_headers`, which is generated from
+`headers.config.ts` on the `@vanamalix/edge` baseline. The site is public: there is no
 Cloudflare Access application in front of it, and no login.
 
 ## References

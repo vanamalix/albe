@@ -6,29 +6,39 @@
   "type": "module",
   "description": "albe: an interactive visualiser of curved spacetime (Schwarzschild geometry, geodesics, lensing).",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.18"
   },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "budget": "vn-js-budget dist 400",
+    "headers": "node scripts/headers.ts",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
-    "check": "npm run typecheck && npm run test && npm run build",
+    "test:e2e": "npm run build && playwright test",
+    "check": "npm run typecheck && npm run test && npm run build && npm run budget",
     "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
+    "@vanamalix/ui": "0.2.0",
     "react": "~19.3.1",
     "react-dom": "~19.3.1",
     "three": "^0.187.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.64.1",
     "@types/node": "^22.20.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.187.0",
+    "@vanamalix/config": "0.2.1",
+    "@vanamalix/edge": "0.5.0",
+    "@vanamalix/governance": "0.4.0",
+    "@vanamalix/testing": "0.1.0",
     "@vitejs/plugin-react": "^6.1.2",
     "typescript": "~5.9.3",
     "vite": "^8.3.5",
