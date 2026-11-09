@@ -1132,3 +1132,44 @@ output {
 .segmented[hidden] {
   display: none;
 }
+
+.exhibit-panel {
+  position: absolute;
+  right: var(--gutter);
+  top: calc(var(--safe-top) + 58px);
+  z-index: 6;
+  width: 300px;
+  max-width: calc(100vw - 2 * var(--gutter));
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: 13px/1.45 system-ui;
+}
+.exhibit-toggle {
+  display: none;
+}
+@media (max-width: 720px) {
+  .exhibit-dock {
+    position: absolute;
+    right: var(--gutter);
+    left: var(--gutter);
+    bottom: calc(var(--safe-bottom) + 152px);
+    z-index: 6;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: flex-end;
+    gap: 6px;
+  }
+  .exhibit-toggle {
+    display: inline-flex;
+    background: var(--panel);
+  }
+  .exhibit-panel {
+    position: static;
+    width: 100%;
+    max-height: 44vh;
+    overflow-y: auto;
+  }
+}
