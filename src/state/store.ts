@@ -20,8 +20,14 @@ export interface Readout extends FieldSample {
 
 export interface Settings {
   tool: Tool;
-  /** log10 of the mass to place. */
+  /** log10 of the black-hole mass to place. */
   logMass: number;
+  /** What the Mass tool places (an id from physics/bodies.ts). */
+  bodyType: string;
+  /** Names drawn beside named bodies. */
+  labels: boolean;
+  /** Whether galaxies keep their dark halos. */
+  darkMatter: boolean;
   playing: boolean;
   /** Simulation time units per real second. */
   timeScale: number;
@@ -32,6 +38,8 @@ export interface Settings {
   arrows: boolean;
   gr: boolean;
   gw: boolean;
+  /** 1PN corrections for the masses. */
+  pn: boolean;
   exaggeration: number;
   /** Keep the camera on the masses' centre of mass. */
   follow: boolean;
@@ -43,7 +51,7 @@ export interface Settings {
   presetId: string;
   note: string;
   readout: Readout | null;
-  stats: { bodies: number; probes: number; rays: number; simTime: number; throttled: boolean; fps: number; offscreen: number; offscreenKind: 'mass' | 'particle' };
+  stats: { bodies: number; probes: number; rays: number; stars: number; simTime: number; throttled: boolean; fps: number; offscreen: number; offscreenKind: 'mass' | 'particle' };
   /** Bumped to ask the scene to reload the current preset. */
   resetToken: number;
 }
@@ -51,6 +59,9 @@ export interface Settings {
 let state: Settings = {
   tool: 'view',
   logMass: 0,
+  bodyType: 'bh',
+  labels: true,
+  darkMatter: true,
   playing: true,
   timeScale: 60,
   mode: 'space',
@@ -60,6 +71,7 @@ let state: Settings = {
   arrows: false,
   gr: true,
   gw: false,
+  pn: true,
   exaggeration: 1,
   follow: true,
   selectedId: null,
@@ -71,7 +83,7 @@ let state: Settings = {
   presetId: 'single',
   note: '',
   readout: null,
-  stats: { bodies: 0, probes: 0, rays: 0, simTime: 0, throttled: false, fps: 60, offscreen: 0, offscreenKind: 'mass' },
+  stats: { bodies: 0, probes: 0, rays: 0, stars: 0, simTime: 0, throttled: false, fps: 60, offscreen: 0, offscreenKind: 'mass' },
   resetToken: 0,
 };
 

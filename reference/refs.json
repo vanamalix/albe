@@ -1,0 +1,1365 @@
+{
+ "generated": "2026-11-09",
+ "units": "Three-body and galaxy blocks: G=1 (dimensionless). Solar-system and stars: as labelled.",
+ "packages_exact": {
+  "astropy": "8.0.2",
+  "gala": "1.12.0",
+  "galpy": "1.12.1",
+  "mpmath": "1.4.1",
+  "numpy": "2.5.4",
+  "pynbody": "2.8.0",
+  "rebound": "5.2.2",
+  "scipy": "1.17.1"
+ },
+ "environment_lock": "rebound 5.2.2, galpy 1.12.1, astropy 8.0.2, numpy 2.5.4, scipy 1.17.1",
+ "licence_note": "REBOUND is GPL-3.0-only and pynbody is GPLv3+: no code from either is in this file or may enter the app. Only numerical outputs are used. Sources under sources/ are retained for provenance only.",
+ "not_verified_or_failed": [
+  "AGAMA could not be built here (GSL required; its installer asks an interactive question). Not used.",
+  "Szebehely & Peters 1967 numerical results were not read; the Pythagorean values are computed only, and the citation was resolved through Crossref.",
+  "Betelgeuse's effective temperature is quoted from Joyce et al. 2020's text citing Levesque and Guinan, not from a measurement paper read directly.",
+  "Sirius B radius and Teff carry the authors' internal errors only; systematic errors are stated to be modestly larger.",
+  "Neutron-star entries have no whole-surface Teff: only the hot-spot temperature of PSR J0740+6620 is reported, because surface temperature depends on age."
+ ],
+ "three_body_periodic": {
+  "provenance": {
+   "primary": "REBOUND 5.2.2 IAS15 (adaptive; epsilon default 1e-9, adaptive_mode PRS23 default, min_dt 0, exact_finish_time=1); numerical outputs only (REBOUND is GPL-3.0-only; no code copied)",
+   "cross_check": "SciPy 1.17.1 DOP853 rtol=2.3e-14 atol=1e-15; its Newton solve starts from the IAS15 root and converges to DOP853's own root",
+   "numpy": "2.5.4",
+   "ic_form": "x1=-1, x2=+1, x3=0, y=0; v1=v2=(p1,p2), v3=-2(p1,p2); G=m=1",
+   "paper_caveat": "Suvakov & Dmitrasinovic report initial conditions to 5 decimals and state a return proximity below 1e-6 (arXiv:1303.0181 source). At those printed values the closure error here is 3.6e-4 to 1.8e-3, and the refined T differs from the printed T by up to 9.3e-4, more than rounding of the printed T can explain. The refined values close to below 4e-12 under IAS15 and below 1e-10 under DOP853; use them, not the printed T, for a closure test.",
+   "figure_eight_note": "Figure-eight is not a row of Suvakov Table I; its seed comes from the Simo / Chenciner-Montgomery initial conditions mapped into the same form."
+  },
+  "orbits": {
+   "butterfly_I": {
+    "source_ic": "Suvakov & Dmitrasinovic 2013, PRL 110, 114301, doi:10.1103/PhysRevLett.110.114301, Table I (values checked in the arXiv:1303.0181 LaTeX source)",
+    "input_seed": {
+     "p1": 0.30689,
+     "p2": 0.12551,
+     "T": 6.2356
+    },
+    "refined": {
+     "p1": 0.3068934204644488,
+     "p2": 0.12550656701526994,
+     "T": 6.234674838728371,
+     "method": "Gauss-Newton shooting on (p1,p2,T), 12-component closure residual, central FD Jacobian, REBOUND IAS15"
+    },
+    "refined_dop853_independent": {
+     "p1": 0.3068934204625856,
+     "p2": 0.12550656701569593,
+     "T": 6.234674838711984
+    },
+    "agreement_digits_ias15_vs_dop853_root": {
+     "p1": 11.216733631060832,
+     "p2": 11.469264421462162,
+     "T": 11.580317221051278
+    },
+    "closure_L2_full_12d_state": {
+     "before_at_seed": {
+      "ias15": 0.0018286927830617379,
+      "dop853": 0.0018286927907441204
+     },
+     "after": {
+      "ias15_at_ias15_root": 6.874374380309411e-14,
+      "dop853_at_ias15_root": 1.3524913074742886e-11,
+      "dop853_at_dop853_root": 7.422981226433614e-12
+     }
+    },
+    "newton_history_ias15": [
+     0.0018286927830617379,
+     1.6015390534196459e-06,
+     2.0337784554136057e-10,
+     2.9419835422380217e-13,
+     6.874374380309411e-14
+    ],
+    "newton_history_dop853": [
+     1.3524913074742886e-11,
+     7.422981226433614e-12
+    ],
+    "jacobian_singular_values_last": [
+     16.691238107337806,
+     0.9054210568647634,
+     0.10577941810510132
+    ],
+    "energy": -2.1701935903350176,
+    "angular_momentum": 0.0,
+    "min_pairwise_separation_one_period": {
+     "separation": 0.011024464338342256,
+     "time": 4.973018140484649,
+     "pair": [
+      1,
+      3
+     ]
+    },
+    "max_pairwise_separation_one_period": 1.9999999999998783,
+    "floquet_dop853_analytic_stm": {
+     "eigenvalue_moduli_desc": [
+      1.7757590879897514,
+      1.0002293017158947,
+      1.000005315782914,
+      1.0000026467895466,
+      1.000002051047196,
+      0.9999999999971857,
+      0.9999999999971857,
+      0.9999979489567978,
+      0.9999973532039981,
+      0.9999946842094948,
+      0.9997707514553871,
+      0.5631394522157602
+     ],
+     "max_floquet_modulus": 1.7757590879897514,
+     "lyapunov_per_period_ln_lambda": 0.5742279867144482,
+     "det_monodromy": 1.0000000006267447,
+     "symplecticity_residual": 2.4831549619956103e-09,
+     "amplification_over_20_periods_lambda_pow_20": 97203.27995662905,
+     "classification": "linearly unstable"
+    },
+    "survival_20_periods_ias15": {
+     "periods_until_closure_error_exceeds_0.1": null,
+     "max_pairwise_separation_seen": 2.000000000000075,
+     "stays_bound_within_4x_one_period_extent": true,
+     "survives_20_periods": true,
+     "closure_error_each_period": [
+      8.80853720163647e-14,
+      5.560307894996036e-13,
+      7.868480727181714e-13,
+      1.574897839097602e-12,
+      2.7911590345368353e-12,
+      5.07541760199257e-12,
+      9.312369428498662e-12,
+      1.67663367767811e-11,
+      3.001941928865564e-11,
+      5.377414512895122e-11,
+      9.605521744737778e-11,
+      1.711129744754343e-10,
+      3.0464823461711823e-10,
+      5.415060909701954e-10,
+      9.618700338016057e-10,
+      1.7079062347936147e-09,
+      3.0324769332838686e-09,
+      5.384766962761264e-09,
+      9.561994667983304e-09,
+      1.6979638612140352e-08
+     ]
+    },
+    "survival_20_periods_perturbed_v1x_plus_1e-6": {
+     "periods_until_closure_error_exceeds_0.1": null,
+     "max_pairwise_separation_seen": 2.011327216363032,
+     "stays_bound_within_4x_one_period_extent": true,
+     "survives_20_periods": true,
+     "closure_error_each_period": [
+      4.451829488393381e-06,
+      8.934171085662064e-06,
+      1.3476824108738012e-05,
+      1.814423848904833e-05,
+      2.308783015202802e-05,
+      2.8670263312692635e-05,
+      3.575752692378483e-05,
+      4.632947900089923e-05,
+      6.449874791240363e-05,
+      9.783480701836129e-05,
+      0.00015924733368410325,
+      0.0002707494494822523,
+      0.00047087567397709635,
+      0.00082806506696659,
+      0.0014644951316902953,
+      0.0025991205268250566,
+      0.004626850992921056,
+      0.008268289133425795,
+      0.014866013034924805,
+      0.027015608526336898
+     ]
+    },
+    "seconds": 3.128599166870117,
+    "T_refined_minus_published": -0.0009251612716285607,
+    "table_note": "refined values are the IAS15 Newton root; closure is the L2 norm of the 12-D state difference after one period"
+   },
+   "moth_I": {
+    "source_ic": "Suvakov & Dmitrasinovic 2013, PRL 110, 114301, doi:10.1103/PhysRevLett.110.114301, Table I (values checked in the arXiv:1303.0181 LaTeX source)",
+    "input_seed": {
+     "p1": 0.46444,
+     "p2": 0.39606,
+     "T": 14.8939
+    },
+    "refined": {
+     "p1": 0.46444517281806647,
+     "p2": 0.3960600146528148,
+     "T": 14.894305175042081,
+     "method": "Gauss-Newton shooting on (p1,p2,T), 12-component closure residual, central FD Jacobian, REBOUND IAS15"
+    },
+    "refined_dop853_independent": {
+     "p1": 0.46444517281801206,
+     "p2": 0.3960600146528262,
+     "T": 14.894305175037099
+    },
+    "agreement_digits_ias15_vs_dop853_root": {
+     "p1": 12.931328143588049,
+     "p2": 13.541626904001813,
+     "T": 12.47555716996502
+    },
+    "closure_L2_full_12d_state": {
+     "before_at_seed": {
+      "ias15": 0.00036082474661171894,
+      "dop853": 0.0003608247405913642
+     },
+     "after": {
+      "ias15_at_ias15_root": 9.568776870741291e-14,
+      "dop853_at_ias15_root": 6.5833285833979976e-12,
+      "dop853_at_dop853_root": 3.605797479036762e-13
+     }
+    },
+    "newton_history_ias15": [
+     0.00036082474661171894,
+     2.9903444008459724e-08,
+     9.568776870741291e-14
+    ],
+    "newton_history_dop853": [
+     6.5833285833979976e-12,
+     5.572801900190213e-13,
+     3.605797479036762e-13
+    ],
+    "jacobian_singular_values_last": [
+     182.41094782034733,
+     11.482273593528745,
+     0.5739811309733555
+    ],
+    "energy": -1.3822814387176254,
+    "angular_momentum": 0.0,
+    "min_pairwise_separation_one_period": {
+     "separation": 0.07946749440068178,
+     "time": 12.626005873672165,
+     "pair": [
+      1,
+      3
+     ]
+    },
+    "max_pairwise_separation_one_period": 2.1600662798478933,
+    "floquet_dop853_analytic_stm": {
+     "eigenvalue_moduli_desc": [
+      1.000030934032452,
+      1.0000030688433763,
+      1.000000000002549,
+      1.000000000002549,
+      0.9999999999984674,
+      0.9999999999984674,
+      0.9999999999947468,
+      0.9999999999947468,
+      0.9999999999891858,
+      0.9999999999891858,
+      0.999996931161476,
+      0.9999690669191407
+     ],
+     "max_floquet_modulus": 1.000030934032452,
+     "lyapunov_per_period_ln_lambda": 3.0933554004708506e-05,
+     "det_monodromy": 0.9999999999601221,
+     "symplecticity_residual": 6.794966566520966e-10,
+     "amplification_over_20_periods_lambda_pow_20": 1.0006188624965193,
+     "classification": "no linear instability resolved (max|lambda|-1 < 1e-3; deviations this small are consistent with numerical splitting of the defective eigenvalue 1)"
+    },
+    "survival_20_periods_ias15": {
+     "periods_until_closure_error_exceeds_0.1": null,
+     "max_pairwise_separation_seen": 2.000000000000016,
+     "stays_bound_within_4x_one_period_extent": true,
+     "survives_20_periods": true,
+     "closure_error_each_period": [
+      7.183739202212753e-14,
+      2.0231126924379863e-13,
+      2.7051503655537696e-13,
+      3.9810373071511285e-13,
+      6.116491879173928e-13,
+      7.239553514652321e-13,
+      7.862941520027866e-13,
+      8.690431451787009e-13,
+      9.802847749420053e-13,
+      1.1034455968438485e-12,
+      1.211064923815318e-12,
+      1.3211863271928863e-12,
+      1.466939826460285e-12,
+      1.6088453708733285e-12,
+      1.7985210271308353e-12,
+      1.98357777485122e-12,
+      2.1242014778411746e-12,
+      2.1919540768580404e-12,
+      2.262608760420201e-12,
+      2.3421743771770776e-12
+     ]
+    },
+    "survival_20_periods_perturbed_v1x_plus_1e-6": {
+     "periods_until_closure_error_exceeds_0.1": null,
+     "max_pairwise_separation_seen": 2.0000014503005246,
+     "stays_bound_within_4x_one_period_extent": true,
+     "survives_20_periods": true,
+     "closure_error_each_period": [
+      2.192573672161177e-05,
+      4.1573377826260624e-05,
+      5.7203021230059724e-05,
+      7.427272242614424e-05,
+      9.249296730036597e-05,
+      0.00011499535344814606,
+      0.00013709235579826732,
+      0.00015787488568011647,
+      0.0001746594015037753,
+      0.00019093078149283807,
+      0.0002088136982172931,
+      0.00023001294635223026,
+      0.0002529145471469294,
+      0.00027390377430660384,
+      0.00029222893555675306,
+      0.00030777933039792093,
+      0.0003255514041257145,
+      0.00034516680595893717,
+      0.0003686407755220786,
+      0.00038965405835087
+     ]
+    },
+    "seconds": 2.614888906478882,
+    "T_refined_minus_published": 0.0004051750420810407,
+    "table_note": "refined values are the IAS15 Newton root; closure is the L2 norm of the 12-D state difference after one period"
+   },
+   "yin_yang_I": {
+    "source_ic": "Suvakov & Dmitrasinovic 2013, PRL 110, 114301, doi:10.1103/PhysRevLett.110.114301, Table I (values checked in the arXiv:1303.0181 LaTeX source)",
+    "input_seed": {
+     "p1": 0.51394,
+     "p2": 0.30474,
+     "T": 17.3284
+    },
+    "refined": {
+     "p1": 0.513938537460401,
+     "p2": 0.3047359193468318,
+     "T": 17.328834018621603,
+     "method": "Gauss-Newton shooting on (p1,p2,T), 12-component closure residual, central FD Jacobian, REBOUND IAS15"
+    },
+    "refined_dop853_independent": {
+     "p1": 0.5139385374609328,
+     "p2": 0.3047359193467433,
+     "T": 17.328834018663407
+    },
+    "agreement_digits_ias15_vs_dop853_root": {
+     "p1": 11.98516544106774,
+     "p2": 12.53705509650205,
+     "T": 11.617543380339926
+    },
+    "closure_L2_full_12d_state": {
+     "before_at_seed": {
+      "ias15": 0.0015154295080104419,
+      "dop853": 0.0015154295701483654
+     },
+     "after": {
+      "ias15_at_ias15_root": 3.7961614942569625e-12,
+      "dop853_at_ias15_root": 7.104087527058188e-11,
+      "dop853_at_dop853_root": 5.587822200014968e-11
+     }
+    },
+    "newton_history_ias15": [
+     0.0015154295080104419,
+     1.0177073275524546e-06,
+     6.117574015862479e-12,
+     3.7961614942569625e-12
+    ],
+    "newton_history_dop853": [
+     7.104087527058188e-11,
+     5.587822200014968e-11
+    ],
+    "jacobian_singular_values_last": [
+     153.2181522076404,
+     40.240457797368464,
+     0.058813471756581324
+    ],
+    "energy": -1.4290095975187158,
+    "angular_momentum": 0.0,
+    "min_pairwise_separation_one_period": {
+     "separation": 0.013276614415805979,
+     "time": 15.31902241754871,
+     "pair": [
+      1,
+      3
+     ]
+    },
+    "max_pairwise_separation_one_period": 2.7138256515859536,
+    "floquet_dop853_analytic_stm": {
+     "eigenvalue_moduli_desc": [
+      1.90522746579494,
+      1.000285251505116,
+      1.00003262873638,
+      1.00003262873638,
+      1.000000000000899,
+      1.000000000000899,
+      0.9999999999507783,
+      0.9999999999507783,
+      0.9999673720485013,
+      0.9999673720485013,
+      0.999714832226317,
+      0.5248717112819259
+     ],
+     "max_floquet_modulus": 1.90522746579494,
+     "lyapunov_per_period_ln_lambda": 0.6446014060672668,
+     "det_monodromy": 1.0000000020839437,
+     "symplecticity_residual": 4.254525109917365e-08,
+     "amplification_over_20_periods_lambda_pow_20": 397133.6374727401,
+     "classification": "linearly unstable"
+    },
+    "survival_20_periods_ias15": {
+     "periods_until_closure_error_exceeds_0.1": null,
+     "max_pairwise_separation_seen": 2.713825698041451,
+     "stays_bound_within_4x_one_period_extent": true,
+     "survives_20_periods": true,
+     "closure_error_each_period": [
+      1.7837000775724305e-12,
+      2.191399928500285e-12,
+      9.245452933417257e-12,
+      1.904000494470137e-11,
+      2.930568476781664e-11,
+      4.005064601254099e-11,
+      5.726392966718764e-11,
+      8.928201254360084e-11,
+      1.413710367469534e-10,
+      2.464752986569246e-10,
+      4.4732200938221656e-10,
+      8.337076532946561e-10,
+      1.5744336021282665e-09,
+      2.980881437249872e-09,
+      5.667096964242092e-09,
+      1.0781108869075021e-08,
+      2.0528899313285656e-08,
+      3.909764202483567e-08,
+      7.446892993817358e-08,
+      1.418627472804468e-07
+     ]
+    },
+    "survival_20_periods_perturbed_v1x_plus_1e-6": {
+     "periods_until_closure_error_exceeds_0.1": null,
+     "max_pairwise_separation_seen": 2.7138272400248464,
+     "stays_bound_within_4x_one_period_extent": true,
+     "survives_20_periods": true,
+     "closure_error_each_period": [
+      2.3898599102802718e-05,
+      4.7335597569912864e-05,
+      7.15926670294911e-05,
+      9.421867027936155e-05,
+      0.00011927627535544991,
+      0.00014297172785775886,
+      0.00016930456203831766,
+      0.00019856900061700536,
+      0.0002298794441630359,
+      0.0002810455342129322,
+      0.00035410781469284356,
+      0.0005054698331295872,
+      0.0008036233160352009,
+      0.0013763610261935079,
+      0.0025108108858097646,
+      0.004632176731632849,
+      0.008673419116292791,
+      0.016196210498707404,
+      0.029995259971995,
+      0.05449175372348494
+     ]
+    },
+    "seconds": 3.205923080444336,
+    "T_refined_minus_published": 0.000434018621604082,
+    "table_note": "refined values are the IAS15 Newton root; closure is the L2 norm of the 12-D state difference after one period"
+   },
+   "figure_eight": {
+    "source_ic": "Simo / Chenciner & Montgomery 2000 ICs (x=0.97000436,-0.24308753; v3=-0.93240737,-0.86473146; T=6.32591398), rotated and scaled into the Suvakov form. Not a row of Suvakov Table I.",
+    "input_seed": {
+     "p1": 0.34711688924450496,
+     "p2": 0.532724944724257,
+     "T": 6.325913953144075
+    },
+    "refined": {
+     "p1": 0.3471168881189293,
+     "p2": 0.5327249453880291,
+     "T": 6.325913982926227,
+     "method": "Gauss-Newton shooting on (p1,p2,T), 12-component closure residual, central FD Jacobian, REBOUND IAS15"
+    },
+    "refined_dop853_independent": {
+     "p1": 0.34711688811892677,
+     "p2": 0.5327249453880388,
+     "T": 6.325913982926127
+    },
+    "agreement_digits_ias15_vs_dop853_root": {
+     "p1": 14.133337677889301,
+     "p2": 13.73661013158316,
+     "T": 13.799544621984806
+    },
+    "closure_L2_full_12d_state": {
+     "before_at_seed": {
+      "ias15": 7.54468416330052e-08,
+      "dop853": 7.544624015658725e-08
+     },
+     "after": {
+      "ias15_at_ias15_root": 4.632448391435241e-15,
+      "dop853_at_ias15_root": 6.158740260193822e-13,
+      "dop853_at_dop853_root": 2.14343035358436e-13
+     }
+    },
+    "newton_history_ias15": [
+     7.54468416330052e-08,
+     4.632448391435241e-15
+    ],
+    "newton_history_dop853": [
+     6.158740260193822e-13,
+     2.2193686393700007e-13,
+     2.14343035358436e-13
+    ],
+    "jacobian_singular_values_last": [
+     55.172782688781844,
+     2.1485122292363212,
+     0.045717074855398845
+    ],
+    "energy": -1.2871419956318566,
+    "angular_momentum": 0.0,
+    "min_pairwise_separation_one_period": {
+     "separation": 0.6905266290640878,
+     "time": 2.635797492885879,
+     "pair": [
+      2,
+      3
+     ]
+    },
+    "max_pairwise_separation_one_period": 2.000000000000008,
+    "floquet_dop853_analytic_stm": {
+     "eigenvalue_moduli_desc": [
+      1.000000852821355,
+      1.0000000000000486,
+      1.0000000000000486,
+      1.0000000000000482,
+      1.0000000000000482,
+      1.0000000000000462,
+      1.0000000000000462,
+      1.0000000000000373,
+      1.0000000000000373,
+      1.000000000000008,
+      1.000000000000008,
+      0.9999991471792432
+     ],
+     "max_floquet_modulus": 1.000000852821355,
+     "lyapunov_per_period_ln_lambda": 8.528209914387576e-07,
+     "det_monodromy": 1.000000000000223,
+     "symplecticity_residual": 2.270102319310255e-11,
+     "amplification_over_20_periods_lambda_pow_20": 1.0000170565652904,
+     "classification": "no linear instability resolved (max|lambda|-1 < 1e-3; deviations this small are consistent with numerical splitting of the defective eigenvalue 1)"
+    },
+    "survival_20_periods_ias15": {
+     "periods_until_closure_error_exceeds_0.1": null,
+     "max_pairwise_separation_seen": 2.000000000000006,
+     "stays_bound_within_4x_one_period_extent": true,
+     "survives_20_periods": true,
+     "closure_error_each_period": [
+      1.7571672350137153e-14,
+      3.667104224864864e-14,
+      4.800895867337078e-14,
+      6.173947094411126e-14,
+      7.496939264648036e-14,
+      8.279129572275005e-14,
+      8.727531215134544e-14,
+      9.367759591701693e-14,
+      9.674389049322725e-14,
+      9.263800121859054e-14,
+      8.888527699730988e-14,
+      8.458518996186195e-14,
+      8.307269439819091e-14,
+      9.068793503103306e-14,
+      9.659611303680075e-14,
+      1.0035259385698069e-13,
+      1.1291251767460886e-13,
+      1.2060626416806147e-13,
+      1.252029472128465e-13,
+      1.3115465212029745e-13
+     ]
+    },
+    "survival_20_periods_perturbed_v1x_plus_1e-6": {
+     "periods_until_closure_error_exceeds_0.1": null,
+     "max_pairwise_separation_seen": 2.000001681321706,
+     "stays_bound_within_4x_one_period_extent": true,
+     "survives_20_periods": true,
+     "closure_error_each_period": [
+      4.869486905184428e-06,
+      1.221003346361648e-05,
+      2.1368754921632052e-05,
+      2.655188280848873e-05,
+      3.24586086561775e-05,
+      4.20503586375676e-05,
+      4.8733363951482595e-05,
+      5.3433501806025154e-05,
+      6.224943768191733e-05,
+      7.061548702524616e-05,
+      7.511929867264435e-05,
+      8.23777818758805e-05,
+      9.187088300042422e-05,
+      9.727669302124085e-05,
+      0.00010287916313477927,
+      0.00011245905043169284,
+      0.00011947838778909868,
+      0.0001240406467867555,
+      0.000132629899806285,
+      0.0001412841851489405
+     ]
+    },
+    "seconds": 0.752112865447998,
+    "seed_mapping_length_scale_L": 1.0000000028302551,
+    "table_note": "refined values are the IAS15 Newton root; closure is the L2 norm of the 12-D state difference after one period"
+   }
+  }
+ },
+ "pythagorean_three_body": {
+  "provenance": {
+   "method": "Masses 3,4,5 at (1,3), (-2,-1), (1,-1), at rest, G=1. REBOUND IAS15 (epsilon 1e-9 and 1e-11) and SciPy DOP853 (rtol 2.3e-14, atol 1e-15), integrated to t=100, state sampled every 0.01.",
+   "packages": {
+    "rebound": "5.2.2",
+    "scipy": "1.17.1"
+   },
+   "reference_problem": "Burrau 1913; Szebehely & Peters 1967, AJ 72, 876, doi:10.1086/110355 (citation resolved via Crossref; its numerical results were not read or compared).",
+   "definitions": {
+    "final_close_encounter_t": "last local minimum of the distance from the escaper to the binary barycentre",
+    "t_unbound": "time after which the two-body energy of the escaper relative to the binary barycentre stays positive",
+    "t_r_exceeds_10a": "time after which that distance stays above 10x the final binary semi-major axis"
+   },
+   "time_resolution": 0.01
+  },
+  "regression": {
+   "binary_pair_masses": [
+    4.0,
+    5.0
+   ],
+   "escaper_mass": 3.0,
+   "final_close_encounter_t": 59.41999999999675,
+   "t_unbound": 59.529999999996726,
+   "t_r_exceeds_10a": 60.84999999999646,
+   "binary_a_at_t100": 0.5523882211591459,
+   "binary_e_at_t100": 0.9887149190155723
+  },
+  "spread_across_three_runs": {
+   "final_close_encounter_t": {
+    "min": 59.41999999999675,
+    "max": 59.42
+   },
+   "t_unbound": {
+    "min": 59.529999999996726,
+    "max": 59.53
+   },
+   "t_r_exceeds_10a": {
+    "min": 60.84999999999646,
+    "max": 60.88
+   },
+   "binary_a_at_t100": {
+    "min": 0.5523882211591459,
+    "max": 0.5569249724528678
+   },
+   "binary_e_at_t100": {
+    "min": 0.9885071588882572,
+    "max": 0.9887149190155723
+   }
+  },
+  "note": "Identity of the binary and the escaper and the time of the final encounter agree across all three runs. Post-encounter orbital elements differ at the 1e-3 level because the system is chaotic and passes within 0.006 of collision on the sampled grid (the true minimum is smaller), so a regression test should use tolerances no tighter than the spread shown.",
+  "runs": {
+   "ias15_eps1e-11": {
+    "end_time": 100.0,
+    "pair_elements_at_end": {
+     "m3-m4": {
+      "r": 96.47311293698579,
+      "specific_energy": 3.664932152396611,
+      "a": -0.9549972153539713,
+      "e": 44.77128378454509
+     },
+     "m3-m5": {
+      "r": 96.48777145616003,
+      "specific_energy": 2.442259221118525,
+      "a": -1.6378277806923578,
+      "e": 25.719635734624536
+     },
+     "m4-m5": {
+      "r": 0.8542091582496706,
+      "specific_energy": -8.146444525115113,
+      "a": 0.5523882211591459,
+      "e": 0.9887149190155723
+     }
+    },
+    "binary_pair_masses": [
+     4.0,
+     5.0
+    ],
+    "escaper_mass": 3.0,
+    "binary_a_end": 0.5523882211591459,
+    "binary_e_end": 0.9887149190155723,
+    "last_local_min_of_outer_distance": {
+     "t": 59.41999999999675,
+     "r": 0.06785899506069526
+    },
+    "t_outer_becomes_permanently_unbound": 59.529999999996726,
+    "t_outer_r_exceeds_10a_permanently": 60.84999999999646,
+    "t_outer_r_exceeds_30a_permanently": 65.01999999999636,
+    "t_outer_r_exceeds_25_length_units_permanently": 68.49999999999814,
+    "outer_r_end": 96.4803231439789,
+    "outer_radial_speed_end": 2.224385525837129,
+    "outer_energy_end": 2.349573637011337,
+    "diagnostics": {
+     "relative_energy_error": 2.9148421864312093e-12,
+     "min_pairwise_sep_on_grid": 0.005974592512906702,
+     "steps": 34440,
+     "E0": -12.816666666666666
+    }
+   },
+   "ias15_eps1e-9": {
+    "end_time": 100.0,
+    "pair_elements_at_end": {
+     "m3-m4": {
+      "r": 96.3528279777284,
+      "specific_energy": 3.3198075174969803,
+      "a": -1.0542779909839106,
+      "e": 31.761185207086363
+     },
+     "m3-m5": {
+      "r": 96.3880355234416,
+      "specific_energy": 2.2465628162950706,
+      "a": -1.7804977323521354,
+      "e": 18.42557187583131
+     },
+     "m4-m5": {
+      "r": 0.9479419790554928,
+      "specific_energy": -8.139796204994374,
+      "a": 0.5528393938461154,
+      "e": 0.9886941344038729
+     }
+    },
+    "binary_pair_masses": [
+     4.0,
+     5.0
+    ],
+    "escaper_mass": 3.0,
+    "binary_a_end": 0.5528393938461154,
+    "binary_e_end": 0.9886941344038729,
+    "last_local_min_of_outer_distance": {
+     "t": 59.41999999999675,
+     "r": 0.06768718508573252
+    },
+    "t_outer_becomes_permanently_unbound": 59.529999999996726,
+    "t_outer_r_exceeds_10a_permanently": 60.84999999999646,
+    "t_outer_r_exceeds_30a_permanently": 65.02999999999636,
+    "t_outer_r_exceeds_25_length_units_permanently": 68.50999999999814,
+    "outer_r_end": 96.3712381724491,
+    "outer_radial_speed_end": 2.2214948660428298,
+    "outer_energy_end": 2.3430071157632537,
+    "diagnostics": {
+     "relative_energy_error": 1.0171095868442874e-10,
+     "min_pairwise_sep_on_grid": 0.005974592554603189,
+     "steps": 26670,
+     "E0": -12.816666666666666
+    }
+   },
+   "dop853": {
+    "end_time": 100.0,
+    "pair_elements_at_end": {
+     "m3-m4": {
+      "r": 95.30330566834299,
+      "specific_energy": 3.084917967808042,
+      "a": -1.1345520485547596,
+      "e": 40.68421391781711
+     },
+     "m3-m5": {
+      "r": 95.45439564741072,
+      "specific_energy": 2.7814780207422216,
+      "a": -1.4380843458660957,
+      "e": 26.91943801665626
+     },
+     "m4-m5": {
+      "r": 0.861062105256768,
+      "specific_energy": -8.080082996064307,
+      "a": 0.5569249724528678,
+      "e": 0.9885071588882572
+     }
+    },
+    "binary_pair_masses": [
+     4.0,
+     5.0
+    ],
+    "escaper_mass": 3.0,
+    "binary_a_end": 0.5569249724528678,
+    "binary_e_end": 0.9885071588882572,
+    "last_local_min_of_outer_distance": {
+     "t": 59.42,
+     "r": 0.06774974501529096
+    },
+    "t_outer_becomes_permanently_unbound": 59.53,
+    "t_outer_r_exceeds_10a_permanently": 60.88,
+    "t_outer_r_exceeds_30a_permanently": 65.13,
+    "t_outer_r_exceeds_25_length_units_permanently": 68.59,
+    "outer_r_end": 95.38631447939123,
+    "outer_radial_speed_end": 2.195372178205269,
+    "outer_energy_end": 2.284031430237065,
+    "diagnostics": {
+     "relative_energy_error": 1.7154237804838537e-09,
+     "nfev": 288419,
+     "E0": -12.816666666666666
+    }
+   }
+  }
+ },
+ "solar_system": {
+  "provenance": {
+   "semi_major_axes": "JPL SSD 'Approximate Positions of the Planets' Table 1 (Standish; a at J2000, valid 1800-2050), https://ssd.jpl.nasa.gov/planets/approx_pos.html, fetched 2026-11-09, sha256 9f7b30ca81cc548a879565bb3f70e6899a38ff5877cb1ff16bb04892f9c4d742",
+   "masses": "JPL SSD 'Planetary Physical Parameters', https://ssd.jpl.nasa.gov/planets/phys_par.html, fetched 2026-11-09, sha256 e49a487947295c389ba6e5833dd8fb04b63e826d39f70c123881882096e5e68b",
+   "solar_mass": "astropy 8.0.2 constants M_sun = 1.988409870698051e+30 kg (IAU 2015 Resolution B 3 + CODATA 2022)",
+   "method": "mass_ratio_to_sun = planet mass / astropy M_sun, each from the cited table; a in au as tabulated."
+  },
+  "M_sun_kg": 1.988409870698051e+30,
+  "GM_sun_m3_s2": 1.3271244e+20,
+  "au_m": 149597870700.0,
+  "planets": {
+   "Mercury": {
+    "a_au": 0.38709927,
+    "a_au_body": "Mercury",
+    "mass_kg": 3.3010299999999994e+23,
+    "mass_kg_plus_minus": 2.1e+19,
+    "mass_ratio_to_sun": 1.660135593091348e-07,
+    "sidereal_period_yr": 0.2408467,
+    "kepler_check_a3_over_P2_1plusq": 0.9999668078309732
+   },
+   "Venus": {
+    "a_au": 0.72333566,
+    "a_au_body": "Venus",
+    "mass_kg": 4.867309999999999e+24,
+    "mass_kg_plus_minus": 2.3e+20,
+    "mass_ratio_to_sun": 2.4478403933346407e-06,
+    "sidereal_period_yr": 0.61519726,
+    "kepler_check_a3_over_P2_1plusq": 0.9999764681198673
+   },
+   "Earth": {
+    "a_au": 1.00000261,
+    "a_au_body": "Earth-Moon barycentre (JPL's EM Bary row)",
+    "mass_kg": 5.97217e+24,
+    "mass_kg_plus_minus": 2.7999999999999997e+20,
+    "mass_ratio_to_sun": 3.0034904211692584e-06,
+    "sidereal_period_yr": 1.0000174,
+    "kepler_check_a3_over_P2_1plusq": 0.999970027255819
+   },
+   "Mars": {
+    "a_au": 1.52371034,
+    "a_au_body": "Mars",
+    "mass_kg": 6.41691e+23,
+    "mass_kg_plus_minus": 3e+19,
+    "mass_ratio_to_sun": 3.2271565810258627e-07,
+    "sidereal_period_yr": 1.8808476,
+    "kepler_check_a3_over_P2_1plusq": 0.9999997454273528
+   },
+   "Jupiter": {
+    "a_au": 5.202887,
+    "a_au_body": "Jupiter",
+    "mass_kg": 1.898125e+27,
+    "mass_kg_plus_minus": 8.8e+22,
+    "mass_ratio_to_sun": 0.0009545944364748323,
+    "sidereal_period_yr": 11.862615,
+    "kepler_check_a3_over_P2_1plusq": 0.9999031404803047
+   },
+   "Saturn": {
+    "a_au": 9.53667594,
+    "a_au_body": "Saturn",
+    "mass_kg": 5.68317e+26,
+    "mass_kg_plus_minus": 2.6e+22,
+    "mass_ratio_to_sun": 0.00028581481533306144,
+    "sidereal_period_yr": 29.447498,
+    "kepler_check_a3_over_P2_1plusq": 0.999931302857198
+   },
+   "Uranus": {
+    "a_au": 19.18916464,
+    "a_au_body": "Uranus",
+    "mass_kg": 8.68099e+25,
+    "mass_kg_plus_minus": 4e+21,
+    "mass_ratio_to_sun": 4.365795064652567e-05,
+    "sidereal_period_yr": 84.016846,
+    "kepler_check_a3_over_P2_1plusq": 1.0009594845017362
+   },
+   "Neptune": {
+    "a_au": 30.06992276,
+    "a_au_body": "Neptune",
+    "mass_kg": 1.024092e+26,
+    "mass_kg_plus_minus": 4.8e+21,
+    "mass_ratio_to_sun": 5.150306358318782e-05,
+    "sidereal_period_yr": 164.79132,
+    "kepler_check_a3_over_P2_1plusq": 1.0011655696129733
+   }
+  }
+ },
+ "trappist_1": {
+  "provenance": {
+   "source": "Agol et al. 2021, PSJ 2, 1, doi:10.3847/PSJ/abd022, arXiv:2010.01074v2; parsed from the arXiv LaTeX source",
+   "source_sha256_tex": "6400157811fb153ad961464d63642c069631aa97e20023ada1c25a348e66613f",
+   "tables": "periods and mass ratios: tab:TTV_parameters; masses, radii, a: tab:uber_table; star: tab:stellar_parameters (M* from Mann et al. 2019)",
+   "method": "P_days, mass_earth, a_au are published values. derived_* are computed here (a^3/P^2 with P in Julian yr; mass_earth * astropy M_earth/M_sun / M_star).",
+   "caveat": "mass_ratio_to_star is the published M_p/M_* column with M_* scaling described in that table's caption."
+  },
+  "star": {
+   "mass_msun": 0.0898,
+   "mass_msun_1sigma": 0.0023,
+   "radius_rsun": 0.1192,
+   "radius_rsun_1sigma": 0.0013,
+   "teff_K": 2566,
+   "teff_K_1sigma": 26
+  },
+  "planets": {
+   "b": {
+    "P_days": 1.510826,
+    "P_days_1sigma": 6e-06,
+    "mass_earth": 1.374,
+    "mass_earth_1sigma": 0.069,
+    "a_au": 0.01154,
+    "a_au_1sigma": 0.0001,
+    "radius_earth": 1.116,
+    "radius_earth_minus_plus": [
+     0.012,
+     0.014
+    ],
+    "mass_ratio_to_star_1e-5": 4.596,
+    "mass_ratio_to_star_1e-5_1sigma": 0.198,
+    "derived_kepler_mstar_from_a_P_msun": 0.08981915718790966,
+    "derived_mass_ratio_from_published_mass_and_mstar": 4.595539382317361e-05
+   },
+   "c": {
+    "P_days": 2.421937,
+    "P_days_1sigma": 1.8e-05,
+    "mass_earth": 1.308,
+    "mass_earth_1sigma": 0.056,
+    "a_au": 0.0158,
+    "a_au_1sigma": 0.00013,
+    "radius_earth": 1.097,
+    "radius_earth_minus_plus": [
+     0.012,
+     0.014
+    ],
+    "mass_ratio_to_star_1e-5": 4.374,
+    "mass_ratio_to_star_1e-5_1sigma": 0.151,
+    "derived_kepler_mstar_from_a_P_msun": 0.08970693657791172,
+    "derived_mass_ratio_from_published_mass_and_mstar": 4.3747929491056104e-05
+   },
+   "d": {
+    "P_days": 4.049219,
+    "P_days_1sigma": 2.6e-05,
+    "mass_earth": 0.388,
+    "mass_earth_1sigma": 0.012,
+    "a_au": 0.022269999999999998,
+    "a_au_1sigma": 0.00019,
+    "radius_earth": 0.788,
+    "radius_earth_minus_plus": [
+     0.01,
+     0.011
+    ],
+    "mass_ratio_to_star_1e-5": 1.297,
+    "mass_ratio_to_star_1e-5_1sigma": 0.025,
+    "derived_kepler_mstar_from_a_P_msun": 0.0898666532497933,
+    "derived_mass_ratio_from_published_mass_and_mstar": 1.2977214558508995e-05
+   },
+   "e": {
+    "P_days": 6.101013,
+    "P_days_1sigma": 3.5e-05,
+    "mass_earth": 0.692,
+    "mass_earth_1sigma": 0.022,
+    "a_au": 0.029249999999999998,
+    "a_au_1sigma": 0.00025,
+    "radius_earth": 0.92,
+    "radius_earth_minus_plus": [
+     0.012,
+     0.013
+    ],
+    "mass_ratio_to_star_1e-5": 2.313,
+    "mass_ratio_to_star_1e-5_1sigma": 0.043,
+    "derived_kepler_mstar_from_a_P_msun": 0.08969209323383355,
+    "derived_mass_ratio_from_published_mass_and_mstar": 2.314492905795934e-05
+   },
+   "f": {
+    "P_days": 9.20754,
+    "P_days_1sigma": 3.2e-05,
+    "mass_earth": 1.039,
+    "mass_earth_1sigma": 0.031,
+    "a_au": 0.03849,
+    "a_au_1sigma": 0.00033,
+    "radius_earth": 1.045,
+    "radius_earth_minus_plus": [
+     0.012,
+     0.013
+    ],
+    "mass_ratio_to_star_1e-5": 3.475,
+    "mass_ratio_to_star_1e-5_1sigma": 0.052,
+    "derived_kepler_mstar_from_a_P_msun": 0.08972985254232088,
+    "derived_mass_ratio_from_published_mass_and_mstar": 3.4750840016213514e-05
+   },
+   "g": {
+    "P_days": 12.352446,
+    "P_days_1sigma": 5.4e-05,
+    "mass_earth": 1.321,
+    "mass_earth_1sigma": 0.038,
+    "a_au": 0.04683,
+    "a_au_1sigma": 0.0004,
+    "radius_earth": 1.129,
+    "radius_earth_minus_plus": [
+     0.013,
+     0.015
+    ],
+    "mass_ratio_to_star_1e-5": 4.418,
+    "mass_ratio_to_star_1e-5_1sigma": 0.057,
+    "derived_kepler_mstar_from_a_P_msun": 0.0897939330734599,
+    "derived_mass_ratio_from_published_mass_and_mstar": 4.41827330716247e-05
+   },
+   "h": {
+    "P_days": 18.772866,
+    "P_days_1sigma": 0.000214,
+    "mass_earth": 0.326,
+    "mass_earth_1sigma": 0.02,
+    "a_au": 0.06189,
+    "a_au_1sigma": 0.00053,
+    "radius_earth": 0.755,
+    "radius_earth_minus_plus": [
+     0.014,
+     0.014
+    ],
+    "mass_ratio_to_star_1e-5": 1.088,
+    "mass_ratio_to_star_1e-5_1sigma": 0.062,
+    "derived_kepler_mstar_from_a_P_msun": 0.08973889900387695,
+    "derived_mass_ratio_from_published_mass_and_mstar": 1.0903535943489518e-05
+   }
+  }
+ },
+ "galaxy": {
+  "provenance": {
+   "package": "galpy 1.12.1",
+   "methods": {
+    "pseudo_isothermal": "galpy.potential.PseudoIsothermalPotential(amp,a), natural units, vcirc^2 and .mass versus analytic M(r)=amp*(r/a-atan(r/a)), v_c^2=M/r",
+    "flat_curve": "galpy.potential.LogarithmicHaloPotential(normalize=1,core=0,q=1), vcirc and epifreq",
+    "toomre": "Q = sigma_R*kappa/(3.36 G Sigma), Toomre 1964, ApJ 139, 1217 (stellar); Q = sigma*kappa/(pi G Sigma) (fluid). kappa from galpy. Inputs declared in 'inputs'."
+   },
+   "note": "M(r) proportional to r - a*atan(r/a) is the exact enclosed mass of rho = rho0/(1+(r/a)^2); rho0 = amp/(4 pi a^3)."
+  },
+  "pseudo_isothermal_amp1_a1": [
+   {
+    "r": 0.1,
+    "vc2_galpy": 0.003313475088379825,
+    "vc2_analytic_M_over_r": 0.003313475088379675,
+    "M_galpy": 0.0003313475088379774,
+    "M_analytic": 0.0003313475088379675,
+    "rel_diff": 4.528586353289037e-14
+   },
+   {
+    "r": 0.25,
+    "vc2_galpy": 0.020085347492543423,
+    "vc2_analytic_M_over_r": 0.020085347492543426,
+    "M_galpy": 0.005021336873135866,
+    "M_analytic": 0.0050213368731358565,
+    "rel_diff": -1.7273522169539895e-16
+   },
+   {
+    "r": 0.5,
+    "vc2_galpy": 0.0727047819983877,
+    "vc2_analytic_M_over_r": 0.0727047819983877,
+    "M_galpy": 0.036352390999193865,
+    "M_analytic": 0.03635239099919385,
+    "rel_diff": 0.0
+   },
+   {
+    "r": 1.0,
+    "vc2_galpy": 0.21460183660255172,
+    "vc2_analytic_M_over_r": 0.21460183660255172,
+    "M_galpy": 0.21460183660255175,
+    "M_analytic": 0.21460183660255172,
+    "rel_diff": 0.0
+   },
+   {
+    "r": 2.0,
+    "vc2_galpy": 0.4464256411029547,
+    "vc2_analytic_M_over_r": 0.4464256411029547,
+    "M_galpy": 0.8928512822059096,
+    "M_analytic": 0.8928512822059094,
+    "rel_diff": 0.0
+   },
+   {
+    "r": 4.0,
+    "vc2_galpy": 0.6685455840829919,
+    "vc2_analytic_M_over_r": 0.6685455840829919,
+    "M_galpy": 2.6741823363319677,
+    "M_analytic": 2.6741823363319677,
+    "rel_diff": 0.0
+   },
+   {
+    "r": 8.0,
+    "vc2_galpy": 0.8191948334689833,
+    "vc2_analytic_M_over_r": 0.8191948334689831,
+    "M_galpy": 6.553558667751865,
+    "M_analytic": 6.553558667751865,
+    "rel_diff": 1.3552612629693697e-16
+   },
+   {
+    "r": 16.0,
+    "vc2_galpy": 0.9057264052000663,
+    "vc2_analytic_M_over_r": 0.9057264052000663,
+    "M_galpy": 14.491622483201061,
+    "M_analytic": 14.491622483201061,
+    "rel_diff": 0.0
+   }
+  ],
+  "pseudo_isothermal_scaled_amp3.7_a2.3": [
+   {
+    "r": 0.5,
+    "vc2_galpy": 0.02464659380163386,
+    "vc2_analytic": 0.024646593801633965,
+    "rel_diff": -4.223034200843937e-15
+   },
+   {
+    "r": 2.3,
+    "vc2_galpy": 0.3452290414910616,
+    "vc2_analytic": 0.34522904149106154,
+    "rel_diff": 1.6079513760343678e-16
+   },
+   {
+    "r": 9.2,
+    "vc2_galpy": 1.0754863743943783,
+    "vc2_analytic": 1.0754863743943783,
+    "rel_diff": 0.0
+   }
+  ],
+  "max_abs_rel_diff": 4.528586353289037e-14,
+  "flat_rotation_logarithmic_halo": [
+   {
+    "R": 0.5,
+    "vc": 1.0,
+    "kappa": 2.8284271247461903,
+    "kappa_over_omega": 1.4142135623730951
+   },
+   {
+    "R": 1.0,
+    "vc": 1.0,
+    "kappa": 1.4142135623730951,
+    "kappa_over_omega": 1.4142135623730951
+   },
+   {
+    "R": 2.0,
+    "vc": 1.0,
+    "kappa": 0.7071067811865476,
+    "kappa_over_omega": 1.4142135623730951
+   },
+   {
+    "R": 4.0,
+    "vc": 1.0,
+    "kappa": 0.3535533905932738,
+    "kappa_over_omega": 1.4142135623730951
+   }
+  ],
+  "toomre_Q_exponential_disk": {
+   "inputs": {
+    "G": 1,
+    "M_d": 1.0,
+    "R_d": 1.0,
+    "v_c": 1.0,
+    "sigma_R": 0.15,
+    "note": "sigma_R=0.15 v_c and M_d=1 (G=v_c=R_d=1) are illustrative inputs chosen here, not observed values. Q scales as sigma_R/M_d."
+   },
+   "rows": [
+    {
+     "R": 1.0,
+     "kappa": 1.4142135623730951,
+     "Sigma": 0.05854983152431917,
+     "Q_stellar_3p36": 1.0783042818541622,
+     "Q_gas_pi": 1.153269308447735,
+     "sigma_R_for_Q_1p5": 0.2086609538572069
+    },
+    {
+     "R": 2.0,
+     "kappa": 0.7071067811865476,
+     "Sigma": 0.021539279301848634,
+     "Q_stellar_3p36": 1.4655674674568748,
+     "Q_gas_pi": 1.5674555022365038,
+     "sigma_R_for_Q_1p5": 0.1535241501985788
+    },
+    {
+     "R": 3.0,
+     "kappa": 0.4714045207910317,
+     "Sigma": 0.007923858032799689,
+     "Q_stellar_3p36": 2.655883610112511,
+     "Q_gas_pi": 2.8405238724317563,
+     "sigma_R_for_Q_1p5": 0.08471756787206061
+    },
+    {
+     "R": 4.0,
+     "kappa": 0.3535533905932738,
+     "Sigma": 0.0029150244650281935,
+     "Q_stellar_3p36": 5.414580116903286,
+     "Q_gas_pi": 5.791008319301523,
+     "sigma_R_for_Q_1p5": 0.04155446870156985
+    },
+    {
+     "R": 5.0,
+     "kappa": 0.282842712474619,
+     "Sigma": 0.0010723775711956546,
+     "Q_stellar_3p36": 11.77468379241108,
+     "Q_gas_pi": 12.593274146249986,
+     "sigma_R_for_Q_1p5": 0.019108793405137138
+    }
+   ]
+  }
+ },
+ "stars": {
+  "provenance": {
+   "main_sequence": "E. Mamajek, 'A Modern Mean Dwarf Stellar Color and Effective Temperature Sequence', version 2022.04.16, https://www.pas.rochester.edu/~emamajek/EEM_dwarf_UBVIJHK_colors_Teff.txt; cite Pecaut & Mamajek 2013, ApJS 208, 9 per the file header. Rows parsed from the raw file, sha256 1de2edeec17bb3346e0e4e70b999de5ee29947df38474e64cddb7cfacc164b7f",
+   "method": "Column positions from the file's own #SpT header line; values as tabulated."
+  },
+  "main_sequence_mean_dwarf": {
+   "O5V": {
+    "teff_K": 41400.0,
+    "log10_L_Lsun": 5.54,
+    "radius_rsun": 11.45,
+    "mass_msun": 43.0
+   },
+   "O9V": {
+    "teff_K": 33300.0,
+    "log10_L_Lsun": 4.82,
+    "radius_rsun": 7.72,
+    "mass_msun": 20.2
+   },
+   "B0V": {
+    "teff_K": 31400.0,
+    "log10_L_Lsun": 4.65,
+    "radius_rsun": 7.16,
+    "mass_msun": 17.7
+   },
+   "B5V": {
+    "teff_K": 15700.0,
+    "log10_L_Lsun": 2.77,
+    "radius_rsun": 3.36,
+    "mass_msun": 4.7
+   },
+   "A0V": {
+    "teff_K": 9700.0,
+    "log10_L_Lsun": 1.58,
+    "radius_rsun": 2.193,
+    "mass_msun": 2.18
+   },
+   "A5V": {
+    "teff_K": 8100.0,
+    "log10_L_Lsun": 1.09,
+    "radius_rsun": 1.785,
+    "mass_msun": 1.88
+   },
+   "F0V": {
+    "teff_K": 7220.0,
+    "log10_L_Lsun": 0.86,
+    "radius_rsun": 1.728,
+    "mass_msun": 1.61
+   },
+   "F5V": {
+    "teff_K": 6550.0,
+    "log10_L_Lsun": 0.56,
+    "radius_rsun": 1.473,
+    "mass_msun": 1.33
+   },
+   "G0V": {
+    "teff_K": 5930.0,
+    "log10_L_Lsun": 0.13,
+    "radius_rsun": 1.1,
+    "mass_msun": 1.06
+   },
+   "G2V": {
+    "teff_K": 5770.0,
+    "log10_L_Lsun": 0.01,
+    "radius_rsun": 1.012,
+    "mass_msun": 1.0
+   },
+   "G5V": {
+    "teff_K": 5660.0,
+    "log10_L_Lsun": -0.05,
+    "radius_rsun": 0.977,
+    "mass_msun": 0.98
+   },
+   "K0V": {
+    "teff_K": 5270.0,
+    "log10_L_Lsun": -0.34,
+    "radius_rsun": 0.813,
+    "mass_msun": 0.88
+   },
+   "K5V": {
+    "teff_K": 4440.0,
+    "log10_L_Lsun": -0.76,
+    "radius_rsun": 0.701,
+    "mass_msun": 0.7
+   },
+   "M0V": {
+    "teff_K": 3850.0,
+    "log10_L_Lsun": -1.16,
+    "radius_rsun": 0.588,
+    "mass_msun": 0.57
+   },
+   "M2V": {
+    "teff_K": 3560.0,
+    "log10_L_Lsun": -1.54,
+    "radius_rsun": 0.446,
+    "mass_msun": 0.44
+   },
+   "M5V": {
+    "teff_K": 3060.0,
+    "log10_L_Lsun": -2.52,
+    "radius_rsun": 0.196,
+    "mass_msun": 0.162
+   },
+   "M8V": {
+    "teff_K": 2570.0,
+    "log10_L_Lsun": -3.28,
+    "radius_rsun": 0.114,
+    "mass_msun": 0.085
+   }
+  },
+  "main_sequence_table_notes": "Mean-dwarf values, not individual stars.",
+  "evolved_and_compact": {
+   "red_giant_Arcturus": {
+    "mass_msun": 1.08,
+    "mass_msun_1sigma": 0.06,
+    "radius_rsun": 25.4,
+    "radius_rsun_1sigma": 0.2,
+    "teff_K": 4286,
+    "teff_K_1sigma": 30,
+    "source": "Ramirez & Allende Prieto 2011, ApJ 743, 135, arXiv:1109.4425 (abstract text read directly)"
+   },
+   "red_supergiant_Betelgeuse": {
+    "mass_msun_range": [
+     16.5,
+     19
+    ],
+    "radius_rsun": 764,
+    "radius_rsun_minus_plus": [
+     62,
+     116
+    ],
+    "teff_K": 3600,
+    "teff_K_1sigma": 25,
+    "source": "Joyce et al. 2020, ApJ 902, 63, arXiv:2006.09837 (mass and radius: abstract; Teff: paper text quoting Levesque & Massey 2020 and Guinan et al.)",
+    "caveat": "Radius is a model-based estimate. Betelgeuse varies; the Teff quoted is spectroscopic and the paper notes it could be higher by about 200 K given LTE and TiO modelling assumptions (text cites Ireland, Scholz & Wood 2008)."
+   },
+   "white_dwarf_Sirius_B": {
+    "mass_msun": 1.018,
+    "mass_msun_1sigma": 0.011,
+    "radius_rsun": 0.008098,
+    "radius_rsun_1sigma": 4.6e-05,
+    "teff_K": 25369,
+    "teff_K_1sigma": 46,
+    "log10_g_cgs": 8.591,
+    "source": "Bond et al. 2017, ApJ 840, 70, arXiv:1703.10625 (mass: abstract; Teff, log g, radius: paper text; quoted internal errors exclude systematics)"
+   },
+   "neutron_star_PSR_J0740+6620": {
+    "mass_msun": 2.08,
+    "mass_msun_1sigma": 0.07,
+    "radius_km_miller2021": 13.7,
+    "radius_km_miller2021_minus_plus": [
+     1.5,
+     2.6
+    ],
+    "radius_km_riley2021": 12.39,
+    "radius_km_riley2021_minus_plus": [
+     0.98,
+     1.3
+    ],
+    "hot_spot_log10_T_K_riley2021": 5.99,
+    "source": "Miller et al. 2021, ApJL 918, L28, arXiv:2105.06979; Riley et al. 2021, ApJL 918, L27, arXiv:2105.06980 (abstracts)",
+    "caveat": "The temperature is for the hot polar caps, not a whole-surface effective temperature; a neutron-star surface temperature depends strongly on age."
+   },
+   "neutron_star_canonical_1p4Msun": {
+    "mass_msun": 1.4,
+    "radius_km_center": 12.45,
+    "radius_km_halfwidth": 0.65,
+    "source": "Miller et al. 2021 (arXiv:2105.06979), abstract: range spanning the +-1 sigma credible intervals across their three EOS frameworks"
+   }
+  }
+ }
+}

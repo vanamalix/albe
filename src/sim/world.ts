@@ -3,11 +3,14 @@
  * (no three.js); the scene reads it every frame.
  */
 import { DOMAIN } from '../physics/fields';
-import { advanceRay, makeRay } from '../physics/light';
-import { advanceBodies, type NBodyOptions } from '../physics/nbody';
+import { advanceRay, CAPTURE_RATIO, makeRay } from '../physics/light';
+import { haloEnclosed } from '../physics/bodies';
+import { advanceBodies, type NBodyOptions, type Remnant } from '../physics/nbody';
 import type { Preset } from '../physics/presets';
-import { circularSpeed, dominantSource, probeDt, rk4ProbeStep } from '../physics/probes';
-import type { Body, Probe, Ray } from '../physics/types';
+import { circularSpeed, dominantSource, probeDt, properTimeRatio, rk4ProbeStep } from '../physics/probes';
+import { MAX_STARS, spawnDisk, Swarm } from '../physics/swarm';
+import { isCompact, surfaceRadius, type Body, type Probe, type Ray } from '../physics/types';
+import { WaveBuffer } from './waves';
 
 export const MAX_BODIES = 32;
 export const MAX_PROBES = 600;
@@ -55,12 +58,24 @@ export interface Flash {
   y: number;
   size: number;
   age: number;
-  kind: 'merge' | 'capture';
+  kind: 'merge' | 'capture' | 'supernova';
 }
+
+/** Everything about a new body beyond its position, velocity and mass. */
+export type BodyTraits = Partial<Pick<Body, 'kind' | 'radius' | 'soft' | 'color' | 'typeId' | 'name'>>;
+
+/** Stars in a galaxy placed by hand. */
+const PLACED_DISK_STARS = 2500;
+/** Pieces a star breaks into when a compact object tears it apart. */
+const DEBRIS_PIECES = 500;
+/** Most real time one frame may spend on the stars, in milliseconds. */
+const SWARM_BUDGET_MS = 12;
 
 export interface StepConfig {
   gr: boolean;
   gw: boolean;
+  /** 1PN corrections for the masses. Defaults to the value in the N-body options. */
+  pn?: boolean;
 }
 
 export class World {
@@ -73,6 +88,22 @@ export class World {
   throttled = false;
   /** Body pinned under the pointer while being moved. */
   held: { id: number; x: number; y: number } | null = null;
+  /** History of the gravitational-wave signal. */
+  readonly waves = new WaveBuffer();
+  /** What the most recent relativistic merger left behind. */
+  lastMerger: (Remnant & { mass: number }) | null = null;
+  /** Thousands of stars, for galaxies and tidal debris. */
+  readonly swarm = new Swarm();
+  /** A twin of the system started a hair away, to show chaos. Not felt by anything else. */
+  ghost: Body[] = [];
+  readonly ghostIds = new Set<number>();
+  /** False when the scene needs close approaches without collisions. */
+  merge = true;
+  /** Friction multiplier for this scene. */
+  friction = 1;
+  /** In the browser, stars may take only part of each frame, so drawing stays smooth. */
+  realtime = false;
+  private swarmRestAt = 0;
   private nextId = 1;
 
   clear(): void {
@@ -83,18 +114,46 @@ export class World {
     this.flashes = [];
     this.simTime = 0;
     this.held = null;
+    this.waves.reset();
+    this.lastMerger = null;
+    this.swarm.clear();
+    this.ghost = [];
+    this.ghostIds.clear();
+    this.merge = true;
+    this.friction = 1;
   }
 
   loadPreset(p: Preset): void {
     this.clear();
-    for (const b of p.bodies) this.addBody(b.x, b.y, b.vx, b.vy, b.m);
-    for (const q of p.probes) this.addProbe(q.x, q.y, q.vx, q.vy, q.model);
+    this.merge = p.settings.merge ?? true;
+    this.friction = p.settings.friction ?? 1;
+    for (const b of p.bodies) {
+      const { x, y, vx, vy, m, ...traits } = b;
+      this.addBody(x, y, vx, vy, m, traits);
+    }
+    for (const q of p.probes) this.addProbe(q.x, q.y, q.vx, q.vy, q.model, q.label);
     for (const f of p.fans) this.fireFan(f.x, f.y, f.dx, f.dy, f.width, f.count);
+    if (p.swarm) {
+      this.swarm.selfGravity = p.swarm.selfGravity;
+      this.swarm.softening = p.swarm.softening;
+      this.swarm.dt = p.swarm.dt;
+    }
+    for (const d of p.disks ?? []) spawnDisk(this.swarm, this.bodies[d.host], d, this.bodies);
+    if (p.settings.ghost) {
+      this.ghost = this.bodies.map((b) => ({ ...b, id: this.nextId++ }));
+      if (this.ghost.length) this.ghost[0].x += p.settings.ghost;
+      for (const b of this.ghost) {
+        this.ghostIds.add(b.id);
+        const t = new Trail(BODY_TRAIL);
+        t.push(b.x, b.y);
+        this.trails.set(b.id, t);
+      }
+    }
   }
 
-  addBody(x: number, y: number, vx: number, vy: number, m: number): Body | null {
+  addBody(x: number, y: number, vx: number, vy: number, m: number, traits: BodyTraits = {}): Body | null {
     if (this.bodies.length >= MAX_BODIES) return null;
-    const b: Body = { id: this.nextId++, x, y, vx, vy, m, ax: 0, ay: 0 };
+    const b: Body = { id: this.nextId++, x, y, vx, vy, m, ax: 0, ay: 0, ...traits };
     this.bodies.push(b);
     const t = new Trail(BODY_TRAIL);
     t.push(x, y);
@@ -102,14 +161,13 @@ export class World {
     return b;
   }
 
-  addProbe(x: number, y: number, vx: number, vy: number, model: Probe['model'] = 'follow'): Probe | null {
+  addProbe(x: number, y: number, vx: number, vy: number, model: Probe['model'] = 'follow', label?: string): Probe | null {
     if (this.probes.length >= MAX_PROBES) {
       const old = this.probes.shift();
       if (old) this.trails.delete(old.id);
     }
-    // Do not spawn inside a horizon.
-    for (const b of this.bodies) if (Math.hypot(x - b.x, y - b.y) < 2 * b.m) return null;
-    const p: Probe = { id: this.nextId++, x, y, vx, vy, model, lag: 0 };
+    if (this.insideHorizon(x, y)) return null; // nothing spawns inside a horizon or a star
+    const p: Probe = { id: this.nextId++, x, y, vx, vy, model, lag: 0, tau: 0, rate: 1, label };
     this.probes.push(p);
     const t = new Trail(PROBE_TRAIL);
     t.push(x, y);
@@ -117,8 +175,20 @@ export class World {
     return p;
   }
 
+  /** Adds a galaxy: a halo body and a disk of test stars turning around it. */
+  spawnGalaxy(x: number, y: number, vx: number, vy: number): Body | null {
+    if (this.swarm.n + PLACED_DISK_STARS > MAX_STARS) return null;
+    const b = this.addBody(x, y, vx, vy, 1, { kind: 'galaxy', soft: 28, radius: 210, color: [1, 0.86, 0.6], typeId: 'galaxy', name: 'Galaxy' });
+    if (!b) return null;
+    if (this.swarm.n === 0) this.swarm.softening = 3;
+    // A step this size suits a galaxy; finer steps left over from close debris would waste the frame.
+    this.swarm.dt = Math.max(this.swarm.dt, 20);
+    spawnDisk(this.swarm, b, { count: PLACED_DISK_STARS, scale: 26, edge: 115, mass: 0, q: 1.3, sense: 1, seed: this.nextId }, this.bodies);
+    return b;
+  }
+
   fireRay(x: number, y: number, dx: number, dy: number): void {
-    for (const b of this.bodies) if (Math.hypot(x - b.x, y - b.y) < 2 * b.m) return;
+    if (this.insideHorizon(x, y)) return;
     this.rays.push(makeRay(this.nextId++, x, y, dx, dy, this.bodies));
     while (this.rays.length > MAX_RAYS) this.rays.shift();
   }
@@ -135,6 +205,7 @@ export class World {
   }
 
   removeBody(id: number): void {
+    if (this.bodyById(id)?.kind === 'galaxy') this.swarm.removeHost(id);
     this.bodies = this.bodies.filter((b) => b.id !== id);
     this.trails.delete(id);
     if (this.held?.id === id) this.held = null;
@@ -149,7 +220,7 @@ export class World {
     let bd = Infinity;
     for (const b of this.bodies) {
       const d = Math.hypot(x - b.x, y - b.y);
-      const reach = Math.max(maxDist, 2.5 * b.m);
+      const reach = Math.max(maxDist, 1.25 * (surfaceRadius(b) || (b.soft ?? 0)));
       if (d < reach && d < bd) {
         bd = d;
         best = b;
@@ -171,8 +242,11 @@ export class World {
     const dy = y - s.y;
     const r = Math.hypot(dx, dy);
     if (r < 1e-6) return [s.vx, s.vy];
-    let v = newMass > 0 ? circularSpeed(s.m + newMass, r, false) : circularSpeed(s.m, r, gr);
-    if (!Number.isFinite(v)) v = circularSpeed(s.m, r, false);
+    // Inside a halo only the mass within r counts; stars have no relativistic orbit here.
+    const pull = s.kind === 'galaxy' ? haloEnclosed(s.m, s.soft ?? 1, s.radius ?? 1, r) : s.m;
+    const useGr = gr && isCompact(s);
+    let v = newMass > 0 ? circularSpeed(pull + newMass, r, false) : circularSpeed(pull, r, useGr);
+    if (!Number.isFinite(v)) v = circularSpeed(pull, r, false);
     if (newMass > 0) {
       // Share the relative velocity so the pair's centre of mass keeps the source's velocity:
       // the source recoils by -m/(M+m)·v_rel and the newcomer gets +M/(M+m)·v_rel.
@@ -188,26 +262,68 @@ export class World {
 
   step(dt: number, cfg: StepConfig, opts: NBodyOptions): void {
     if (dt <= 0) return;
+    if (this.swarm.n === 0) {
+      this.throttled = this.advance(dt, cfg, opts) < dt * 0.999;
+    } else {
+      // Equal steps no longer than swarm.dt, so everything still moves every frame at low speeds.
+      // If a frame runs out of budget the simulation slows rather than losing accuracy.
+      const steps = Math.ceil(dt / this.swarm.dt - 1e-9);
+      const h = dt / steps;
+      const began = performance.now();
+      // After an expensive step, sit out for as long as it took: sim time slows and frames stay even.
+      let short = this.realtime && began < this.swarmRestAt;
+      for (let k = 0; k < steps && !short; k++) {
+        const before = performance.now();
+        this.swarm.step(h, () => this.bodies, (hb) => this.advance(hb, cfg, opts), ESCAPE_RADIUS);
+        const now = performance.now();
+        if (this.realtime && now - began > SWARM_BUDGET_MS) {
+          short = true;
+          this.swarmRestAt = now + (now - before);
+        }
+      }
+      this.throttled = short;
+    }
+    this.recordTrails();
+  }
+
+  /** Advances everything except the stars. Returns the time actually simulated. */
+  private advance(dt: number, cfg: StepConfig, opts: NBodyOptions): number {
     const held = this.held;
+    const start = this.simTime;
+    let elapsed = 0;
+    // Scenes with collisions off pass extremely close: softening there would change the orbit.
+    const nb = { ...opts, softening: this.merge ? opts.softening : 1e-3, gw: cfg.gw, pn: cfg.pn ?? opts.pn, merge: this.merge, friction: this.friction };
+    // Three-body scenes can afford far finer steps, and their close passes need them.
+    const eta = this.merge ? 0.01 : 0.0015;
+    const budget = this.merge ? 900 : 8000;
     const res = advanceBodies(
       this.bodies,
       dt,
-      { ...opts, gw: cfg.gw },
-      0.01,
-      900,
+      nb,
+      eta,
+      budget,
       (h) => {
         if (held) this.pin(held);
         this.advanceProbes(h, cfg.gr);
+        elapsed += h;
+        this.waves.advance(start + elapsed, this.bodies);
+        this.tearStars();
       },
-      (e) => {
-        this.flashes.push({ x: e.x, y: e.y, size: 12 * e.m, age: 0, kind: 'merge' });
+      (e, sense) => {
+        this.flashes.push({ x: e.x, y: e.y, size: e.supernova ? 150 : Math.max(12 * e.m, 4 * e.radius), age: 0, kind: e.supernova ? 'supernova' : 'merge' });
         this.trails.delete(e.absorbedId);
         if (this.held?.id === e.absorbedId) this.held = null;
+        if (e.remnant) {
+          this.lastMerger = { ...e.remnant, mass: e.m };
+          this.waves.beginRingdown(start + elapsed, e.m, e.remnant.spin, sense);
+        }
       },
     );
     if (held) this.pin(held);
-    this.throttled = res.simulated < dt * 0.999;
     this.simTime += res.simulated;
+    if (this.ghost.length) {
+      advanceBodies(this.ghost, res.simulated, nb, eta, budget);
+    }
     // Only objects that have left for good are dropped, far beyond anything the camera can show.
     this.bodies = this.bodies.filter((b) => {
       const keep = Math.hypot(b.x, b.y) < ESCAPE_RADIUS;
@@ -222,7 +338,45 @@ export class World {
     let reach = DOMAIN;
     for (const b of this.bodies) reach = Math.max(reach, Math.abs(b.x), Math.abs(b.y));
     for (const r of this.rays) advanceRay(r, res.simulated, this.bodies, reach + RAY_MARGIN);
-    this.recordTrails();
+    return res.simulated;
+  }
+
+  /**
+   * A star passing inside the tidal radius r_t = R (M/m)^(1/3) of a compact object comes apart (Rees
+   * 1988). If r_t is inside the horizon the star is swallowed whole, as happens for very large holes.
+   */
+  private tearStars(): void {
+    for (let i = this.bodies.length - 1; i >= 0; i--) {
+      const star = this.bodies[i];
+      if (star.kind !== 'star') continue;
+      for (const hole of this.bodies) {
+        if (!isCompact(hole) || hole.m <= star.m) continue;
+        const R = surfaceRadius(star);
+        const tidal = R * Math.cbrt(hole.m / star.m);
+        const d = Math.hypot(star.x - hole.x, star.y - hole.y);
+        if (d < tidal && tidal > surfaceRadius(hole)) {
+          this.shred(star, hole, d);
+          break;
+        }
+      }
+    }
+  }
+
+  private shred(star: Body, hole: Body, d: number): void {
+    const [r, g, b] = star.color ?? [1, 0.9, 0.7];
+    if (this.swarm.n === 0) this.swarm.dt = 0.01 * Math.sqrt((d * d * d) / hole.m);
+    const R = surfaceRadius(star);
+    const spread = 0.05 * Math.sqrt(star.m / R);
+    for (let k = 0; k < DEBRIS_PIECES; k++) {
+      const q = R * Math.sqrt(Math.random());
+      const t = Math.random() * Math.PI * 2;
+      this.swarm.add(star.x + q * Math.cos(t), star.y + q * Math.sin(t), star.vx + spread * (Math.random() - 0.5), star.vy + spread * (Math.random() - 0.5), 0, r, g, b);
+    }
+    this.flashes.push({ x: star.x, y: star.y, size: 8 * R, age: 0, kind: 'merge' });
+    this.trails.delete(star.id);
+    if (this.held?.id === star.id) this.held = null;
+    // In place: the integrator holds a reference to this array.
+    this.bodies.splice(this.bodies.indexOf(star), 1);
   }
 
   private pin(h: { id: number; x: number; y: number }): void {
@@ -242,17 +396,24 @@ export class World {
       const useGr = gr && p.model === 'follow';
       let guard = 0;
       for (;;) {
-        const d = probeDt(p, src, 0.01);
-        if (!Number.isFinite(d)) {
+        // The step is in the particle's proper time; `lag` counts the distant observer's time.
+        const dTau = probeDt(p, src, 0.01);
+        if (!Number.isFinite(dTau)) {
           p.x += p.vx * p.lag;
           p.y += p.vy * p.lag;
+          p.tau += p.lag;
+          p.rate = 1;
           p.lag = 0;
           break;
         }
+        const ratio = useGr ? properTimeRatio(p, src) : 1;
+        p.rate = 1 / ratio;
+        const d = dTau * ratio;
         if (p.lag < d) break;
-        const ratio = rk4ProbeStep(p, d, src, useGr);
+        const nearest = rk4ProbeStep(p, dTau, src, useGr);
         p.lag -= d;
-        if (ratio < 1 || this.insideHorizon(p.x, p.y)) {
+        p.tau += dTau;
+        if (nearest < (useGr ? CAPTURE_RATIO : 1) || this.insideHorizon(p.x, p.y)) {
           dead.push(p.id);
           this.flashes.push({ x: p.x, y: p.y, size: 5, age: 0, kind: 'capture' });
           break;
@@ -271,7 +432,7 @@ export class World {
   }
 
   private insideHorizon(x: number, y: number): boolean {
-    for (const b of this.bodies) if (Math.hypot(x - b.x, y - b.y) < 2 * b.m) return true;
+    for (const b of this.bodies) if (Math.hypot(x - b.x, y - b.y) < surfaceRadius(b)) return true;
     return false;
   }
 
@@ -283,6 +444,7 @@ export class World {
       if (!l || Math.hypot(x - l[0], y - l[1]) >= spacing) t.push(x, y);
     };
     for (const b of this.bodies) rec(b.id, b.x, b.y, 0.8);
+    for (const b of this.ghost) rec(b.id, b.x, b.y, 0.8);
     for (const p of this.probes) rec(p.id, p.x, p.y, 1.0);
   }
 

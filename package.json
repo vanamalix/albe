@@ -2,6 +2,7 @@
   "name": "albe",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "albe: an interactive visualiser of curved spacetime (Schwarzschild geometry, geodesics, lensing).",
   "engines": {

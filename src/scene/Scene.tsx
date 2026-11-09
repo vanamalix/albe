@@ -5,11 +5,20 @@ import * as THREE from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { DOMAIN, heightAt, MAX_SHADER_MASSES, sampleFields, type ViewMode } from '../physics/fields';
 import { DEFAULT_NBODY } from '../physics/nbody';
+import { MAX_STARS } from '../physics/swarm';
+import { isBlackHole, surfaceRadius } from '../physics/types';
 import { MAX_BODIES, MAX_PROBES, MAX_RAYS, VEL_SCALE, world } from '../sim/world';
 import { store, useStore } from '../state/store';
 import { Interaction, preview } from './Interaction';
+import { LensView } from './lensView';
+import { WarpLayer } from './warpView';
+import { KerrExhibit } from './KerrExhibit';
+import { WormholeExhibit } from './WormholeExhibit';
+import { useExhibit } from '../state/exhibit';
 import { CORE_CELL, fitDistance, frameObjects, gridScale, MAX_CAMERA_DISTANCE, planeAxis, snapTo } from './plane';
 import {
+  bodyFragment,
+  bodyVertex,
   latticeFragment,
   latticeVertex,
   pointsFragment,
@@ -17,18 +26,30 @@ import {
   sharedUniforms,
   sheetFragment,
   sheetVertex,
+  starsFragment,
+  starsVertex,
+  waveTexture,
 } from './shaders';
 
-const MODE_INDEX: Record<ViewMode, number> = { space: 0, time: 1, tidal: 2, lattice: 3 };
+const MODE_INDEX: Record<ViewMode, number> = { space: 0, time: 1, tidal: 2, lattice: 3, waves: 4, lens: 5, warp: 6 };
 const LIFT = 0.35;
 const FOCUS_Z = -12;
 const LATTICE_STEP = 15;
 
 type CameraRequest = 'home' | 'frame';
 let cameraRequest: CameraRequest | null = null;
-/** Ask the camera to fly home, or to frame everything in the scene. */
-export const requestCamera = (kind: CameraRequest): void => {
+/** How much farther than usual "home" is for the current scene. */
+let homeScale = 1;
+/** Ask the camera to fly home (optionally to a wider view), or to frame everything in the scene. */
+export const requestCamera = (kind: CameraRequest, scale = 1): void => {
   cameraRequest = kind;
+  if (kind === 'home') homeScale = scale;
+};
+
+let labelLayer: HTMLDivElement | null = null;
+/** The HTML layer that body names are drawn into. */
+export const setLabelLayer = (el: HTMLDivElement | null): void => {
+  labelLayer = el;
 };
 
 /** Where the camera starts: pulled back on portrait screens so the system fits. */
@@ -81,6 +102,7 @@ function planeGeometry(): THREE.BufferGeometry {
 }
 
 function Sheet() {
+  const mode = useStore((s) => s.mode);
   const material = useMemo(
     () =>
       new THREE.ShaderMaterial({
@@ -105,7 +127,12 @@ function Sheet() {
     sharedUniforms.uOrigin.value.set(snapTo(x, cell), snapTo(y, cell));
     sharedUniforms.uLatticeOrigin.value.set(snapTo(x, LATTICE_STEP), snapTo(y, LATTICE_STEP));
   });
-  return <mesh geometry={geometry} material={material} frustumCulled={false} renderOrder={0} />;
+  return <mesh geometry={geometry} material={material} visible={mode !== 'lens' && mode !== 'warp'} frustumCulled={false} renderOrder={0} />;
+}
+
+function WarpHost() {
+  const active = useStore((s) => s.mode === 'warp');
+  return <WarpLayer active={active} />;
 }
 
 function Lattice() {
@@ -184,6 +211,27 @@ function makeLines(maxVerts: number) {
   };
 }
 
+/** The swarm's points. Positions are filled straight into the buffer: there are many of them. */
+function makeStars() {
+  const geo = new THREE.BufferGeometry();
+  const pos = new THREE.BufferAttribute(new Float32Array(MAX_STARS * 3), 3);
+  const col = new THREE.BufferAttribute(new Float32Array(MAX_STARS * 3), 3);
+  pos.setUsage(THREE.DynamicDrawUsage);
+  col.setUsage(THREE.DynamicDrawUsage);
+  geo.setAttribute('position', pos);
+  geo.setAttribute('color', col);
+  geo.setDrawRange(0, 0);
+  const mat = new THREE.ShaderMaterial({
+    uniforms: { uPixelScale: { value: 800 }, uSize: { value: 2.2 } },
+    vertexShader: starsVertex,
+    fragmentShader: starsFragment,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  });
+  return { geo, pos, col, mat };
+}
+
 function makePoints(max: number, soft: boolean) {
   const geo = new THREE.BufferGeometry();
   const pos = new THREE.BufferAttribute(new Float32Array(max * 3), 3);
@@ -234,7 +282,8 @@ function Dynamic() {
   const rings = useMemo(() => makeLines(MAX_BODIES * 4 * RING_SEGS * 2), []);
   const arrows = useMemo(() => makeLines((MAX_BODIES + MAX_PROBES) * 6 + 400), []);
   const glow = useMemo(() => makePoints(MAX_BODIES + 96, true), []);
-  const dots = useMemo(() => makePoints(MAX_PROBES + MAX_RAYS + 8, false), []);
+  const dots = useMemo(() => makePoints(MAX_PROBES + MAX_RAYS + MAX_BODIES + 8, false), []);
+  const stars = useMemo(makeStars, []);
   const lineMat = useMemo(
     () => new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false }),
     [],
@@ -245,23 +294,28 @@ function Dynamic() {
   );
   const holes = useRef<THREE.InstancedMesh>(null);
   const sphere = useMemo(() => new THREE.SphereGeometry(1, 28, 18), []);
-  const black = useMemo(() => new THREE.MeshBasicMaterial({ color: '#000000' }), []);
+  const surface = useMemo(() => new THREE.ShaderMaterial({ vertexShader: bodyVertex, fragmentShader: bodyFragment }), []);
   const tmp = useMemo(() => new THREE.Object3D(), []);
+  const tint = useMemo(() => new THREE.Color(), []);
   const lastStats = useRef(0);
   const projected = useMemo(() => new THREE.Vector3(), []);
   const fps = useRef({ frames: 0, t: 0, value: 60 });
+  const waveVersion = useRef(-1);
 
   useEffect(() => {
     const persp = camera as THREE.PerspectiveCamera;
     const scale = size.height / (2 * Math.tan(THREE.MathUtils.degToRad(persp.fov) / 2));
     glow.mat.uniforms.uPixelScale.value = scale;
     dots.mat.uniforms.uPixelScale.value = scale;
-  }, [size, camera, glow, dots]);
+    stars.mat.uniforms.uPixelScale.value = scale;
+  }, [size, camera, glow, dots, stars]);
 
   useFrame((state, delta) => {
     const s = store.get();
     const real = Math.min(delta, 1 / 20);
-    const cfg = { gr: s.gr, gw: s.gw };
+    const cfg = { gr: s.gr, gw: s.gw, pn: s.pn };
+    world.swarm.haloFactor = s.darkMatter ? 1 : 0;
+    world.realtime = true;
     if (!document.hidden) {
       if (s.playing) world.step(real * s.timeScale, cfg, DEFAULT_NBODY);
       else if (stepRequested > 0) {
@@ -273,31 +327,63 @@ function Dynamic() {
     const bodies = world.bodies;
     const mode = s.mode;
     const ex = s.exaggeration;
-    const H = (x: number, y: number) => heightAt(mode, x, y, bodies, ex);
+    const H = (x: number, y: number) => (mode === 'waves' ? world.waves.ripple(x, y) * ex : heightAt(mode, x, y, bodies, ex));
 
     // Shader uniforms.
     const u = sharedUniforms;
     const count = Math.min(bodies.length, MAX_SHADER_MASSES);
-    for (let i = 0; i < count; i++) u.uMasses.value[i].set(bodies[i].x, bodies[i].y, bodies[i].m, 0);
+    for (let i = 0; i < count; i++) {
+      const b = bodies[i];
+      u.uMasses.value[i].set(b.x, b.y, b.m, Math.max(b.radius ?? 0, 2 * b.m));
+    }
     u.uCount.value = count;
     u.uMode.value = MODE_INDEX[mode];
     u.uExag.value = ex;
     u.uGrid.value = s.grid ? 1 : 0;
     u.uTime.value = state.clock.elapsedTime;
+    const waves = world.waves;
+    if (mode === 'waves') {
+      if (waveVersion.current !== waves.version) {
+        waveVersion.current = waves.version;
+        waveTexture.needsUpdate = true;
+      }
+      u.uWaveHead.value = waves.head;
+      u.uWaveCentre.value.set(waves.cx, waves.cy);
+      u.uWaveGain.value = waves.gain;
+    }
 
-    // Holes (black spheres of radius r_s at the bottom of their wells).
+    // Spheres: black at the horizon of a hole, coloured for anything with a surface. A galaxy has none.
     const inst = holes.current;
     if (inst) {
       for (let i = 0; i < bodies.length; i++) {
         const b = bodies[i];
-        const r = Math.max(2 * b.m, 0.6);
-        tmp.position.set(b.x, b.y, H(b.x, b.y));
+        const r = b.kind === 'galaxy' ? 1e-4 : Math.max(surfaceRadius(b), 0.6);
+        // A hole sits at the bottom of its well. A star rests on the sheet instead of sinking into it.
+        tmp.position.set(b.x, b.y, isBlackHole(b) ? H(b.x, b.y) : H(b.x + r, b.y) + 0.35 * r);
         tmp.scale.setScalar(r);
         tmp.updateMatrix();
         inst.setMatrixAt(i, tmp.matrix);
+        const c = b.color;
+        inst.setColorAt(i, c ? tint.setRGB(c[0], c[1], c[2]) : tint.setRGB(0, 0, 0));
       }
       inst.count = bodies.length;
       inst.instanceMatrix.needsUpdate = true;
+      if (inst.instanceColor) inst.instanceColor.needsUpdate = true;
+    }
+
+    // The swarm.
+    const swarm = world.swarm;
+    {
+      const p = stars.pos.array as Float32Array;
+      for (let i = 0; i < swarm.n; i++) {
+        p[i * 3] = swarm.x[i];
+        p[i * 3 + 1] = swarm.y[i];
+        p[i * 3 + 2] = H(swarm.x[i], swarm.y[i]) + 1;
+      }
+      (stars.col.array as Float32Array).set(swarm.color.subarray(0, swarm.n * 3));
+      stars.geo.setDrawRange(0, swarm.n);
+      stars.pos.needsUpdate = true;
+      stars.col.needsUpdate = true;
     }
 
     // Trails.
@@ -309,7 +395,8 @@ function Dynamic() {
         if (t.count < 2) continue;
         const isProbe = probeModel.has(id);
         const gr = probeModel.get(id);
-        const [cr, cg, cb] = !isProbe ? [0.95, 0.93, 1.0] : gr ? [1.0, 0.78, 0.32] : [0.45, 0.75, 1.0];
+        const owner = isProbe ? undefined : bodies.find((b) => b.id === id);
+        const [cr, cg, cb] = world.ghostIds.has(id) ? [0.35, 0.65, 1.0] : !isProbe ? (owner?.color ?? [0.79, 0.82, 0.85]) : gr ? [0.82, 0.6, 0.13] : [0.35, 0.65, 1.0];
         const amax = isProbe ? 0.75 : 0.9;
         let [px, py] = t.at(0);
         let pz = H(px, py) + LIFT;
@@ -358,8 +445,11 @@ function Dynamic() {
     // Probes.
     for (const p of world.probes) {
       const gr = s.gr && p.model === 'follow';
-      dots.add(p.x, p.y, H(p.x, p.y) + LIFT + 0.3, gr ? 1 : 0.5, gr ? 0.8 : 0.78, gr ? 0.35 : 1, 2.6);
+      // A GR particle reddens as its clock slows relative to a distant observer.
+      const slow = gr ? Math.min(1, Math.sqrt(Math.max(0, 1 - p.rate)) * 1.4) : 0;
+      dots.add(p.x, p.y, H(p.x, p.y) + LIFT + 0.3, gr ? 1 : 0.5, gr ? 0.8 - 0.55 * slow : 0.78, gr ? 0.35 - 0.15 * slow : 1, 2.6);
     }
+    for (const b of world.ghost) dots.add(b.x, b.y, H(b.x, b.y) + LIFT + 0.3, 0.5, 0.78, 1, 5);
     if (preview.active && (preview.tool === 'probe' || preview.tool === 'mass')) {
       dots.add(preview.x0, preview.y0, H(preview.x0, preview.y0) + LIFT + 0.3, 0.6, 1, 0.9, preview.tool === 'mass' ? 4 : 2.6);
     }
@@ -367,14 +457,25 @@ function Dynamic() {
 
     // Glow halos and flashes.
     glow.reset();
-    for (const b of bodies) glow.add(b.x, b.y, H(b.x, b.y) + 1, 1.0, 0.55, 0.22, Math.max(2 * b.m, 0.6) * 5.5);
+    for (const b of bodies) {
+      const z = H(b.x, b.y) + 1;
+      if (isBlackHole(b)) glow.add(b.x, b.y, z, 0.62, 0.42, 0.14, Math.max(2 * b.m, 0.6) * 4.5);
+      else if (b.kind === 'galaxy') glow.add(b.x, b.y, z, 0.5, 0.42, 0.28, (b.soft ?? 20) * 2.5);
+      else {
+        const c = b.color ?? [1, 1, 1];
+        // Planets are tiny from afar: the halo is what keeps them findable.
+        const k = b.kind === 'planet' ? 0.45 : 0.8;
+        glow.add(b.x, b.y, z, c[0] * k, c[1] * k, c[2] * k, Math.max(surfaceRadius(b) * 5, 9));
+      }
+    }
     for (const f of world.flashes) {
       const k = f.age / 1.2;
       const a = 1 - k;
-      const c = f.kind === 'merge' ? [1, 0.8, 0.5] : [1, 0.4, 0.3];
+      const c = f.kind === 'supernova' ? [0.85, 0.9, 1] : f.kind === 'merge' ? [0.9, 0.72, 0.4] : [0.97, 0.32, 0.29];
       glow.add(f.x, f.y, H(f.x, f.y) + 1, c[0] * a, c[1] * a, c[2] * a, f.size * (0.6 + 2.5 * k));
     }
     glow.commit();
+    glow.mat.visible = mode !== 'lens';
 
     // Rings: horizon, photon sphere, ISCO, selection.
     rings.reset();
@@ -394,14 +495,17 @@ function Dynamic() {
       }
     };
     for (const b of bodies) {
-      ring(b.x, b.y, 2 * b.m * 1.02, [1, 0.55, 0.2], 0.95);
-      if (s.rings) {
-        ring(b.x, b.y, 3 * b.m, [1, 0.85, 0.4], 0.75, true);
-        ring(b.x, b.y, 6 * b.m, [0.4, 0.85, 1], 0.7, true);
+      if (isBlackHole(b)) {
+        ring(b.x, b.y, 2 * b.m * 1.02, [0.82, 0.6, 0.13], 0.95);
+        if (s.rings) {
+          ring(b.x, b.y, 3 * b.m, [0.82, 0.6, 0.13], 0.75, true);
+          ring(b.x, b.y, 6 * b.m, [0.35, 0.65, 1], 0.7, true);
+        }
       }
-      if (b.id === s.selectedId) ring(b.x, b.y, Math.max(8 * b.m, 6), [1, 1, 1], 0.9);
+      if (b.id === s.selectedId) ring(b.x, b.y, Math.max(surfaceRadius(b) * 1.6, b.soft ?? 0, 6), [1, 1, 1], 0.9);
     }
     rings.commit();
+    if (mode === 'lens') rings.geo.setDrawRange(0, 0);
 
     // Velocity arrows and the placement preview.
     arrows.reset();
@@ -452,6 +556,28 @@ function Dynamic() {
     }
     arrows.commit();
 
+    // Names, drawn as HTML so they stay sharp and readable at any distance.
+    const layer = labelLayer;
+    if (layer) {
+      const named = s.labels ? bodies.filter((b) => b.name) : [];
+      while (layer.children.length < named.length) layer.appendChild(document.createElement('span'));
+      for (let i = 0; i < layer.children.length; i++) {
+        const el = layer.children[i] as HTMLElement;
+        const b = named[i];
+        if (!b) {
+          el.hidden = true;
+          continue;
+        }
+        projected.set(b.x, b.y, H(b.x, b.y)).project(camera);
+        const onScreen = projected.z < 1 && Math.abs(projected.x) < 1 && Math.abs(projected.y) < 1;
+        el.hidden = !onScreen;
+        if (onScreen) {
+          if (el.textContent !== b.name) el.textContent = b.name ?? '';
+          el.style.transform = `translate(${((projected.x + 1) / 2) * size.width + 8}px, ${((1 - projected.y) / 2) * size.height + 6}px)`;
+        }
+      }
+    }
+
     // Stats for the UI (4 Hz).
     const f = fps.current;
     f.frames++;
@@ -477,6 +603,7 @@ function Dynamic() {
           bodies: bodies.length,
           probes: world.probes.length,
           rays: world.rays.length,
+          stars: world.swarm.n,
           simTime: world.simTime,
           throttled: world.throttled,
           fps: f.value,
@@ -490,7 +617,8 @@ function Dynamic() {
 
   return (
     <>
-      <instancedMesh ref={holes} args={[sphere, black, MAX_BODIES]} frustumCulled={false} renderOrder={1} />
+      <instancedMesh ref={holes} args={[sphere, surface, MAX_BODIES]} frustumCulled={false} renderOrder={1} />
+      <points geometry={stars.geo} material={stars.mat} frustumCulled={false} renderOrder={2} />
       <lineSegments geometry={trails.geo} material={lineMat} frustumCulled={false} renderOrder={2} />
       <lineSegments geometry={rays.geo} material={addMat} frustumCulled={false} renderOrder={3} />
       <lineSegments geometry={rings.geo} material={lineMat} frustumCulled={false} renderOrder={3} />
@@ -503,6 +631,7 @@ function Dynamic() {
 
 function Controls() {
   const tool = useStore((s) => s.tool);
+  const mode = useStore((s) => s.mode);
   const ref = useRef<OrbitControlsImpl>(null);
   const flight = useRef<{ target: THREE.Vector3; position: THREE.Vector3 } | null>(null);
   const lastTarget = useRef(new THREE.Vector3(0, 0, FOCUS_Z));
@@ -545,9 +674,11 @@ function Controls() {
     if (cameraRequest) {
       const aspect = state.size.width / Math.max(1, state.size.height);
       if (cameraRequest === 'home') {
-        flight.current = { target: new THREE.Vector3(0, 0, FOCUS_Z), position: homePosition(aspect) };
+        flight.current = { target: new THREE.Vector3(0, 0, FOCUS_Z), position: homePosition(aspect).multiplyScalar(homeScale) };
       } else {
-        const g = frameObjects(world.bodies, world.probes);
+        const sampled = [...world.probes];
+        for (let i = 0; i < world.swarm.n; i += 40) sampled.push({ x: world.swarm.x[i], y: world.swarm.y[i] } as (typeof sampled)[number]);
+        const g = frameObjects(world.bodies, sampled);
         const goal = new THREE.Vector3(g.cx, g.cy, FOCUS_Z);
         const dir = cam.position.clone().sub(target).normalize();
         flight.current = { target: goal, position: goal.clone().addScaledVector(dir, fitDistance(g.radius, cam.fov, aspect)) };
@@ -559,6 +690,8 @@ function Controls() {
 
     const f = flight.current;
     if (f) {
+      // The lens view is face-on, or a tilted flight would never reach its goal.
+      if (s.mode === 'lens') f.position.set(f.target.x, f.target.y, f.target.z + f.position.distanceTo(f.target));
       const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
       const k = reduced ? 1 : 1 - Math.exp(-delta * 6);
       target.lerp(f.target, k);
@@ -602,7 +735,7 @@ function Controls() {
       target={[0, 0, FOCUS_Z]}
       minDistance={15}
       maxDistance={MAX_CAMERA_DISTANCE}
-      maxPolarAngle={Math.PI * 0.49}
+      maxPolarAngle={mode === 'lens' ? 1e-4 : Math.PI * 0.49}
       screenSpacePanning={false}
     />
   );
@@ -621,6 +754,8 @@ function FitCamera() {
 }
 
 export function Scene() {
+  const mode = useStore((s) => s.mode);
+  const x = useExhibit((s) => s.id);
   return (
     <Canvas
       className="scene"
@@ -628,16 +763,19 @@ export function Scene() {
       dpr={[1, 2]}
       gl={{ antialias: true, powerPreference: 'high-performance' }}
       camera={{ position: [0, -265, 225], up: [0, 0, 1], fov: 45, near: 1, far: 60000 }}
-      onCreated={({ gl }) => gl.setClearColor('#04050a')}
+      onCreated={({ gl }) => gl.setClearColor('#010409')}
       aria-label="Spacetime manifold view"
     >
       <FitCamera />
-      <Stars radius={4000} depth={1200} count={4000} factor={40} saturation={0} fade speed={0.3} />
-      <Sheet />
-      <Lattice />
+      {mode === 'lens' ? <LensView /> : <Stars radius={4000} depth={1200} count={4000} factor={40} saturation={0} fade speed={0.3} />}
+      {!x && <Sheet />}
+      <WarpHost />
+      {!x && <Lattice />}
+      {x === 'wormhole' && <WormholeExhibit />}
+      {x && x !== 'wormhole' && <KerrExhibit id={x} />}
       <Dynamic />
       <Controls />
-      <Interaction />
+      {!x && <Interaction />}
     </Canvas>
   );
 }

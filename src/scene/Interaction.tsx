@@ -6,6 +6,7 @@
 import { useThree } from '@react-three/fiber';
 import { useEffect } from 'react';
 import * as THREE from 'three';
+import { bodyType, typeMass } from '../physics/bodies';
 import { heightAt, sampleFields } from '../physics/fields';
 import { ESCAPE_RADIUS, MAX_BODIES, MAX_SPEED, VEL_SCALE, world } from '../sim/world';
 import { massFromLog, store, type Tool } from '../state/store';
@@ -98,7 +99,8 @@ export function Interaction() {
         // Keep the grab radius about the same on screen however far away the camera is.
         const b = world.nearestBody(p.x, p.y, 8 * Math.max(1, camera.position.distanceTo(new THREE.Vector3(p.x, p.y, 0)) / 350));
         store.set({ selectedId: b ? b.id : null });
-        if (b) world.held = { id: b.id, x: b.x, y: b.y };
+        // A galaxy can be selected and deleted, but its halo and thousands of stars cannot be dragged.
+        if (b && b.kind !== 'galaxy') world.held = { id: b.id, x: b.x, y: b.y };
       }
       readout(p, true);
     };
@@ -136,9 +138,13 @@ export function Interaction() {
       switch (s.tool) {
         case 'mass': {
           if (world.bodies.length >= MAX_BODIES) break;
-          const m = massFromLog(s.logMass);
+          const t = bodyType(s.bodyType);
+          const m = t.kind === 'galaxy' ? 1 : typeMass(t, massFromLog(s.logMass));
           const [vx, vy] = dragged ? capSpeed(dx / VEL_SCALE, dy / VEL_SCALE) : world.autoVelocity(x0, y0, m, s.gr);
-          const b = world.addBody(x0, y0, vx, vy, m);
+          const b =
+            t.kind === 'galaxy'
+              ? world.spawnGalaxy(x0, y0, vx, vy)
+              : world.addBody(x0, y0, vx, vy, m, { kind: t.kind, radius: t.radius, color: t.color, typeId: t.id, name: t.kind === 'bh' ? undefined : t.label });
           if (b) store.set({ selectedId: b.id });
           break;
         }
