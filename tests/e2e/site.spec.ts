@@ -175,6 +175,16 @@ for (const [name, width, height] of [
       await expect.poll(async () => parseFloat((await row(/^Sum/).textContent()) ?? '')).not.toBe(sum);
       await panel.getByRole('button', { name: 'Black hole slice' }).click();
       await expect(panel).toContainText('Isotropic chart, M = 1');
+      // The explainer and the controls share a side: opening one steps the other aside, and back.
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-actions').getByRole('button', { name: 'Explain' }).click();
+      await expect(page.locator('.panel.explain').getByRole('heading', { name: /Explain · Euclid’s postulates/ })).toBeVisible();
+      await expect(panel).toBeHidden();
+      if (await toggle.isVisible()) {
+        await toggle.click();
+        await expect(page.locator('.panel.explain')).toBeHidden();
+      } else await page.keyboard.press('Escape');
+      await expect(panel).toBeVisible();
       expect(parseFloat((await row(/Excess/).textContent()) ?? '')).toBeLessThan(0);
       await panel.getByRole('button', { name: 'Warp slice' }).click();
       await expect(row(/^Sum/)).toHaveText('180.00°');

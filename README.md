@@ -21,14 +21,15 @@ Wrangler. Everything is bundled, so nothing loads from a CDN at runtime.
   red dwarf to red supergiant, a rocky planet, a gas giant, or a whole galaxy. When they touch, the
   densest wins; compact objects pushed past their mass limit collapse, and stars that stray inside
   a compact object's tidal radius are torn apart.
-- **Scenes**, in groups. *Relativity*: single black hole, clocks, Mercury precession, binary inspiral,
-  gravitational waves, precessing binary, lensing fan, photon sphere. *Three bodies*: figure-eight,
+- **Scenes**, in groups. *Relativity*: single black hole, clocks, gyroscope round a hole, dust ring, Mercury
+  precession, binary inspiral, gravitational waves, precessing binary, lensing fan, photon sphere. *Geometry*:
+  Euclid's postulates. *Three bodies*: figure-eight,
   butterfly, moth, yin-yang, the Lagrange triangle, the Pythagorean problem (with a chaos twin), Trojan
   asteroids. *Stars and planets*: inner and outer solar system, TRAPPIST-1, star zoo, Sirius A and B,
   neutron star merger, star meets black hole. *Galaxies*: a self-gravitating spiral with a live
   rotation curve and a dark-matter switch, a collision with tidal tails, a tidal stream, a cluster.
   *Exotic*: an Alcubierre warp bubble (theoretical), an Ellis wormhole, Kerr frame dragging, the Penrose
-  process and light past a spinning hole. *Sandbox*: an empty scene, and **Surprise me** for a random system.
+  process, light past a spinning hole, and two exactly balanced (extremally charged) holes. *Sandbox*: an empty scene, and **Surprise me** for a random system.
 - A hover readout (a tap on phones, which stays until closed) shows r to the nearest mass, Φ, dτ/dt, K, the
   largest M/r (the post-Newtonian expansion parameter) and the 1PN g_tt cross term 4M_aM_b/(r_a r_b) that
   adding the masses leaves out. A "How it works" panel has a plain-language overview, and a second tab with
@@ -67,6 +68,25 @@ Wrangler. Everything is bundled, so nothing loads from a CDN at runtime.
   - *Hit a merger time* (Binary inspiral): pick a target and a separation, run the pair off screen with the
     scene's own law, and compare with Peters' T = (5/256)a⁴/(m₁m₂M), broken down before and after the 1PN cap
     (at 35.8: 1882 against 2005).
+- **Euclid's postulates** (Geometry): five switches, one per postulate. Switching one off moves to a geometry
+  where it fails (the sphere for 1 and 3, the Flamm sheet cut at r = 2M for 2, the taxicab plane for 4, the
+  hyperbolic plane or the sphere for 5); the others follow. Drag a geodesic triangle in a conformal chart (angles
+  on the page are true) and read its angle sum against ∫K dA (Gauss-Bonnet, including Σα − 3π for a triangle round
+  a throat), a circle's circumference against 2πs, and perpendiculars meeting or diverging. The same runs on the
+  Flamm slice of a black hole, the Ellis wormhole and the Alcubierre bubble's slice (flat: exactly 180°). The
+  explainer goes from Euclid to Gauss, Riemann and Einstein and says what changes in Lorentzian spacetime.
+- **Two balanced holes** (Exotic): Majumdar-Papapetrou. With Q = M for each hole, U = 1 + ΣMᵢ/|x − xᵢ| is exact at
+  any separation, so this is the one multi-hole scene where adding fields is not an approximation, and it says
+  why. A fan of rays in the plane of the holes, and exit angle against b that zooms ×6 on a tap, showing the
+  Cantor-set edges of chaotic scattering; each ray runs at two step sizes and disagreements are flagged.
+  Labelled not astrophysical.
+- **More in the Explain panel**: *Gyroscope round a hole* (its own scene): an arrow carried round the Flamm slice,
+  2π(1 − √(1 − 2M/r)) per loop, against a gyroscope, 2π(1 − √(1 − 3M/r)), with Gravity Probe B's numbers.
+  *Through the horizon* (Clocks): a Penrose diagram with the falling clock continued past where albe removes it to
+  r = 0, and the white hole tagged as not formed by collapse. *Stretch and squeeze* (Dust ring scene): the ring's
+  measured stretch against linear geodesic deviation, with the undrawn third axis as a computed bar.
+  *Effective potential and epicycles* (Single black hole): V²(r) with an L slider, and the epicyclic advance
+  2π[(1 − 6M/r)^(−½) − 1] beside the exact integral and the pins.
 - **Not our universe** (Explain panel, any scene with test particles round a hole), headed as such and flagged
   by a chip while active; every scene load puts our laws back. A force-law exponent n for Newtonian test
   particles (F ∝ 1/rⁿ, equal to Newton's at 20M) with the apsis angle 180°/√(3 − n), the exact angle for the
@@ -95,6 +115,9 @@ Wrangler. Everything is bundled, so nothing loads from a CDN at runtime.
 | Lens view | Exact Schwarzschild bending of each mass, summed; a galaxy uses the softened law 4Mb/(b²+a²) | Exact for one black hole; several masses add their exact angles, leaving nonlinear terms of order M/d. Stars are at compressed radius. Flat invented sky, face-on. |
 | Warp bubble | Alcubierre (1994) metric, York time and Eulerian energy density | Exact metric; a theoretical geometry needing negative energy. |
 | Wormhole and Kerr exhibits | Geodesics on the Ellis and equatorial Kerr geometries | Exact for test particles; hole mass and spin fixed. |
+| Euclid exhibit | Geodesics of e^{2σ}(dx² + dy²) by RK4 with two-point shooting; ∫K dA by quadrature of the closed-form K | Exact geometries (plane, sphere, Poincaré disk, Flamm, Ellis, Alcubierre slice), numerical to 5+ digits against spherical and hyperbolic trigonometry and Gauss-Bonnet. Spatial slices only. |
+| Balanced holes | Majumdar-Papapetrou metric; rays as geodesics of the optical metric U⁴dx² in the plane of the holes | Exact spacetime (extremal charge); rays by RK4 at two step sizes; start and end 200 M_total out (about 1° of far bending left out). |
+| Gyroscope, Kruskal, dust ring, epicycles | Closed forms (slice transport, geodetic precession, Kruskal U, V, linear deviation, V²) beside the scene's own particles | Exact for one hole. The dust ring's linear law holds to 2% down to 8M; the out-of-plane axis is computed, not simulated. |
 | Test particles | a = −ΣM r̂/r² (1 + 3L²/r²) in proper time, RK4; dt/dτ = E/(1 − 2M/r) | Orbit and timing exact for one static mass, in Schwarzschild r (bodies are harmonic r, offset M). Several masses are superposed, and particle clocks near a star are kinematic only. |
 | Light | Null geodesics d²x/dλ² = −Σ3Mh²d/r⁵, dt/dλ = 1/(1 − 2M/r), RK4; a galaxy deflects by 4Mb/(b²+a²), the same law as the Lens view | Exact for one static mass (photon sphere, capture at 3√3 M, Shapiro delay). Several masses are superposed. |
 
@@ -116,11 +139,16 @@ offline. Nothing from them ships in the app, and only numerical output from REBO
 - `src/physics/measure.ts` (pins and the closed forms they are checked against), `chirp.ts` (the wave cursor's
   maths), `approx.ts` (the chips), each with tests.
 - `src/explain/`: the explainers (lazy-loaded, with tests that pin every figure they show).
+- `src/physics/conformal.ts` (geodesics in a conformal chart) and `euclid.ts`, `majumdar.ts`, `gyro.ts`,
+  `kruskal.ts`, `dust.ts`, `potential.ts`, tested in `euclid.test.ts`, `majumdar.test.ts` and `classics.test.ts`.
+  The geometry exhibits' controls are in `src/ui/exhibits/`, their 3D views `src/scene/EuclidExhibit.tsx` and
+  `BalancedExhibit.tsx`, all lazy.
 - `src/physics/winding.ts`, `orbitEdge.ts`, `whatif.ts`, `src/sim/mergerRun.ts` and `chirpSound.ts`: the
   challenges, the "not our universe" laws and the sound, tested in `play.test.ts`. Their panels are in
   `src/ui/play/`, each its own lazy chunk.
 - `src/ui/`, `src/App.tsx`: the dock, scene picker, panels and keyboard handling. `ExplainPanel`, `MeasurePanel`,
-  `Chips` and `WaveScope` load on demand, outside the initial JS budget.
+  `Chips`, `WaveScope`, How it works (`About`), the exhibit controls, the exhibits and the warp layer load on
+  demand, outside the initial JS budget (367.5 of 400 KB gzipped).
 
 ## Scripts
 
@@ -154,7 +182,11 @@ B1224; Misner, Thorne & Wheeler (1973) *Gravitation* §23.8; Chenciner & Montgom
 Math.* 152:881; Nichols et al. (2011) *Phys. Rev. D* 84:124014; Middleton & Langston (2014) *Am. J.
 Phys.* 82:287; Šuvakov & Dmitrašinović (2013) *Phys. Rev. Lett.* 110:114301; Barnes & Hut (1986)
 *Nature* 324:446; Toomre (1964) *ApJ* 139:1217; Toomre & Toomre (1972) *ApJ* 178:623; Chandrasekhar
-(1943) *ApJ* 97:255; Rubin, Ford & Thonnard (1980) *ApJ* 238:471; Rees (1988) *Nature* 333:523.
+(1943) *ApJ* 97:255; Rubin, Ford & Thonnard (1980) *ApJ* 238:471; Rees (1988) *Nature* 333:523; Gauss (1827);
+Riemann (1868); Hilbert (1901) *Trans. AMS* 2:87; Majumdar (1947) *Phys. Rev.* 72:390; Papapetrou (1947) *Proc.
+R. Irish Acad. A* 51:191; Hartle & Hawking (1972) *Commun. Math. Phys.* 26:87; Shipley & Dolan (2016) *Class. Quantum
+Grav.* 33:175001; de Sitter (1916) *MNRAS* 77:155; Everitt et al. (2011) *Phys. Rev. Lett.* 106:221101; Kruskal (1960)
+*Phys. Rev.* 119:1743; Pirani (1956) *Acta Phys. Pol.* 15:389; Bardeen, Press & Teukolsky (1972) *ApJ* 178:347.
 
 ## Licence
 

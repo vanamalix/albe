@@ -3,7 +3,7 @@ import { lazy, Suspense, useState, type CSSProperties, type ReactNode } from 're
 import { extractable, omega, penroseDecay, penroseMaxGain, rIsco, rMarginallyBound, rPhoton, rPlus, R_ERGO_EQUATOR, criticalImpact } from '../physics/kerr';
 import { crossingSweep, ellisJupiters, ellisTide, reflectDeflection, wormholeFate } from '../physics/wormhole';
 import { exhibitStore, penroseMinSpin, useExhibit, type ExhibitId } from '../state/exhibit';
-import { useStore } from '../state/store';
+import { store, useStore } from '../state/store';
 
 // The geometry exhibits' controls are their own chunks.
 const EuclidPanel = lazy(() => import('./exhibits/EuclidPanel'));
@@ -134,8 +134,18 @@ export function ExhibitPanel() {
   if (!id) return null;
   return (
     <div className="exhibit-dock">
-      <button className="btn exhibit-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
-        {open ? 'Hide controls' : 'Controls'}
+      <button
+        className="btn exhibit-toggle"
+        aria-expanded={open && !covered}
+        onClick={() => {
+          // Asking for the controls closes the explainer they share the space with.
+          if (covered) {
+            store.set({ explainOpen: false, measureOpen: false });
+            setOpen(true);
+          } else setOpen(!open);
+        }}
+      >
+        {open && !covered ? 'Hide controls' : 'Controls'}
       </button>
       {open && !covered && <Controls id={id} />}
     </div>

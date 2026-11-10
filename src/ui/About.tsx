@@ -36,7 +36,8 @@ function Overview() {
         <li>Choose the <b>Light fan</b> tool and aim it just beside a black hole.</li>
         <li>Open <b>Spiral galaxy</b> and watch arms form, then switch off the <b>dark matter halo</b>.</li>
         <li>Open <b>Pythagorean problem</b>: the blue twin starts a hair away and ends up somewhere else entirely.</li>
-        <li>Open <b>Exotic</b> in Scenes for a warp bubble, a wormhole and a spinning black hole, and try the <b>Lens</b> view on anything.</li>
+        <li>Open <b>Exotic</b> in Scenes for a warp bubble, a wormhole, a spinning black hole and two exactly balanced holes, and try the <b>Lens</b> view on anything.</li>
+        <li>Open <b>Euclid’s postulates</b> under <b>Geometry</b>, switch one off, and drag a triangle until its angles stop adding to 180°.</li>
         <li>With the <b>Mass</b> tool, pick a star type or a planet, or press <b>Surprise me</b> in Scenes.</li>
       </ul>
 
@@ -348,6 +349,37 @@ function Physics() {
             so the ISCO moves to 6sM and the exact advance is the same elliptic integral. Masses, light, clocks and the sheet keep ours.
           </p>
 
+          <h3>Geometry: Euclid’s postulates and albe’s folds</h3>
+          <p>
+            Each geometry is written in a conformal chart, g = e<sup>2σ</sup>(dx² + dy²), so angles on the page are true angles. Geodesics turn at
+            dθ/ds = ∂σ/∂n and are integrated by RK4, with two-point shooting for a triangle’s edges; ∫K dA, K = −e<sup>−2σ</sup>Δσ, is a separate
+            quadrature, so Gauss-Bonnet (Σα − π = ∫K dA, or Σα − 3π for a triangle round a throat) is a check, not an identity. Tests match
+            spherical and hyperbolic trigonometry, Girard, Lobachevsky’s angle of parallelism, 2π sin s and 2π sinh s, and the Flamm proper
+            radius √(r(r − 2M)) + M ln((r − M + √(r(r − 2M)))/M) to five digits or better. The folds are the Flamm slice (K = −M/r³, isotropic
+            radius), the Ellis wormhole (K = −b²/(l² + b²)²) and the Alcubierre slice, which is flat. <span className="tag exact">exact geometry</span>{' '}
+            These are spatial slices at one instant: spacetime is Lorentzian, and its curvature is not one number.
+          </p>
+
+          <h3>Two balanced holes</h3>
+          <p>
+            Majumdar-Papapetrou: ds² = −U⁻²dt² + U²dx², U = 1 + ΣM<sub>i</sub>/|x − x<sub>i</sub>|, for holes with charge equal to mass. Electric
+            repulsion cancels attraction, the field equations reduce to ∇²U = 0, and U adds exactly. Rays in the plane of the holes are geodesics
+            of the optical metric U⁴dx². One hole is extremal Reissner-Nordström, capturing below b = 4M (a test recovers it); the exit angle
+            against b has the Cantor-set structure of chaotic scattering (Shipley &amp; Dolan 2016). <span className="tag exact">exact spacetime</span>{' '}
+            <span className="tag approx">not astrophysical: real holes are nearly neutral</span>
+          </p>
+
+          <h3>Gyroscope, Kruskal diagram, dust ring and epicycles</h3>
+          <p>
+            A vector carried round the circle r on the Flamm slice leads the stars by 2π(1 − √(1 − 2M/r)) per loop; a gyroscope on the circular
+            geodesic by 2π(1 − √(1 − 3M/r)) (de Sitter 1916), 66.1° against 105.4° at 6M. Both are recovered by integrating the transport in tests.
+            Gravity Probe B measured 6601.8 ± 18.3 mas/yr against GR’s 6606.1 (Everitt et al. 2011). The Clocks scene’s falling clock is carried
+            through the horizon in Kruskal U, V, with v = t + r* integrated from dv/dτ = 1/(E + √(E² − f)), to r = 0 at τ = π√(R³/8M). The dust
+            ring is read from its four axis particles in the falling frame and compared with ξ̈ = −Eξ, E = (M/r³)diag(−2, 1, 1): within 2% to
+            8M; the out-of-plane axis is computed, not simulated. The epicyclic advance 2π[(1 − 6M/r)<sup>−½</sup> − 1] is the elliptic
+            integral’s e → 0 limit. <span className="tag exact">exact for one mass</span>
+          </p>
+
           <h3>Presets</h3>
           <p>
             The Mercury preset exaggerates the effect about a millionfold: a = 40M instead of ≈ 4×10⁷ solar M.
@@ -388,6 +420,10 @@ function Physics() {
             <li>C. Cutler &amp; É. É. Flanagan (1994), “Gravitational waves from merging compact binaries”, Phys. Rev. D 49, 2658.</li>
             <li>M. D. Kruskal (1960), “Maximal extension of Schwarzschild metric”, Phys. Rev. 119, 1743.</li>
             <li>C. M. Will (2014), “The confrontation between general relativity and experiment”, Living Rev. Relativ. 17, 4.</li>
+            <li>C. F. Gauss (1827), “Disquisitiones generales circa superficies curvas”; B. Riemann (1868), “Über die Hypothesen, welche der Geometrie zu Grunde liegen”; D. Hilbert (1901), Trans. Amer. Math. Soc. 2, 87.</li>
+            <li>S. D. Majumdar (1947), Phys. Rev. 72, 390; A. Papapetrou (1947), Proc. R. Irish Acad. A 51, 191; J. B. Hartle &amp; S. W. Hawking (1972), Commun. Math. Phys. 26, 87; J. O. Shipley &amp; S. R. Dolan (2016), Class. Quantum Grav. 33, 175001.</li>
+            <li>W. de Sitter (1916), MNRAS 77, 155; C. W. F. Everitt et al. (2011), “Gravity Probe B: final results”, Phys. Rev. Lett. 106, 221101.</li>
+            <li>F. A. E. Pirani (1956), Acta Phys. Pol. 15, 389; A. K. Raychaudhuri (1955), Phys. Rev. 98, 1123.</li>
             <li>E. Agol et al. (2021), “Refining the transit-timing and photometric analysis of TRAPPIST-1”, Planetary Science Journal 2, 1.</li>
           </ol>
           <p className="muted">Keyboard: Space pause · 1–6 tools · V cycle view · F frame everything · G toggle GR · . step · Delete remove selected · Esc close.</p>
