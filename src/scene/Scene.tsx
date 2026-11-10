@@ -1,6 +1,6 @@
 import { OrbitControls, Stars } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { useEffect, useMemo, useRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { DOMAIN, heightAt, MAX_SHADER_MASSES, sampleFields, type ViewMode } from '../physics/fields';
@@ -11,9 +11,6 @@ import { MAX_BODIES, MAX_PROBES, MAX_RAYS, VEL_SCALE, world } from '../sim/world
 import { store, useStore } from '../state/store';
 import { Interaction, preview } from './Interaction';
 import { LensView } from './lensView';
-import { WarpLayer } from './warpView';
-import { KerrExhibit } from './KerrExhibit';
-import { WormholeExhibit } from './WormholeExhibit';
 import { useExhibit } from '../state/exhibit';
 import { CORE_CELL, fitDistance, frameObjects, gridScale, MAX_CAMERA_DISTANCE, planeAxis, snapTo } from './plane';
 import {
@@ -130,9 +127,14 @@ function Sheet() {
   return <mesh geometry={geometry} material={material} visible={mode !== 'lens' && mode !== 'warp'} frustumCulled={false} renderOrder={0} />;
 }
 
+// The warp layer and the exhibits are loaded only when shown.
+const WarpLayer = lazy(() => import('./warpView').then((m) => ({ default: m.WarpLayer })));
+const KerrExhibit = lazy(() => import('./KerrExhibit').then((m) => ({ default: m.KerrExhibit })));
+const WormholeExhibit = lazy(() => import('./WormholeExhibit').then((m) => ({ default: m.WormholeExhibit })));
+
 function WarpHost() {
   const active = useStore((s) => s.mode === 'warp');
-  return <WarpLayer active={active} />;
+  return active ? <WarpLayer active /> : null;
 }
 
 function Lattice() {
@@ -293,6 +295,12 @@ function Dynamic() {
     [],
   );
   const holes = useRef<THREE.InstancedMesh>(null);
+  // The body shader reads instanceColor, which three.js creates only on the first setColorAt. Create it
+  // at once, so a frame drawn before any body exists (an exhibit or the warp scene) still compiles.
+  const holesRef = useCallback((m: THREE.InstancedMesh | null) => {
+    holes.current = m;
+    if (m && !m.instanceColor) m.setColorAt(0, new THREE.Color(0, 0, 0));
+  }, []);
   const sphere = useMemo(() => new THREE.SphereGeometry(1, 28, 18), []);
   const surface = useMemo(() => new THREE.ShaderMaterial({ vertexShader: bodyVertex, fragmentShader: bodyFragment }), []);
   const tmp = useMemo(() => new THREE.Object3D(), []);
@@ -625,7 +633,7 @@ function Dynamic() {
 
   return (
     <>
-      <instancedMesh ref={holes} args={[sphere, surface, MAX_BODIES]} frustumCulled={false} renderOrder={1} />
+      <instancedMesh ref={holesRef} args={[sphere, surface, MAX_BODIES]} frustumCulled={false} renderOrder={1} />
       <points geometry={stars.geo} material={stars.mat} frustumCulled={false} renderOrder={2} />
       <lineSegments geometry={trails.geo} material={lineMat} frustumCulled={false} renderOrder={2} />
       <lineSegments geometry={rays.geo} material={addMat} frustumCulled={false} renderOrder={3} />
@@ -778,10 +786,12 @@ export function Scene() {
       <FitCamera />
       {mode === 'lens' ? <LensView /> : <Stars radius={4000} depth={1200} count={4000} factor={40} saturation={0} fade speed={0.3} />}
       {!x && <Sheet />}
-      <WarpHost />
+      <Suspense fallback={null}>
+        <WarpHost />
+        {x === 'wormhole' && <WormholeExhibit />}
+        {x && x !== 'wormhole' && <KerrExhibit id={x} />}
+      </Suspense>
       {!x && <Lattice />}
-      {x === 'wormhole' && <WormholeExhibit />}
-      {x && x !== 'wormhole' && <KerrExhibit id={x} />}
       <Dynamic />
       <Controls />
       {!x && <Interaction />}

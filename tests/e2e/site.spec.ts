@@ -121,6 +121,32 @@ for (const [name, width, height] of [
       expect(net.shielded).toEqual([]);
     });
 
+    test('the lazily loaded warp panel and exhibits arrive with no errors', async ({ page }) => {
+      const errors = watch(page);
+      const net = await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      const info = page.locator('.info');
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-menu').getByRole('button', { name: /Alcubierre warp bubble/ }).click();
+      if (!(await info.evaluate((el) => el.classList.contains('open')))) await page.locator('.info-head').click();
+      await expect(info.getByRole('group', { name: 'What the warp sheet shows' })).toBeVisible();
+      for (const [scene, region] of [
+        [/Ellis wormhole/, 'Wormhole controls'],
+        [/Frame dragging/, 'Kerr black hole controls'],
+      ] as const) {
+        await page.locator('.scene-btn').click();
+        await page.locator('.scene-menu').getByRole('button', { name: scene }).click();
+        const toggle = page.locator('.exhibit-toggle');
+        await expect(page.locator('.exhibit-dock')).toBeAttached();
+        if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+        await expect(page.getByRole('region', { name: region })).toBeVisible();
+        await page.waitForTimeout(800);
+      }
+      expect(errors).toEqual([]);
+      expect(net.blocked).toEqual([]);
+    });
+
     test('without WebGL the page still carries the credit and passes axe', async ({ page }) => {
       await page.addInitScript('HTMLCanvasElement.prototype.getContext = () => null');
       const net = await offline(page);

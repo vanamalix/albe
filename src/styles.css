@@ -340,6 +340,10 @@ input[type='range']:focus-visible {
   gap: 8px;
   pointer-events: none;
 }
+/* The open scene menu sits above the exhibit controls and the panels. */
+.bottom:has(.scene-menu) {
+  z-index: 7;
+}
 .bottom-stack {
   width: 100%;
   display: flex;

@@ -10,11 +10,8 @@ import { useDepth } from './state/depth';
 import { DepthSwitch } from './ui/DepthSwitch';
 import { viewCopy } from './ui/viewCopy';
 import { requestCamera, requestStep, Scene, setLabelLayer } from './scene/Scene';
-import { WarpPanel } from './scene/warpView';
 import { world } from './sim/world';
 import { massFromLog, store, TOOLS, useStore, type Settings, type Tool } from './state/store';
-import { About } from './ui/About';
-import { ExhibitPanel } from './ui/ExhibitPanel';
 import { SiteFoot } from './ui/SiteFoot';
 import { loadPreset } from './state/actions';
 import { openExhibit, useExhibit } from './state/exhibit';
@@ -25,6 +22,10 @@ const WaveScope = lazy(() => import('./ui/WaveScope'));
 const Chips = lazy(() => import('./ui/Chips'));
 const ExplainPanel = lazy(() => import('./ui/ExplainPanel'));
 const MeasurePanel = lazy(() => import('./ui/MeasurePanel'));
+// How it works, the exhibit controls and the warp panel: each opened by few visitors, so each is its own chunk.
+const About = lazy(() => import('./ui/About').then((m) => ({ default: m.About })));
+const ExhibitPanel = lazy(() => import('./ui/ExhibitPanel').then((m) => ({ default: m.ExhibitPanel })));
+const WarpPanel = lazy(() => import('./scene/warpView').then((m) => ({ default: m.WarpPanel })));
 
 /** Opens one right-hand panel (or phone sheet) and closes the others. */
 function openPanel(which: 'settingsOpen' | 'explainOpen' | 'measureOpen', on = true): void {
@@ -528,7 +529,11 @@ function InfoCard({ mode, exag, bodies, probes, time }: { mode: ViewMode; exag: 
               <WaveScope />
             </Suspense>
           )}
-          {mode === 'warp' && <WarpPanel />}
+          {mode === 'warp' && (
+            <Suspense fallback={null}>
+              <WarpPanel />
+            </Suspense>
+          )}
           {world.swarm.selfGravity && world.swarm.n > 0 && <RotationScope />}
           <LiveNumbers time={time} />
           {note && <p className="preset-note">{note}</p>}
@@ -720,7 +725,11 @@ export function App() {
       </header>
 
       <InfoCard mode={mode} exag={exag} bodies={stats.bodies} probes={stats.probes} time={stats.simTime} />
-      <ExhibitPanel />
+      {exhibit && (
+        <Suspense fallback={null}>
+          <ExhibitPanel />
+        </Suspense>
+      )}
 
       {settingsOpen && <SettingsPanel />}
       {(explainOpen || measureOpen) && (
@@ -792,7 +801,11 @@ export function App() {
         </div>
       </div>
 
-      {aboutOpen && <About />}
+      {aboutOpen && (
+        <Suspense fallback={null}>
+          <About />
+        </Suspense>
+      )}
     </div>
   );
 }
