@@ -2,7 +2,7 @@
 import { useSyncExternalStore } from 'react';
 import { euclidStore } from './euclid';
 
-export type ExhibitId = 'wormhole' | 'kerr-drag' | 'kerr-penrose' | 'kerr-light' | 'euclid';
+export type ExhibitId = 'wormhole' | 'kerr-drag' | 'kerr-penrose' | 'kerr-light' | 'euclid' | 'mp';
 
 export interface ExhibitSettings {
   /** The exhibit on screen, or null for the normal sheet. */
@@ -17,9 +17,14 @@ export interface ExhibitSettings {
   spin: number;
   /** Where the Penrose parent turns round, 0 = deepest allowed, 1 = the edge of the ergosphere. */
   decay: number;
+  /** Balanced holes: coordinate separation, in units of one hole's M. */
+  mpSep: number;
+  /** Balanced holes: the window of impact parameters the fan and the plot cover. */
+  mpB0: number;
+  mpB1: number;
 }
 
-let state: ExhibitSettings = { id: null, b: 22, aim: 0.6, speed: 0.6, spin: 0.9, decay: 0.45 };
+let state: ExhibitSettings = { id: null, b: 22, aim: 0.6, speed: 0.6, spin: 0.9, decay: 0.45, mpSep: 3, mpB0: -6, mpB1: 6 };
 
 const listeners = new Set<() => void>();
 
@@ -44,6 +49,7 @@ export function openExhibit(id: ExhibitId | null): void {
   if (id === 'kerr-penrose') exhibitStore.set({ id, spin: 0.998, decay: 0.12 });
   else if (id === 'kerr-drag' || id === 'kerr-light') exhibitStore.set({ id, spin: 0.9 });
   else if (id === 'wormhole') exhibitStore.set({ id, b: 22, aim: 0.6, speed: 0.6 });
+  else if (id === 'mp') exhibitStore.set({ id, mpSep: 3, mpB0: -6, mpB1: 6 });
   else if (id === 'euclid') {
     euclidStore.set({ geometry: 'flat', verts: [], circle: 0, perpendiculars: true, demo: 'none', dragging: false });
     exhibitStore.set({ id });

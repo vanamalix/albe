@@ -68,6 +68,7 @@ const SCENE_COPY: Record<string, { title: string; blurb: string }> = {
   'kerr-penrose': { title: 'Penrose process', blurb: 'Stealing energy from black-hole spin' },
   'kerr-light': { title: 'Light past a spinning hole', blurb: 'A lopsided capture window' },
   euclid: { title: 'Euclid’s postulates', blurb: 'Switch one off; measure albe’s folds' },
+  mp: { title: 'Two balanced holes', blurb: 'Exact superposition, chaotic light' },
   lensing: { title: 'Lensing fan', blurb: 'A fan of light bends around a mass' },
   photon: { title: 'Photon sphere', blurb: 'Light caught orbiting a black hole' },
   empty: { title: 'Empty space', blurb: 'Flat spacetime: build your own' },

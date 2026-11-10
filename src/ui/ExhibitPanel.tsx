@@ -7,6 +7,7 @@ import { useStore } from '../state/store';
 
 // The geometry exhibits' controls are their own chunks.
 const EuclidPanel = lazy(() => import('./exhibits/EuclidPanel'));
+const BalancedPanel = lazy(() => import('./exhibits/BalancedPanel'));
 
 const row: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 12 };
 const sub: CSSProperties = { color: 'var(--muted)', fontSize: 12, marginTop: 8 };
@@ -120,12 +121,8 @@ const isNarrow = (): boolean => typeof window !== 'undefined' && !!window.matchM
 
 function Controls({ id }: { id: ExhibitId }) {
   if (id === 'wormhole') return <WormholePanel />;
-  if (id === 'euclid')
-    return (
-      <Suspense fallback={null}>
-        <EuclidPanel />
-      </Suspense>
-    );
+  if (id === 'euclid' || id === 'mp')
+    return <Suspense fallback={null}>{id === 'euclid' ? <EuclidPanel /> : <BalancedPanel />}</Suspense>;
   return <KerrPanel id={id} />;
 }
 

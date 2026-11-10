@@ -191,6 +191,31 @@ for (const [name, width, height] of [
       expect(net.blocked).toEqual([]);
     });
 
+    test('Two balanced holes: the exit-angle plot zooms in and keeps finding changes of fate', async ({ page }) => {
+      const errors = watch(page);
+      const net = await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-menu').getByRole('button', { name: /Two balanced holes/ }).click();
+      await expect(page.locator('.exhibit-dock')).toBeAttached();
+      const toggle = page.locator('.exhibit-toggle');
+      if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+      const panel = page.getByRole('region', { name: 'Balanced holes controls' });
+      await expect(panel).toContainText('extremal');
+      const changes = panel.locator('.live div').filter({ hasText: 'Changes of fate' }).locator('dd');
+      await expect(changes).toHaveText(/^\d+$/, { timeout: 20_000 });
+      expect(Number(await changes.textContent())).toBeGreaterThan(2);
+      await panel.getByRole('button', { name: 'Zoom in at the centre' }).click();
+      await expect(panel.locator('.live div').filter({ hasText: 'Window width' }).locator('dd')).toHaveText('2.00e+0 M');
+      await expect(changes).toHaveText(/^\d+$/, { timeout: 20_000 });
+      await shot(page, `balanced-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+      expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(true);
+      expect(errors).toEqual([]);
+      expect(net.blocked).toEqual([]);
+    });
+
     test('without WebGL the page still carries the credit and passes axe', async ({ page }) => {
       await page.addInitScript('HTMLCanvasElement.prototype.getContext = () => null');
       const net = await offline(page);

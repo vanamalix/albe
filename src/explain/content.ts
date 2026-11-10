@@ -19,7 +19,7 @@ import { isCompact, type Body, type Probe } from '../physics/types';
 import type { Depth } from '../state/depth';
 import type { World } from '../sim/world';
 import { viewCopy } from '../ui/viewCopy';
-import { euclidExplainer } from './geometry';
+import { balancedExplainer, euclidExplainer } from './geometry';
 
 export interface ExplainContext {
   world: World;
@@ -135,6 +135,7 @@ const suckMyth: Myth = {
 
 const EXPLAINERS: Record<string, Explainer> = {
   euclid: euclidExplainer,
+  mp: balancedExplainer,
   single: {
     title: 'Single black hole',
     seeing: 'A hole of M = 4 on the true Flamm geometry. Gold traces a relativistic rosette; blue started the same way under Newton and closes. The dashed rings are the photon sphere (3M) and the innermost stable circular orbit (6M).',

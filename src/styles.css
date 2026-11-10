@@ -1522,3 +1522,9 @@ output {
     max-height: 48vh;
   }
 }
+.cap-red {
+  color: #f85149;
+}
+.scope canvas.mp-plot {
+  height: 140px;
+}

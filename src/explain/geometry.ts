@@ -3,7 +3,9 @@
  * on screen and the same measurement made once on each of albe's folds.
  */
 import { GEOMETRIES, triangle, type GeometryId } from '../physics/euclid';
+import { extremalCritical } from '../physics/majumdar';
 import { euclidStore } from '../state/euclid';
+import { exhibitStore } from '../state/exhibit';
 import { euclidModel } from '../ui/exhibits/euclidModel';
 import type { Explainer } from './content';
 
@@ -81,5 +83,48 @@ export const euclidExplainer: Explainer = {
     'A. Einstein (1915), “Die Feldgleichungen der Gravitation”, Sitzungsber. Preuss. Akad. Wiss., 844.',
     'L. Flamm (1916), Physikalische Zeitschrift 17, 448; H. G. Ellis (1973), J. Math. Phys. 14, 104; M. Alcubierre (1994), Class. Quantum Grav. 11, L73.',
     'C. W. Misner, K. S. Thorne & J. A. Wheeler (1973), Gravitation, W. H. Freeman, ch. 21 (slices and extrinsic curvature).',
+  ],
+};
+
+export const balancedExplainer: Explainer = {
+  title: 'Two balanced holes',
+  seeing:
+    'Two black holes, each carrying the largest charge a black hole can have (Q = M), held at the separation set in the panel. A fan of light rays crosses the plane of both holes, coloured by where it ends up, and the plot shows each ray’s exit angle against its impact parameter b.',
+  why: {
+    words:
+      'Two ordinary black holes fall together, and no exact formula describes them. Give each the maximum charge and the electric push cancels the gravitational pull exactly: they sit still, and the field of the pair is just the sum of their fields. That makes these light paths exact. Light can bounce between the holes any number of times before it leaves, and the rays that bounce for ever form a fractal: zoom into any edge between colours and more edges appear.',
+    numbers: () => {
+      const s = exhibitStore.get();
+      return `Separation ${s.mpSep.toFixed(2)} M (coordinate distance). One hole alone captures rays with b < 4M, its photon sphere at areal radius 2M; two touching act as one of mass 2M and capture below 8M. The panel’s window is now ${(s.mpB1 - s.mpB0).toExponential(1)} M wide.`;
+    },
+    equation:
+      'Majumdar (1947) and Papapetrou (1947): for static Einstein-Maxwell fields with A_t = U⁻¹ and every charge equal to its mass, the field equations reduce to ∇²U = 0 for ds² = −U⁻²dt² + U²dx², so U = 1 + Σ Mᵢ/|x − xᵢ| is exact. Hartle and Hawking (1972) showed each xᵢ is a regular horizon of area 4πMᵢ². Null geodesics of a static metric are the geodesics of the optical metric gᵢⱼ/(−g_tt) = U⁴δᵢⱼ (Fermat), so in the plane of the holes a ray turns at dθ/ds = 2n̂·∇U/U. One hole is extremal Reissner-Nordström: areal r = |x| + M, photon sphere r = 2M, critical b = 4M. Between two holes there are unstable periodic orbits bouncing from one to the other; rays near them escape after many bounces, and the set of b that never escapes is a Cantor set of measure zero (Shipley and Dolan 2016).',
+    eq: ['ds² = −U⁻² dt² + U² (dx² + dy² + dz²)', 'U = 1 + M₁/|x − x₁| + M₂/|x − x₂|,   ∇²U = 0', 'dθ/ds = 2 n̂·∇U / U   (rays in the plane of the holes)'],
+  },
+  watch: [
+    { label: 'Separation (coordinate)', value: () => `${exhibitStore.get().mpSep.toFixed(2)} M` },
+    { label: 'Window of b', value: () => `${exhibitStore.get().mpB0.toPrecision(5)} to ${exhibitStore.get().mpB1.toPrecision(5)} M` },
+    { label: 'One hole’s capture edge (extremal RN)', value: () => `b = ${extremalCritical(1).toFixed(1)} M` },
+  ],
+  exact: [
+    'The spacetime, at any separation: superposition is exact because each hole has Q = M. No other multi-hole scene in albe is exact.',
+    'The rays are null geodesics of it, in the plane of the holes, which by reflection symmetry they never leave. One hole alone gives b_c = 4M to three digits, the pair touching 8M (tests).',
+  ],
+  approx: [
+    'Rays are integrated by RK4 at two step sizes; a ray whose fate they disagree on is marked grey. Near the fractal set the outcome is sensitive to everything, including the step.',
+    'Rays start and stop 200 M_total away, so about 1° of far-field bending is left out of the exit angle.',
+    'Not astrophysical. Real black holes are expected to be nearly neutral, since surrounding plasma would cancel any charge. This is a laboratory for exact multi-hole geometry, not a forecast.',
+  ],
+  myths: [
+    {
+      picture: 'Adding the fields of two masses is a shortcut that more computing would make exact.',
+      gr: 'General relativity is nonlinear: the fields of two masses do not add, and no exact metric for two orbiting holes is known; numerical relativity solves them on supercomputers. This scene is one of the few exact multi-hole solutions, and it needs both holes extremally charged so that nothing moves. albe’s other multi-mass scenes add fields as a labelled approximation.',
+    },
+  ],
+  reading: [
+    'S. D. Majumdar (1947), “A class of exact solutions of Einstein’s field equations”, Phys. Rev. 72, 390.',
+    'A. Papapetrou (1947), “A static solution of the equations of the gravitational field for an arbitrary charge-distribution”, Proc. R. Irish Acad. A 51, 191.',
+    'J. B. Hartle & S. W. Hawking (1972), “Solutions of the Einstein-Maxwell equations with many black holes”, Commun. Math. Phys. 26, 87.',
+    'J. O. Shipley & S. R. Dolan (2016), “Binary black hole shadows, chaotic scattering and the Cantor set”, Class. Quantum Grav. 33, 175001.',
   ],
 };

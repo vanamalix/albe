@@ -132,6 +132,7 @@ const WarpLayer = lazy(() => import('./warpView').then((m) => ({ default: m.Warp
 const KerrExhibit = lazy(() => import('./KerrExhibit').then((m) => ({ default: m.KerrExhibit })));
 const WormholeExhibit = lazy(() => import('./WormholeExhibit').then((m) => ({ default: m.WormholeExhibit })));
 const EuclidExhibit = lazy(() => import('./EuclidExhibit').then((m) => ({ default: m.EuclidExhibit })));
+const BalancedExhibit = lazy(() => import('./BalancedExhibit').then((m) => ({ default: m.BalancedExhibit })));
 
 function WarpHost() {
   const active = useStore((s) => s.mode === 'warp');
@@ -791,6 +792,7 @@ export function Scene() {
         <WarpHost />
         {x === 'wormhole' && <WormholeExhibit />}
         {x === 'euclid' && <EuclidExhibit />}
+        {x === 'mp' && <BalancedExhibit />}
         {(x === 'kerr-drag' || x === 'kerr-penrose' || x === 'kerr-light') && <KerrExhibit id={x} />}
       </Suspense>
       {!x && <Lattice />}
