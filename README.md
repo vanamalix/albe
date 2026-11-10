@@ -22,8 +22,9 @@ Wrangler. Everything is bundled, so nothing loads from a CDN at runtime.
   densest wins; compact objects pushed past their mass limit collapse, and stars that stray inside
   a compact object's tidal radius are torn apart.
 - **Scenes**, in groups. *Relativity*: single black hole, clocks, gyroscope round a hole, dust ring, Mercury
-  precession, binary inspiral, gravitational waves, precessing binary, lensing fan, photon sphere. *Geometry*:
-  Euclid's postulates. *Three bodies*: figure-eight,
+  precession, binary inspiral, gravitational waves, precessing binary, lensing fan, photon sphere, black hole
+  shadow, microlensing, collapse to a black hole. *Geometry*: Euclid's postulates. *Cosmology*: an expanding
+  universe. *Three bodies*: figure-eight,
   butterfly, moth, yin-yang, the Lagrange triangle, the Pythagorean problem (with a chaos twin), Trojan
   asteroids. *Stars and planets*: inner and outer solar system, TRAPPIST-1, star zoo, Sirius A and B,
   neutron star merger, star meets black hole. *Galaxies*: a self-gravitating spiral with a live
@@ -80,6 +81,23 @@ Wrangler. Everything is bundled, so nothing loads from a CDN at runtime.
   why. A fan of rays in the plane of the holes, and exit angle against b that zooms ×6 on a tap, showing the
   Cantor-set edges of chaotic scattering; each ray runs at two step sizes and disagreements are flagged.
   Labelled not astrophysical.
+- **Black hole shadow** (Relativity): Bardeen's exact Kerr critical curve for a spin and inclination you set, with
+  the photon-ring ladder: each subring about e^−γ narrower, γ the Lyapunov exponent per half-orbit (Johnson et al.
+  2020, π without spin), shown as a range round the curve. The curve times θ_g is set beside the EHT rings of M87*
+  (42 ± 3 μas) and Sgr A* (51.8 ± 2.3 μas). Labelled a contour, not a ray-traced image.
+- **Microlensing light curve** (Relativity): drag the source's track across a point lens and the light curve,
+  Paczyński's exact A(u), redraws. A binary lens uses the exact fifth-order image polynomial for the curve and
+  caustics, over a magnification map made by inverse ray shooting through the app's own lens map (2000² rays, 150²
+  pixels, its resolution and counting noise stated). A one-click planet, q = 0.001.
+- **Collapse to a black hole** (Relativity): Oppenheimer-Snyder dust, exact. The ball shrinks by areal radius with
+  its event horizon born at the centre at η = π − 3χ₀, before the surface crosses 2M at π − 2χ₀, and the apparent
+  horizon χ = (π − η)/2; on the Clocks scene's Penrose diagram, interior glued to the Kruskal exterior along the
+  surface. Says what pressure and spin would change.
+- **Expanding universe** (Cosmology): FRW with Ω_m, Ω_Λ, Ω_r, Ω_k (setting Ω_Λ) and H₀, presets from Planck 2018
+  to de Sitter. a(t), the Davis-Lineweaver spacetime diagram in proper or comoving distance (light cone, particle
+  and event horizons, Hubble sphere), and a galaxy at a chosen z that recedes faster than light today and when its
+  light left, yet is seen, with the numbers. The 3D view switches the grid between comoving and proper. Detects a
+  bounce (no big bang). Exact when homogeneous; it says why it cannot be mixed with the other scenes' masses.
 - **More in the Explain panel**: *Gyroscope round a hole* (its own scene): an arrow carried round the Flamm slice,
   2π(1 − √(1 − 2M/r)) per loop, against a gyroscope, 2π(1 − √(1 − 3M/r)), with Gravity Probe B's numbers.
   *Through the horizon* (Clocks): a Penrose diagram with the falling clock continued past where albe removes it to
@@ -118,6 +136,10 @@ Wrangler. Everything is bundled, so nothing loads from a CDN at runtime.
 | Euclid exhibit | Geodesics of e^{2σ}(dx² + dy²) by RK4 with two-point shooting; ∫K dA by quadrature of the closed-form K | Exact geometries (plane, sphere, Poincaré disk, Flamm, Ellis, Alcubierre slice), numerical to 5+ digits against spherical and hyperbolic trigonometry and Gauss-Bonnet. Spatial slices only. |
 | Balanced holes | Majumdar-Papapetrou metric; rays as geodesics of the optical metric U⁴dx² in the plane of the holes | Exact spacetime (extremal charge); rays by RK4 at two step sizes; start and end 200 M_total out (about 1° of far bending left out). |
 | Gyroscope, Kruskal, dust ring, epicycles | Closed forms (slice transport, geodetic precession, Kruskal U, V, linear deviation, V²) beside the scene's own particles | Exact for one hole. The dust ring's linear law holds to 2% down to 8M; the out-of-plane axis is computed, not simulated. |
+| Black hole shadow | Bardeen critical curve; Lyapunov exponent by Johnson et al.'s closed form | Exact contour for any spin and inclination; not an image (no emission model, no ray tracing). Ladder ratio e^−γ is the large-n limit. |
+| Microlensing | Point lens A(u); binary images from the fifth-order polynomial; caustics from the critical quartic; map by inverse ray shooting | Exact thin-lens, weak-field (next term of order M/b). Point source, static lenses. The map is limited by 0.02 θ_E pixels and ~1/√(nA) noise. |
+| Expanding universe | Friedmann equation by quadrature (past, a = x²) and RK4 on ä (future) | Exact FRW; ages match closed forms to 10⁻⁸. Massless neutrinos. Not combinable with local masses. |
+| Collapse | Oppenheimer-Snyder closed forms; interior glued to Kruskal along the surface | Exact for pressureless uniform dust. Part of the interior chart is a drawing choice. |
 | Test particles | a = −ΣM r̂/r² (1 + 3L²/r²) in proper time, RK4; dt/dτ = E/(1 − 2M/r) | Orbit and timing exact for one static mass, in Schwarzschild r (bodies are harmonic r, offset M). Several masses are superposed, and particle clocks near a star are kinematic only. |
 | Light | Null geodesics d²x/dλ² = −Σ3Mh²d/r⁵, dt/dλ = 1/(1 − 2M/r), RK4; a galaxy deflects by 4Mb/(b²+a²), the same law as the Lens view | Exact for one static mass (photon sphere, capture at 3√3 M, Shapiro delay). Several masses are superposed. |
 
@@ -140,7 +162,9 @@ offline. Nothing from them ships in the app, and only numerical output from REBO
   maths), `approx.ts` (the chips), each with tests.
 - `src/explain/`: the explainers (lazy-loaded, with tests that pin every figure they show).
 - `src/physics/conformal.ts` (geodesics in a conformal chart) and `euclid.ts`, `majumdar.ts`, `gyro.ts`,
-  `kruskal.ts`, `dust.ts`, `potential.ts`, tested in `euclid.test.ts`, `majumdar.test.ts` and `classics.test.ts`.
+  `kruskal.ts`, `dust.ts`, `potential.ts`, tested in `euclid.test.ts`, `majumdar.test.ts` and `classics.test.ts`;
+  `shadow.ts`, `microlens.ts`, `cosmology.ts` and `collapse.ts`, tested in `cosmos.test.ts`, with their panels in
+  `src/ui/exhibits/` and 3D views in `src/scene/DeepExhibits.tsx`.
   The geometry exhibits' controls are in `src/ui/exhibits/`, their 3D views `src/scene/EuclidExhibit.tsx` and
   `BalancedExhibit.tsx`, all lazy.
 - `src/physics/winding.ts`, `orbitEdge.ts`, `whatif.ts`, `src/sim/mergerRun.ts` and `chirpSound.ts`: the
@@ -148,7 +172,7 @@ offline. Nothing from them ships in the app, and only numerical output from REBO
   `src/ui/play/`, each its own lazy chunk.
 - `src/ui/`, `src/App.tsx`: the dock, scene picker, panels and keyboard handling. `ExplainPanel`, `MeasurePanel`,
   `Chips`, `WaveScope`, How it works (`About`), the exhibit controls, the exhibits and the warp layer load on
-  demand, outside the initial JS budget (367.5 of 400 KB gzipped).
+  demand, outside the initial JS budget (368.7 of 400 KB gzipped).
 
 ## Scripts
 
@@ -186,7 +210,13 @@ Phys.* 82:287; Šuvakov & Dmitrašinović (2013) *Phys. Rev. Lett.* 110:114301; 
 Riemann (1868); Hilbert (1901) *Trans. AMS* 2:87; Majumdar (1947) *Phys. Rev.* 72:390; Papapetrou (1947) *Proc.
 R. Irish Acad. A* 51:191; Hartle & Hawking (1972) *Commun. Math. Phys.* 26:87; Shipley & Dolan (2016) *Class. Quantum
 Grav.* 33:175001; de Sitter (1916) *MNRAS* 77:155; Everitt et al. (2011) *Phys. Rev. Lett.* 106:221101; Kruskal (1960)
-*Phys. Rev.* 119:1743; Pirani (1956) *Acta Phys. Pol.* 15:389; Bardeen, Press & Teukolsky (1972) *ApJ* 178:347.
+*Phys. Rev.* 119:1743; Pirani (1956) *Acta Phys. Pol.* 15:389; Bardeen, Press & Teukolsky (1972) *ApJ* 178:347;
+Bardeen (1973) in *Black Holes* (Les Houches); Johnson et al. (2020) *Sci. Adv.* 6:eaaz1310; Gralla & Lupsasca (2020)
+*Phys. Rev. D* 101:044031; EHT Collaboration (2019) *ApJL* 875:L1, L6 and (2022) *ApJL* 930:L12; Paczyński (1986)
+*ApJ* 304:1; Mao & Paczyński (1991) *ApJL* 374:L37; Schneider, Ehlers & Falco (1992) *Gravitational Lenses*; Davis &
+Lineweaver (2004) *PASA* 21:97; Planck Collaboration (2020) *A&A* 641:A6; Hogg (1999) astro-ph/9905116; Oppenheimer
+& Snyder (1939) *Phys. Rev.* 56:455; Penrose (1965) *Phys. Rev. Lett.* 14:57; Christodoulou (1984) *Commun. Math.
+Phys.* 93:171.
 
 ## Licence
 

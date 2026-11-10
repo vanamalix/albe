@@ -38,6 +38,7 @@ function Overview() {
         <li>Open <b>Pythagorean problem</b>: the blue twin starts a hair away and ends up somewhere else entirely.</li>
         <li>Open <b>Exotic</b> in Scenes for a warp bubble, a wormhole, a spinning black hole and two exactly balanced holes, and try the <b>Lens</b> view on anything.</li>
         <li>Open <b>Euclid’s postulates</b> under <b>Geometry</b>, switch one off, and drag a triangle until its angles stop adding to 180°.</li>
+        <li>Open <b>Expanding universe</b> under <b>Cosmology</b> and find a galaxy that recedes faster than light yet is still seen; then try <b>Collapse to a black hole</b> and watch the horizon start at the centre.</li>
         <li>With the <b>Mass</b> tool, pick a star type or a planet, or press <b>Surprise me</b> in Scenes.</li>
       </ul>
 
@@ -380,6 +381,39 @@ function Physics() {
             integral’s e → 0 limit. <span className="tag exact">exact for one mass</span>
           </p>
 
+          <h3>Black hole shadow and the photon ring</h3>
+          <p>
+            Spherical photon orbits in Kerr have ξ = −(r³ − 3r² + a²r + a²)/(a(r − 1)) and η = r³(4a² − r(r − 3)²)/(a²(r − 1)²); a distant observer at
+            inclination i sees them on α = −ξ/sin i, β = ±√(η + a²cos²i − ξ²cot²i), the critical curve (Bardeen 1973). Rays near it wind round;
+            each extra half-orbit brings them e<sup>−γ</sup> closer, so successive subrings are about e<sup>−γ</sup> narrower, with γ = 4r√χ K(u₊/u₋)/(a√−u₋) (Johnson
+            et al. 2020), π without spin. Times θ<sub>g</sub> it is set beside the EHT rings of M87* (42 ± 3 μas, θ<sub>g</sub> = 3.8 ± 0.4 μas) and Sgr A* (51.8 ± 2.3 μas). <span className="tag exact">exact contour</span>{' '}
+            <span className="tag approx">not an image: no gas, no ray tracing</span>
+          </p>
+
+          <h3>Microlensing</h3>
+          <p>
+            A point lens gives two unresolved images with total magnification A(u) = (u² + 2)/(u√(u² + 4)) (Paczyński 1986). For a binary, ζ = z − Σm<sub>i</sub>/(z̄ − z<sub>i</sub>)
+            becomes a fifth-order polynomial whose valid roots are the 3 or 5 images; caustics are the images of the critical curves |Σm<sub>i</sub>/(z − z<sub>i</sub>)²| = 1. The shaded map is
+            inverse ray shooting through the app’s lens map; a test checks it against the polynomial within counting noise. <span className="tag exact">exact thin lens</span>{' '}
+            <span className="tag approx">point source, static lenses; map limited by pixels and noise</span>
+          </p>
+
+          <h3>Expanding universe</h3>
+          <p>
+            H² = H₀²(Ω<sub>r</sub>a⁻⁴ + Ω<sub>m</sub>a⁻³ + Ω<sub>k</sub>a⁻² + Ω<sub>Λ</sub>). Proper distance D = aχ, so Ḋ = HD exactly and galaxies beyond the Hubble sphere recede faster than
+            light; a photon’s proper distance obeys Ḋ = HD − c, so light from such a galaxy can still arrive (Davis &amp; Lineweaver 2004: beyond z ≈ 1.46 for Ω<sub>m</sub> = 0.3, Ω<sub>Λ</sub> = 0.7, which a
+            test reproduces). Ages are checked against Einstein-de Sitter, de Sitter, radiation, open and flat ΛCDM closed forms. <span className="tag exact">exact if homogeneous</span>{' '}
+            <span className="tag approx">cannot be mixed with local masses: FRW needs uniform density</span>
+          </p>
+
+          <h3>Collapse to a black hole</h3>
+          <p>
+            Oppenheimer-Snyder (1939): inside a uniform pressureless ball each shell is a closed dust universe, a = (a<sub>m</sub>/2)(1 + cos η), and the surface follows the
+            Schwarzschild free-fall cycloid. The surface crosses 2M at η = π − 2χ₀; the event horizon is the light ray that gets there, leaving the centre at η = π − 3χ₀; the
+            apparent horizon is χ = (π − η)/2. Drawn on the Clocks scene’s Penrose diagram, with the interior glued along the surface. <span className="tag exact">exact for dust</span>{' '}
+            <span className="tag approx">no pressure, no spin</span>
+          </p>
+
           <h3>Presets</h3>
           <p>
             The Mercury preset exaggerates the effect about a millionfold: a = 40M instead of ≈ 4×10⁷ solar M.
@@ -425,6 +459,11 @@ function Physics() {
             <li>W. de Sitter (1916), MNRAS 77, 155; C. W. F. Everitt et al. (2011), “Gravity Probe B: final results”, Phys. Rev. Lett. 106, 221101.</li>
             <li>F. A. E. Pirani (1956), Acta Phys. Pol. 15, 389; A. K. Raychaudhuri (1955), Phys. Rev. 98, 1123.</li>
             <li>E. Agol et al. (2021), “Refining the transit-timing and photometric analysis of TRAPPIST-1”, Planetary Science Journal 2, 1.</li>
+            <li>J. M. Bardeen (1973), “Timelike and null geodesics in the Kerr metric”, in Black Holes (Les Houches 1972), Gordon and Breach; M. D. Johnson et al. (2020), Sci. Adv. 6, eaaz1310; S. E. Gralla &amp; A. Lupsasca (2020), Phys. Rev. D 101, 044031.</li>
+            <li>Event Horizon Telescope Collaboration (2019), ApJL 875, L1 and L6 (M87*); (2022), ApJL 930, L12 (Sgr A*).</li>
+            <li>B. Paczyński (1986), ApJ 304, 1; S. Mao &amp; B. Paczyński (1991), ApJL 374, L37; P. Schneider, J. Ehlers &amp; E. E. Falco (1992), Gravitational Lenses, Springer.</li>
+            <li>T. M. Davis &amp; C. H. Lineweaver (2004), PASA 21, 97; Planck Collaboration (2020), A&amp;A 641, A6; D. W. Hogg (1999), arXiv:astro-ph/9905116.</li>
+            <li>J. R. Oppenheimer &amp; H. Snyder (1939), “On continued gravitational contraction”, Phys. Rev. 56, 455; R. Penrose (1965), Phys. Rev. Lett. 14, 57.</li>
           </ol>
           <p className="muted">Keyboard: Space pause · 1–6 tools · V cycle view · F frame everything · G toggle GR · . step · Delete remove selected · Esc close.</p>
     </>
