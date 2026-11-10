@@ -313,7 +313,7 @@ function Dynamic() {
   useFrame((state, delta) => {
     const s = store.get();
     const real = Math.min(delta, 1 / 20);
-    const cfg = { gr: s.gr, gw: s.gw, pn: s.pn };
+    const cfg = { gr: s.gr, gw: s.gw, pn: s.pn, law: { n: s.forceExponent, s: s.grScale } };
     world.swarm.haloFactor = s.darkMatter ? 1 : 0;
     world.realtime = true;
     if (!document.hidden) {

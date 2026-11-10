@@ -93,7 +93,7 @@ export function circularBinarySpeed(m1: number, m2: number, r: number): number {
 }
 
 /** Two bodies at separation r in the centre-of-mass frame, on the x axis, moving along ±y. */
-function pairOf(m1: number, m2: number, r: number, speed: number): PresetBody[] {
+export function pairOf(m1: number, m2: number, r: number, speed: number): PresetBody[] {
   const M = m1 + m2;
   return [
     { x: (m2 / M) * r, y: 0, vx: 0, vy: (m2 / M) * speed, m: m1 },

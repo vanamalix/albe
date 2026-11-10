@@ -20,6 +20,9 @@ export function loadPreset(id: string): void {
     rings: st.rings ?? s.rings,
     playing: !st.paused,
     darkMatter: true,
+    // A new scene starts in our universe.
+    forceExponent: 2,
+    grScale: 1,
     selectedId: null,
     scenesOpen: false,
   }));

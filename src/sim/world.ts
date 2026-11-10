@@ -8,7 +8,7 @@ import { haloEnclosed, tidalRadius, tornBeforeHorizon } from '../physics/bodies'
 import { ApsisTracker } from '../physics/measure';
 import { advanceBodies, pnCapFired, type NBodyOptions, type Remnant } from '../physics/nbody';
 import type { Preset } from '../physics/presets';
-import { circularSpeed, dominantSource, probeDt, properTimeRatio, rk4ProbeStep, rk4SheetStep } from '../physics/probes';
+import { circularSpeed, dominantSource, OUR_LAW, probeDt, properTimeRatio, rk4ProbeStep, rk4SheetStep, type ProbeLaw } from '../physics/probes';
 import { MAX_STARS, spawnDisk, Swarm } from '../physics/swarm';
 import { isCompact, surfaceRadius, type Body, type Probe, type Ray } from '../physics/types';
 import { WaveBuffer } from './waves';
@@ -77,6 +77,8 @@ export interface StepConfig {
   gw: boolean;
   /** 1PN corrections for the masses. Defaults to the value in the N-body options. */
   pn?: boolean;
+  /** "Not our universe" laws for test particles (default: ours). */
+  law?: ProbeLaw;
 }
 
 /** A particle removed just outside a horizon: where, when, and its geodesic constants there. */
@@ -286,7 +288,7 @@ export class World {
    * Probes use the GR circular speed when GR is on (exact for one mass); masses use the
    * two-body Newtonian speed.
    */
-  autoVelocity(x: number, y: number, newMass: number, gr: boolean): [number, number] {
+  autoVelocity(x: number, y: number, newMass: number, gr: boolean, law: ProbeLaw = OUR_LAW): [number, number] {
     const i = dominantSource(x, y, this.bodies);
     if (i < 0) return [0, 0];
     const s = this.bodies[i];
@@ -297,8 +299,10 @@ export class World {
     // Inside a halo only the mass within r counts; stars have no relativistic orbit here.
     const pull = s.kind === 'galaxy' ? haloEnclosed(s.m, s.soft ?? 1, s.radius ?? 1, r) : s.m;
     const useGr = gr && isCompact(s);
-    let v = newMass > 0 ? circularSpeed(pull + newMass, r, false) : circularSpeed(pull, r, useGr);
-    if (!Number.isFinite(v)) v = circularSpeed(pull, r, false);
+    // A changed law applies to test particles only, and not inside a galaxy's halo.
+    const probeLaw = s.kind === 'galaxy' ? OUR_LAW : law;
+    let v = newMass > 0 ? circularSpeed(pull + newMass, r, false) : circularSpeed(pull, r, useGr, probeLaw);
+    if (!Number.isFinite(v)) v = circularSpeed(pull, r, false, probeLaw);
     if (newMass > 0) {
       // Share the relative velocity so the pair's centre of mass keeps the source's velocity:
       // the source recoils by -m/(M+m)·v_rel and the newcomer gets +M/(M+m)·v_rel.
@@ -358,7 +362,7 @@ export class World {
       budget,
       (h) => {
         if (held) this.pin(held);
-        this.advanceProbes(h, cfg.gr, start + elapsed + h);
+        this.advanceProbes(h, cfg.gr, start + elapsed + h, cfg.law);
         elapsed += h;
         this.observePair(start + elapsed);
         this.waves.advance(start + elapsed, this.bodies);
@@ -451,7 +455,7 @@ export class World {
     this.pins.observe(a.x - b.x, a.y - b.y, a.vx - b.vx, a.vy - b.vy, t);
   }
 
-  private advanceProbes(h: number, gr: boolean, tEnd: number): void {
+  private advanceProbes(h: number, gr: boolean, tEnd: number, law: ProbeLaw = OUR_LAW): void {
     const src = this.bodies;
     const dead: number[] = [];
     const target = this.pinTarget?.kind === 'probe' ? this.pinTarget.id : -1;
@@ -476,7 +480,7 @@ export class World {
         const d = dTau * ratio;
         if (p.lag < d) break;
         const before = { x: p.x, y: p.y, vx: p.vx, vy: p.vy, tau: p.tau, t: tEnd - p.lag };
-        const nearest = sheet ? rk4SheetStep(p, dTau, src) : rk4ProbeStep(p, dTau, src, useGr);
+        const nearest = sheet ? rk4SheetStep(p, dTau, src) : rk4ProbeStep(p, dTau, src, useGr, law);
         p.lag -= d;
         p.tau += dTau;
         if (p.id === target) {

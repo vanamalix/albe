@@ -165,7 +165,7 @@ export function Interaction() {
           break;
         }
         case 'probe': {
-          const [vx, vy] = dragged ? capSpeed(dx / VEL_SCALE, dy / VEL_SCALE) : world.autoVelocity(x0, y0, 0, s.gr);
+          const [vx, vy] = dragged ? capSpeed(dx / VEL_SCALE, dy / VEL_SCALE) : world.autoVelocity(x0, y0, 0, s.gr, { n: s.forceExponent, s: s.grScale });
           world.addProbe(x0, y0, vx, vy, 'follow');
           break;
         }

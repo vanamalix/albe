@@ -26,6 +26,23 @@ export interface ProbeAccel {
 }
 
 /**
+ * "Not our universe": the laws test particles may be given instead of ours. Neither touches the
+ * masses, light, clocks or the drawn sheet.
+ *  - n: Newtonian particles feel F = (M/r²)(R/r)^(n − 2), R = POWER_LAW_RADIUS·M, so the pull is
+ *    Newton's at R and falls as 1/rⁿ. Ours is n = 2.
+ *  - s: the relativistic term 3L²/r² is multiplied by s = (c/c′)², the orbit equation of a universe
+ *    whose light is √s times slower. Ours is s = 1; s = 0 is Newton.
+ */
+export interface ProbeLaw {
+  n: number;
+  s: number;
+}
+
+export const OUR_LAW: ProbeLaw = { n: 2, s: 1 };
+/** Where a changed force law still matches Newton's pull, in units of the source's M. */
+export const POWER_LAW_RADIUS = 20;
+
+/**
  * Acceleration of a test particle. Returns the smallest r_i / R_i seen, with R_i the source's surface
  * or horizon (values < 1 mean the probe has hit it). Only compact objects get the relativistic term:
  * stars are drawn at a compressed scale, so their M/r means nothing physically.
@@ -38,6 +55,7 @@ export function probeAcceleration(
   sources: readonly Body[],
   gr: boolean,
   out: ProbeAccel,
+  law: ProbeLaw = OUR_LAW,
 ): number {
   let ax = 0;
   let ay = 0;
@@ -59,7 +77,9 @@ export function probeAcceleration(
     let f = s.m / (r2 * r);
     if (gr && isCompact(s)) {
       const L = dx * (vy - s.vy) - dy * (vx - s.vx);
-      f *= 1 + (3 * L * L) / r2;
+      f *= 1 + (3 * law.s * L * L) / r2;
+    } else if (law.n !== 2) {
+      f *= Math.pow((POWER_LAW_RADIUS * s.m) / r, law.n - 2);
     }
     ax -= f * dx;
     ay -= f * dy;
@@ -131,17 +151,18 @@ export function rk4ProbeStep(
   dt: number,
   sources: readonly Body[],
   gr: boolean,
+  law: ProbeLaw = OUR_LAW,
 ): number {
   const { x, y, vx, vy } = p;
-  const ratio = probeAcceleration(x, y, vx, vy, sources, gr, k1);
+  const ratio = probeAcceleration(x, y, vx, vy, sources, gr, k1, law);
   const h = dt / 2;
-  probeAcceleration(x + vx * h, y + vy * h, vx + k1.ax * h, vy + k1.ay * h, sources, gr, k2);
+  probeAcceleration(x + vx * h, y + vy * h, vx + k1.ax * h, vy + k1.ay * h, sources, gr, k2, law);
   const v2x = vx + k1.ax * h;
   const v2y = vy + k1.ay * h;
-  probeAcceleration(x + v2x * h, y + v2y * h, vx + k2.ax * h, vy + k2.ay * h, sources, gr, k3);
+  probeAcceleration(x + v2x * h, y + v2y * h, vx + k2.ax * h, vy + k2.ay * h, sources, gr, k3, law);
   const v3x = vx + k2.ax * h;
   const v3y = vy + k2.ay * h;
-  probeAcceleration(x + v3x * dt, y + v3y * dt, vx + k3.ax * dt, vy + k3.ay * dt, sources, gr, k4);
+  probeAcceleration(x + v3x * dt, y + v3y * dt, vx + k3.ax * dt, vy + k3.ay * dt, sources, gr, k4, law);
   const v4x = vx + k3.ax * dt;
   const v4y = vy + k3.ay * dt;
   p.x = x + (dt / 6) * (vx + 2 * v2x + 2 * v3x + v4x);
@@ -204,14 +225,14 @@ export function probeDt(
 
 /**
  * Circular-orbit speed about a mass M at radius r.
- *  Newtonian: v² = M / r.
+ *  Newtonian: v² = M / r (and v² = r F(r) under a changed force law).
  *  This GR force law: v²/r = M/r² (1 + 3 v²)  ⇒  v² = M / (r − 3M), the exact Schwarzschild
- *  relation for L² = M r² / (r − 3M). No circular orbit exists for r ≤ 3M.
+ *  relation for L² = M r² / (r − 3M). No circular orbit exists for r ≤ 3M (3sM with the term scaled).
  */
-export function circularSpeed(m: number, r: number, gr: boolean): number {
-  if (!gr) return Math.sqrt(m / r);
-  if (r <= 3 * m) return NaN;
-  return Math.sqrt(m / (r - 3 * m));
+export function circularSpeed(m: number, r: number, gr: boolean, law: ProbeLaw = OUR_LAW): number {
+  if (!gr) return Math.sqrt((m / r) * (law.n === 2 ? 1 : Math.pow((POWER_LAW_RADIUS * m) / r, law.n - 2)));
+  if (r <= 3 * law.s * m) return NaN;
+  return Math.sqrt(m / (r - 3 * law.s * m));
 }
 
 /** Index of the source with the strongest pull |M/r²| at (x, y), or -1. */

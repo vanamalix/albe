@@ -41,6 +41,10 @@ export interface Settings {
   /** 1PN corrections for the masses. */
   pn: boolean;
   exaggeration: number;
+  /** Not our universe: the force-law exponent n for Newtonian test particles (ours: 2). */
+  forceExponent: number;
+  /** Not our universe: the multiplier s = (c/c′)² on test particles' relativistic term (ours: 1). */
+  grScale: number;
   /** Keep the camera on the masses' centre of mass. */
   follow: boolean;
   selectedId: number | null;
@@ -79,6 +83,8 @@ let state: Settings = {
   gw: false,
   pn: true,
   exaggeration: 1,
+  forceExponent: 2,
+  grScale: 1,
   follow: true,
   selectedId: null,
   aboutOpen: false,

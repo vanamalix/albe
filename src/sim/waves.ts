@@ -17,7 +17,7 @@ export const WAVE_SPACING = 2;
 /** Height of the largest ripple on the sheet at its softening radius. */
 export const WAVE_DISPLAY_HEIGHT = 12;
 /** A new scene eases its signal in over this long, so no artificial wavefront spreads from t = 0. */
-const WAVE_FADE_IN = 120;
+export const WAVE_FADE_IN = 120;
 /** The 1/r falloff is softened inside this radius, where the far-field formula does not hold. */
 export const WAVE_SOFTENING = 40;
 
