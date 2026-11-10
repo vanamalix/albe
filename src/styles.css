@@ -1437,3 +1437,88 @@ output {
 .listen .ref {
   flex-basis: 100%;
 }
+
+/* Geometry exhibits: Euclid's postulates and the balanced holes */
+.exhibit-panel.tall {
+  max-height: calc(100% - 140px);
+  overflow-y: auto;
+}
+.exhibit-panel h4 {
+  margin: 12px 0 4px;
+  font-size: 0.82rem;
+  color: var(--accent);
+}
+.exhibit-panel .toggle small {
+  display: block;
+}
+.depth.wrap {
+  flex-wrap: wrap;
+  width: auto;
+}
+.tag-line {
+  margin: 8px 0 0;
+  font-size: 12px;
+}
+.tag-line.exact {
+  color: var(--exact);
+}
+.tag-line.approx {
+  color: var(--approx);
+}
+.euclid-chart {
+  max-width: 280px;
+}
+.euclid-chart polyline,
+.euclid-chart polygon,
+.euclid-chart circle,
+.euclid-chart line {
+  fill: none;
+}
+.euclid-chart .edge {
+  stroke: #d29922;
+}
+.euclid-chart .perp {
+  stroke: #58a6ff;
+}
+.euclid-chart .circle {
+  stroke: #3fb950;
+}
+.euclid-chart .great {
+  stroke: rgba(255, 238, 158, 0.75);
+}
+.euclid-chart .stopped {
+  stroke: #f85149;
+}
+.euclid-chart .continued {
+  stroke: rgba(255, 238, 158, 0.6);
+  stroke-dasharray: 0.06 0.05;
+}
+.euclid-chart .rim {
+  stroke: rgba(201, 209, 217, 0.45);
+  stroke-dasharray: 0.04 0.04;
+}
+.euclid-chart .throat {
+  stroke: #d29922;
+}
+.euclid-chart .inner {
+  fill: rgba(255, 255, 255, 0.05);
+}
+.euclid-chart .vertex {
+  fill: rgba(240, 246, 252, 0.85);
+  stroke: #0d1117;
+  cursor: grab;
+}
+.euclid-chart .vertex:focus-visible {
+  outline: none;
+  stroke: #58a6ff;
+  stroke-width: 3px;
+}
+.euclid-chart text {
+  fill: #f0f6fc;
+  pointer-events: none;
+}
+@media (max-width: 720px) {
+  .exhibit-panel.tall {
+    max-height: 48vh;
+  }
+}

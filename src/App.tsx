@@ -67,6 +67,7 @@ const SCENE_COPY: Record<string, { title: string; blurb: string }> = {
   'kerr-drag': { title: 'Frame dragging', blurb: 'A spinning hole sweeps space round' },
   'kerr-penrose': { title: 'Penrose process', blurb: 'Stealing energy from black-hole spin' },
   'kerr-light': { title: 'Light past a spinning hole', blurb: 'A lopsided capture window' },
+  euclid: { title: 'Euclid’s postulates', blurb: 'Switch one off; measure albe’s folds' },
   lensing: { title: 'Lensing fan', blurb: 'A fan of light bends around a mass' },
   photon: { title: 'Photon sphere', blurb: 'Light caught orbiting a black hole' },
   empty: { title: 'Empty space', blurb: 'Flat spacetime: build your own' },
@@ -553,7 +554,7 @@ function InfoCard({ mode, exag, bodies, probes, time }: { mode: ViewMode; exag: 
   );
 }
 
-const SCENE_GROUPS: SceneGroup[] = ['Relativity', 'Three bodies', 'Stars and planets', 'Galaxies', 'Exotic', 'Sandbox'];
+const SCENE_GROUPS: SceneGroup[] = ['Relativity', 'Geometry', 'Three bodies', 'Stars and planets', 'Galaxies', 'Exotic', 'Sandbox'];
 
 function ScenePicker() {
   const open = useStore((s) => s.scenesOpen);

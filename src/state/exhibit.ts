@@ -1,7 +1,8 @@
 /** State for the wormhole and Kerr exhibits, kept apart from the main store. */
 import { useSyncExternalStore } from 'react';
+import { euclidStore } from './euclid';
 
-export type ExhibitId = 'wormhole' | 'kerr-drag' | 'kerr-penrose' | 'kerr-light';
+export type ExhibitId = 'wormhole' | 'kerr-drag' | 'kerr-penrose' | 'kerr-light' | 'euclid';
 
 export interface ExhibitSettings {
   /** The exhibit on screen, or null for the normal sheet. */
@@ -43,6 +44,10 @@ export function openExhibit(id: ExhibitId | null): void {
   if (id === 'kerr-penrose') exhibitStore.set({ id, spin: 0.998, decay: 0.12 });
   else if (id === 'kerr-drag' || id === 'kerr-light') exhibitStore.set({ id, spin: 0.9 });
   else if (id === 'wormhole') exhibitStore.set({ id, b: 22, aim: 0.6, speed: 0.6 });
+  else if (id === 'euclid') {
+    euclidStore.set({ geometry: 'flat', verts: [], circle: 0, perpendiculars: true, demo: 'none', dragging: false });
+    exhibitStore.set({ id });
+  }
   else exhibitStore.set({ id: null });
 }
 

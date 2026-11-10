@@ -1,8 +1,12 @@
 /** Sliders and live numbers for the wormhole and Kerr exhibits. Every figure comes from a tested physics module. */
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { lazy, Suspense, useState, type CSSProperties, type ReactNode } from 'react';
 import { extractable, omega, penroseDecay, penroseMaxGain, rIsco, rMarginallyBound, rPhoton, rPlus, R_ERGO_EQUATOR, criticalImpact } from '../physics/kerr';
 import { crossingSweep, ellisJupiters, ellisTide, reflectDeflection, wormholeFate } from '../physics/wormhole';
 import { exhibitStore, penroseMinSpin, useExhibit, type ExhibitId } from '../state/exhibit';
+import { useStore } from '../state/store';
+
+// The geometry exhibits' controls are their own chunks.
+const EuclidPanel = lazy(() => import('./exhibits/EuclidPanel'));
 
 const row: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 12 };
 const sub: CSSProperties = { color: 'var(--muted)', fontSize: 12, marginTop: 8 };
@@ -114,8 +118,21 @@ function KerrPanel({ id }: { id: ExhibitId }) {
 /** On a phone the controls would hide the exhibit, so they start folded away. */
 const isNarrow = (): boolean => typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 720px)').matches;
 
+function Controls({ id }: { id: ExhibitId }) {
+  if (id === 'wormhole') return <WormholePanel />;
+  if (id === 'euclid')
+    return (
+      <Suspense fallback={null}>
+        <EuclidPanel />
+      </Suspense>
+    );
+  return <KerrPanel id={id} />;
+}
+
 export function ExhibitPanel() {
   const id = useExhibit((s) => s.id);
+  // The explainer opens on the same side: the controls step aside for it.
+  const covered = useStore((s) => s.explainOpen || s.measureOpen);
   const [open, setOpen] = useState(() => !isNarrow());
   if (!id) return null;
   return (
@@ -123,7 +140,7 @@ export function ExhibitPanel() {
       <button className="btn exhibit-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
         {open ? 'Hide controls' : 'Controls'}
       </button>
-      {open && (id === 'wormhole' ? <WormholePanel /> : <KerrPanel id={id} />)}
+      {open && !covered && <Controls id={id} />}
     </div>
   );
 }

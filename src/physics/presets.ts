@@ -42,7 +42,7 @@ export interface PresetDisk extends DiskOptions {
   host: number;
 }
 
-export type SceneGroup = 'Relativity' | 'Three bodies' | 'Stars and planets' | 'Galaxies' | 'Exotic' | 'Sandbox';
+export type SceneGroup = 'Relativity' | 'Geometry' | 'Three bodies' | 'Stars and planets' | 'Galaxies' | 'Exotic' | 'Sandbox';
 
 export interface Preset {
   id: string;
@@ -658,10 +658,10 @@ function warp(): Preset {
   };
 }
 
-const exhibitScene = (id: string, name: string, exhibit: ExhibitId, timeScale: number, note: string): Preset => ({
+const exhibitScene = (id: string, name: string, exhibit: ExhibitId, timeScale: number, note: string, group: SceneGroup = 'Exotic'): Preset => ({
   id,
   name,
-  group: 'Exotic',
+  group,
   note,
   bodies: [],
   probes: [],
@@ -786,6 +786,7 @@ export const PRESETS: Preset[] = [
   exhibitScene('kerr-drag', 'Frame dragging', 'kerr-drag', 120, 'Dropped particles are swept along with the spin.'),
   exhibitScene('kerr-penrose', 'Penrose process', 'kerr-penrose', 120, 'One fragment falls in with negative energy; the other leaves with more than the parent had.'),
   exhibitScene('kerr-light', 'Light past a spinning hole', 'kerr-light', 120, 'The capture window is lopsided.'),
+  exhibitScene('euclid', 'Euclid’s postulates', 'euclid', 60, 'Switch off one of Euclid’s five postulates to see a geometry where it fails, then measure albe’s own folds the same way: drag the triangle and compare its angles with the curvature inside.', 'Geometry'),
   empty(),
 ];
 

@@ -131,6 +131,7 @@ function Sheet() {
 const WarpLayer = lazy(() => import('./warpView').then((m) => ({ default: m.WarpLayer })));
 const KerrExhibit = lazy(() => import('./KerrExhibit').then((m) => ({ default: m.KerrExhibit })));
 const WormholeExhibit = lazy(() => import('./WormholeExhibit').then((m) => ({ default: m.WormholeExhibit })));
+const EuclidExhibit = lazy(() => import('./EuclidExhibit').then((m) => ({ default: m.EuclidExhibit })));
 
 function WarpHost() {
   const active = useStore((s) => s.mode === 'warp');
@@ -789,7 +790,8 @@ export function Scene() {
       <Suspense fallback={null}>
         <WarpHost />
         {x === 'wormhole' && <WormholeExhibit />}
-        {x && x !== 'wormhole' && <KerrExhibit id={x} />}
+        {x === 'euclid' && <EuclidExhibit />}
+        {(x === 'kerr-drag' || x === 'kerr-penrose' || x === 'kerr-light') && <KerrExhibit id={x} />}
       </Suspense>
       {!x && <Lattice />}
       <Dynamic />

@@ -147,6 +147,50 @@ for (const [name, width, height] of [
       expect(net.blocked).toEqual([]);
     });
 
+    test('Euclid: switching off postulate 5 bends the angle sum, and the folds are measured the same way', async ({ page }) => {
+      const errors = watch(page);
+      const net = await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-menu').getByRole('button', { name: /Euclid’s postulates/ }).click();
+      await expect(page.locator('.exhibit-dock')).toBeAttached();
+      const toggle = page.locator('.exhibit-toggle');
+      if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+      const panel = page.getByRole('region', { name: 'Euclid’s postulates controls' });
+      await expect(panel).toBeVisible();
+      const row = (name: string | RegExp) => panel.locator('.live div').filter({ hasText: name }).locator('dd');
+      await expect(row(/^Sum/)).toHaveText('180.00°');
+      await panel.locator('label.toggle', { hasText: '5. One parallel' }).click();
+      await expect(panel.getByRole('button', { name: 'Hyperbolic', pressed: true })).toBeVisible();
+      const sum = parseFloat((await row(/^Sum/).textContent()) ?? '');
+      expect(sum).toBeLessThan(180);
+      // The excess equals the enclosed curvature (Gauss-Bonnet), both shown.
+      const excess = parseFloat((await row(/Excess/).textContent()) ?? '');
+      const curvature = parseFloat((await row(/∫K dA inside/).textContent()) ?? '');
+      expect(Math.abs(excess - curvature)).toBeLessThan(0.02);
+      // A vertex moves by keyboard.
+      await panel.getByRole('button', { name: /Vertex C/ }).focus();
+      await page.keyboard.press('ArrowUp');
+      await expect.poll(async () => parseFloat((await row(/^Sum/).textContent()) ?? '')).not.toBe(sum);
+      await panel.getByRole('button', { name: 'Black hole slice' }).click();
+      await expect(panel).toContainText('Isotropic chart, M = 1');
+      expect(parseFloat((await row(/Excess/).textContent()) ?? '')).toBeLessThan(0);
+      await panel.getByRole('button', { name: 'Warp slice' }).click();
+      await expect(row(/^Sum/)).toHaveText('180.00°');
+      const p4 = panel.locator('label.toggle', { hasText: '4. All right angles' });
+      await p4.click();
+      await expect(panel).toContainText('Same ruler turned 45°');
+      await expect(panel.getByRole('checkbox', { name: /4\. All right angles/ })).not.toBeChecked();
+      await p4.click();
+      await page.waitForTimeout(600);
+      await shot(page, `euclid-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+      expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(true);
+      expect(errors).toEqual([]);
+      expect(net.blocked).toEqual([]);
+    });
+
     test('without WebGL the page still carries the credit and passes axe', async ({ page }) => {
       await page.addInitScript('HTMLCanvasElement.prototype.getContext = () => null');
       const net = await offline(page);
