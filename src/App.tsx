@@ -39,6 +39,8 @@ const MODE_LABEL: Record<ViewMode, string> = { space: 'Space', time: 'Time', tid
 const SCENE_COPY: Record<string, { title: string; blurb: string }> = {
   single: { title: 'Single black hole', blurb: 'Precessing orbits, photon sphere and ISCO' },
   clocks: { title: 'Black hole clocks', blurb: 'Time runs slower the closer you get' },
+  gyro: { title: 'Gyroscope round a hole', blurb: 'Space curvature, then time, turn the spin' },
+  dust: { title: 'Dust ring', blurb: 'Tides stretch and squeeze a falling ring' },
   mercury: { title: 'Mercury precession', blurb: 'Einstein’s first test, exaggerated about 10⁶×' },
   binary: { title: 'Binary inspiral', blurb: 'Two black holes radiate and merge' },
   chirp: { title: 'Gravitational waves', blurb: 'Ripples spread as an orbit collapses' },

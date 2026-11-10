@@ -19,6 +19,7 @@ import { isCompact, type Body, type Probe } from '../physics/types';
 import type { Depth } from '../state/depth';
 import type { World } from '../sim/world';
 import { viewCopy } from '../ui/viewCopy';
+import { dustExplainer, gyroExplainer } from './classics';
 import { balancedExplainer, euclidExplainer } from './geometry';
 
 export interface ExplainContext {
@@ -136,6 +137,8 @@ const suckMyth: Myth = {
 const EXPLAINERS: Record<string, Explainer> = {
   euclid: euclidExplainer,
   mp: balancedExplainer,
+  gyro: gyroExplainer,
+  dust: dustExplainer,
   single: {
     title: 'Single black hole',
     seeing: 'A hole of M = 4 on the true Flamm geometry. Gold traces a relativistic rosette; blue started the same way under Newton and closes. The dashed rings are the photon sphere (3M) and the innermost stable circular orbit (6M).',
@@ -391,9 +394,9 @@ export function explainerFor(presetId: string, c: ExplainContext): Explainer {
 export const hasOwnExplainer = (presetId: string): boolean => presetId in EXPLAINERS;
 
 /** The self-paced challenges an explainer offers: each shows a physics result, not a score. */
-export type ToyId = 'wind' | 'tightest' | 'merger';
+export type ToyId = 'wind' | 'tightest' | 'merger' | 'potential' | 'kruskal' | 'gyro' | 'dust';
 
-const TOYS: Record<string, ToyId[]> = { photon: ['wind'], lensing: ['wind'], single: ['tightest'], binary: ['merger'] };
+const TOYS: Record<string, ToyId[]> = { photon: ['wind'], lensing: ['wind'], single: ['potential', 'tightest'], binary: ['merger'], clocks: ['kruskal'], gyro: ['gyro'], dust: ['dust'] };
 
 export const toysFor = (presetId: string): ToyId[] => TOYS[presetId] ?? [];
 

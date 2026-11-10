@@ -216,6 +216,51 @@ for (const [name, width, height] of [
       expect(net.blocked).toEqual([]);
     });
 
+    test('Gyroscope, Kruskal diagram, dust ring and effective potential: each toy draws and reads out', async ({ page }) => {
+      const errors = watch(page);
+      const net = await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      const dd = (toy: ReturnType<Page['locator']>, name: string | RegExp) => toy.locator('.live div').filter({ hasText: name }).locator('dd');
+
+      const gyro = await openExplain(page, /Gyroscope round a hole/, 'Gyroscope round a hole');
+      await expect(gyro.locator('svg.gyro-plan')).toBeVisible();
+      await expect(dd(gyro, 'Slice transport per loop')).toHaveText('48.23°');
+      await expect(dd(gyro, 'Gyroscope per orbit')).toHaveText('75.40°');
+      await expect(dd(gyro, /GP-B: GR prediction/)).toContainText('6606.1 · 6601.8 ± 18.3');
+      await gyro.getByLabel('Orbit radius').fill('12');
+      await gyro.getByRole('button', { name: 'Launch at this radius' }).click();
+      await expect(dd(gyro, /Orbits flown/)).toBeVisible();
+      await shot(page, `gyro-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+
+      const kruskal = await openExplain(page, /Black hole clocks/, 'Kruskal and Penrose diagram');
+      await expect(kruskal.locator('svg.kruskal')).toBeVisible();
+      await expect(dd(kruskal, /at r = 0/)).toContainText('555.4');
+      await kruskal.getByRole('button', { name: 'Release at t = 0' }).click();
+      await shot(page, `kruskal-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+
+      const dust = await openExplain(page, /Dust ring/, 'Dust ring');
+      await expect(dust.locator('svg.bars')).toBeVisible();
+      await expect(dd(dust, /Volume, predicted/)).toHaveText(/^×1\.0\d\d$/);
+      await shot(page, `dust-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+
+      const pot = await openExplain(page, /Single black hole/, 'Effective potential and epicycles');
+      await expect(pot.locator('canvas.potential-plot')).toBeVisible();
+      await pot.getByLabel('Angular momentum L').fill('4.2');
+      await expect(dd(pot, 'Circular orbit for this L')).toHaveText('13.81 M');
+      await expect(dd(pot, /Predicted advance/)).toHaveText('118.7°');
+      await pot.getByRole('button', { name: 'Launch near-circular at this L' }).click();
+      await expect(dd(pot, /Exact for the orbit launched/)).toHaveText(/^\d+\.\d°$/);
+      await shot(page, `potential-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+      expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(true);
+      expect(errors).toEqual([]);
+      expect(net.blocked).toEqual([]);
+    });
+
     test('without WebGL the page still carries the credit and passes axe', async ({ page }) => {
       await page.addInitScript('HTMLCanvasElement.prototype.getContext = () => null');
       const net = await offline(page);

@@ -16,6 +16,10 @@ const TOY: Record<ToyId, ReturnType<typeof lazy>> = {
   wind: lazy(() => import('./play/WindLight')),
   tightest: lazy(() => import('./play/TightestOrbit')),
   merger: lazy(() => import('./play/MergerTime')),
+  potential: lazy(() => import('./play/Potential')),
+  kruskal: lazy(() => import('./play/Kruskal')),
+  gyro: lazy(() => import('./play/Gyroscope')),
+  dust: lazy(() => import('./play/DustRing')),
 };
 const NotOurUniverse = lazy(() => import('./play/NotOurUniverse'));
 

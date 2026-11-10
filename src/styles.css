@@ -1528,3 +1528,109 @@ output {
 .scope canvas.mp-plot {
   height: 140px;
 }
+.swatch.grey {
+  color: #8b949e;
+}
+.swatch.red {
+  color: #f85149;
+}
+.swatch.dash-red {
+  color: #f85149;
+}
+.gyro-plan .orbit,
+.kruskal polyline {
+  fill: none;
+}
+.gyro-plan line {
+  stroke-width: 0.03;
+}
+.plan.gyro-plan .orbit {
+  stroke-width: 0.012;
+}
+.gyro-plan .fixed {
+  stroke: #8b949e;
+  fill: #8b949e;
+}
+.gyro-plan .slice {
+  stroke: #58a6ff;
+  fill: #58a6ff;
+}
+.gyro-plan .spin {
+  stroke: #d29922;
+  fill: #d29922;
+}
+.gyro-plan marker path {
+  stroke: none;
+}
+.kruskal {
+  aspect-ratio: 3.3 / 2;
+  max-width: 340px;
+}
+.kruskal polyline {
+  stroke-width: 0.012;
+}
+.kruskal .edge {
+  stroke: rgba(201, 209, 217, 0.45);
+}
+.kruskal .horizon {
+  stroke: #d29922;
+  stroke-dasharray: 0.04 0.03;
+}
+.kruskal .singular {
+  stroke: #f85149;
+  stroke-dasharray: 0.03 0.02;
+  stroke-width: 0.02;
+}
+.kruskal .orbit8,
+.kruskal .orbit30 {
+  stroke: rgba(201, 209, 217, 0.3);
+}
+.kruskal .now {
+  stroke: #58a6ff;
+}
+.kruskal .fall-ahead {
+  stroke: rgba(210, 153, 34, 0.35);
+  stroke-dasharray: 0.03 0.02;
+}
+.kruskal .fall {
+  stroke: #d29922;
+  stroke-width: 0.02;
+}
+.kruskal .clock {
+  fill: #f0f6fc;
+}
+.kruskal .removed {
+  fill: none;
+  stroke: #f85149;
+  stroke-width: 0.012;
+}
+.kruskal text {
+  fill: #c9d1d9;
+  font-size: 0.11px;
+}
+.bars {
+  display: block;
+  width: 100%;
+  max-width: 320px;
+  margin: 8px 0;
+}
+.bars .measured {
+  fill: #d29922;
+}
+.bars .predicted {
+  fill: #8b949e;
+}
+.bars .computed {
+  fill: #58a6ff;
+}
+.bars .unit {
+  stroke: rgba(240, 246, 252, 0.6);
+  stroke-width: 1;
+}
+.bars text {
+  fill: #c9d1d9;
+  font-size: 11px;
+}
+.scope canvas.potential-plot {
+  height: 120px;
+}
