@@ -296,6 +296,26 @@ function Physics() {
             the Penrose scene are idealised, the hole’s mass and spin are held fixed, and the wormhole’s negative energy has no known source.
           </p>
 
+          <h3>Measuring, explaining and flagging approximations</h3>
+          <p>
+            <b>Measure</b> drops a pin at each closest approach, interpolated to ṙ = 0 between integration steps, and draws the orbit
+            relative to its centre so the protractor reads true angles. The app compares the pins with Darwin’s elliptic integral for the
+            same E and L <span className="tag exact">exact for one mass</span>, and with 6πM/p and its (M/p)² term{' '}
+            <span className="tag approx">series in M/p</span>. In the Mercury scene they give 35.4°, 35.4° and 30.8°.
+          </p>
+          <p>
+            The <b>wave cursor</b> marks extrema of the face-on strain: neighbouring ones are half a period apart. Two readings of f give
+            the chirp mass through f<sup>−8/3</sup> falling linearly at (256/5)π<sup>8/3</sup>ℳ<sup>5/3</sup> (Cutler &amp; Flanagan 1994){' '}
+            <span className="tag approx">leading order</span>. In the Gravitational waves scene it reads about 14% above the true ℳ = 1.62
+            before the 1PN cap acts: the orbit’s 1PN terms, of order v² ≈ 0.1, are what the formula leaves out.
+          </p>
+          <p>
+            The <b>readout</b> adds the largest M/r, the expansion parameter of the post-Newtonian terms, and 4M<sub>a</sub>M<sub>b</sub>/(r<sub>a</sub>r<sub>b</sub>), the
+            1PN cross term of g<sub>tt</sub> that summing the masses one by one leaves out. <b>Why is this approximate?</b> chips appear only
+            while their approximation is on screen. The <b>Explain</b> panel collects, for each scene, what is exact, what is approximate
+            and why, with the live numbers to watch.
+          </p>
+
           <h3>Presets</h3>
           <p>
             The Mercury preset exaggerates the effect about a millionfold: a = 40M instead of ≈ 4×10⁷ solar M.
@@ -330,6 +350,10 @@ function Physics() {
             {WARP_REFERENCES.map((r) => <li key={r}>{r}</li>)}
             <li>M. S. Morris &amp; K. S. Thorne (1988), Am. J. Phys.; T. Müller (2004), Am. J. Phys.; O. James et al. (2015), Am. J. Phys.; N. Tsukamoto (2016), Phys. Rev. D (wormholes).</li>
             <li>J. M. Bardeen, W. H. Press &amp; S. A. Teukolsky (1972), ApJ; J. D. Schnittman (2014), Phys. Rev. Lett.; L. Resca et al. (2020), Am. J. Phys.; R. Ruffini et al. (2025), Phys. Rev. Lett. (Kerr orbits and the Penrose process).</li>
+            <li>C. Darwin (1959), “The gravity field of a particle”, Proc. R. Soc. A 249, 180.</li>
+            <li>C. Cutler &amp; É. É. Flanagan (1994), “Gravitational waves from merging compact binaries”, Phys. Rev. D 49, 2658.</li>
+            <li>M. D. Kruskal (1960), “Maximal extension of Schwarzschild metric”, Phys. Rev. 119, 1743.</li>
+            <li>C. M. Will (2014), “The confrontation between general relativity and experiment”, Living Rev. Relativ. 17, 4.</li>
             <li>E. Agol et al. (2021), “Refining the transit-timing and photometric analysis of TRAPPIST-1”, Planetary Science Journal 2, 1.</li>
           </ol>
           <p className="muted">Keyboard: Space pause · 1–6 tools · V cycle view · F frame everything · G toggle GR · . step · Delete remove selected · Esc close.</p>

@@ -29,8 +29,26 @@ Wrangler. Everything is bundled, so nothing loads from a CDN at runtime.
   rotation curve and a dark-matter switch, a collision with tidal tails, a tidal stream, a cluster.
   *Exotic*: an Alcubierre warp bubble (theoretical), an Ellis wormhole, Kerr frame dragging, the Penrose
   process and light past a spinning hole. *Sandbox*: an empty scene, and **Surprise me** for a random system.
-- A hover readout shows r to the nearest mass, Φ, dτ/dt and K. A "How it works" panel has a plain-language
-  overview, and a second tab with the equations and references.
+- A hover readout (a tap on phones, which stays until closed) shows r to the nearest mass, Φ, dτ/dt, K, the
+  largest M/r (the post-Newtonian expansion parameter) and the 1PN g_tt cross term 4M_aM_b/(r_a r_b) that
+  adding the masses leaves out. A "How it works" panel has a plain-language overview, and a second tab with
+  the equations and references.
+- **Depth**: the info card and the explainers switch between Words, Numbers (live values from the scene) and
+  Equation (the expression and a reference). Equation is the default; the choice is remembered in
+  localStorage when the browser allows it.
+- **Explain** (info card, or Explain in the scene picker): notes to read while the scene runs. What you are
+  seeing, why (a brief derivation at Equation depth), live numbers to watch, what is exact and approximate,
+  "common picture vs what GR says" for the rubber sheet, frozen horizon, slow clocks and sucking holes, and
+  primary references. Single black hole, clocks, Mercury, binary inspiral, gravitational waves and the inner
+  solar system have their own; every other scene gets one built from its note and the current view.
+- **Measure** (info card, where an orbit is pinned): closest approaches leave pins; drag a two-armed
+  protractor on a true-angle plan view, then show the app's values (pins, the exact elliptic integral, and
+  6πM/p with its (M/p)² term).
+- **Why is this approximate?** chips appear above the dock only while an approximation is on screen (summed
+  lens angles, removal at 2.04M, the 1PN cap, summed tides, compressed star radii), each with the neglected
+  order, the source and a live error estimate at Equation depth.
+- **Wave cursor**: in the Waves view, tap crests or troughs on the strain scope (or Mark newest pair); two
+  marks give f, four give ḟ and the leading-order chirp mass.
 - Keyboard: Space pauses, `.` steps, G toggles GR/Newtonian, I opens About, Delete removes the
   selected mass, Esc closes panels.
 - On phones: one finger places objects, two fingers orbit and zoom the camera.
@@ -71,7 +89,11 @@ offline. Nothing from them ships in the app, and only numerical output from REBO
 - `src/sim/world.ts`: the live simulation state (trails, caps, merges, captures).
 - `src/scene/`: the r3f scene. The sheet is one stretched mesh (`plane.ts`) that follows the camera focus and is displaced and
   coloured in GLSL, with the masses passed as a uniform array (up to 32). `shaders.ts` mirrors `fields.ts`.
-- `src/ui/`, `src/App.tsx`: the dock, scene picker, panels and keyboard handling.
+- `src/physics/measure.ts` (pins and the closed forms they are checked against), `chirp.ts` (the wave cursor's
+  maths), `approx.ts` (the chips), each with tests.
+- `src/explain/`: the explainers (lazy-loaded, with tests that pin every figure they show).
+- `src/ui/`, `src/App.tsx`: the dock, scene picker, panels and keyboard handling. `ExplainPanel`, `MeasurePanel`,
+  `Chips` and `WaveScope` load on demand, outside the initial JS budget.
 
 ## Scripts
 
