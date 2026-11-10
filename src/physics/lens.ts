@@ -94,7 +94,8 @@ function carlsonRF(x: number, y: number, z: number): number {
   return NaN;
 }
 
-const ellipticK = (k2: number): number => carlsonRF(0, 1 - k2, 1);
+/** The complete integral K(m), parameter m = k² (any m < 1, negative included). */
+export const ellipticK = (k2: number): number => carlsonRF(0, 1 - k2, 1);
 
 /** The incomplete integral F(φ | k²), with sin²φ given. */
 function ellipticF(sin2: number, k2: number): number {

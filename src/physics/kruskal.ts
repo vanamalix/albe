@@ -37,7 +37,8 @@ export function fallWorldline(M: number, R: number, n = 400): FallPoint[] {
     const r = (R / 2) * (1 + Math.cos(eta));
     if (r <= 0) return 0;
     const f = 1 - (2 * M) / r;
-    return (k * (1 + Math.cos(eta))) / (E + Math.sqrt(E * E - f));
+    // At release E² = f exactly; rounding can leave it a hair negative, which would be NaN.
+    return (k * (1 + Math.cos(eta))) / (E + Math.sqrt(Math.max(0, E * E - f)));
   };
   const out: FallPoint[] = [];
   let v = tortoise(M, R); // t = 0 at release
