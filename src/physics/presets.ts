@@ -225,6 +225,43 @@ function clocks(): Preset {
   };
 }
 
+/** Gyroscope round a hole: one particle on a circular orbit carries the spin (drawn in the Explain panel). */
+export const GYRO = { M: 4, r: 32 };
+function gyroscope(): Preset {
+  const { M, r } = GYRO;
+  return {
+    id: 'gyro',
+    group: 'Relativity',
+    name: 'Gyroscope round a hole',
+    note: 'A particle on a circular orbit at 8M carries a gyroscope. Its spin turns relative to the distant stars by 2π(1 − √(1 − 3M/r)) per orbit, more than the 2π(1 − √(1 − 2M/r)) that space curvature alone gives. Open Explain to watch both arrows.',
+    bodies: [{ x: 0, y: 0, vx: 0, vy: 0, m: M }],
+    probes: [{ x: r, y: 0, vx: 0, vy: circularSpeed(M, r, true), model: 'follow', label: 'Gyroscope' }],
+    fans: [],
+    settings: { timeScale: 60, mode: 'space', gr: true, gw: false, rings: true },
+  };
+}
+
+/** Dust ring: 24 particles round a centre particle, all let go from rest together at R. */
+export const DUST = { M: 4, R: 120, xi: 4, n: 24 };
+function dustRing(): Preset {
+  const { M, R, xi, n } = DUST;
+  const probes: PresetProbe[] = [{ x: R, y: 0, vx: 0, vy: 0, model: 'follow', label: 'Ring centre' }];
+  for (let i = 0; i < n; i++) {
+    const a = (2 * Math.PI * i) / n;
+    probes.push({ x: R + xi * Math.cos(a), y: xi * Math.sin(a), vx: 0, vy: 0, model: 'follow' });
+  }
+  return {
+    id: 'dust',
+    group: 'Relativity',
+    name: 'Dust ring (tides)',
+    note: 'Twenty-four particles in a ring round a centre particle, let go from rest at 30M. The ring stretches toward the hole and squeezes across: the tidal field, seen directly. The plane hides the third axis, which squeezes too, so the area on screen grows while the volume does not.',
+    bodies: [{ x: 0, y: 0, vx: 0, vy: 0, m: M }],
+    probes,
+    fans: [],
+    settings: { timeScale: 30, mode: 'tidal', gr: true, gw: false, rings: true },
+  };
+}
+
 function photonSphere(): Preset {
   const M = 4;
   const critical = 3 * Math.sqrt(3) * M;
@@ -757,6 +794,8 @@ function empty(): Preset {
 export const PRESETS: Preset[] = [
   singleBlackHole(),
   clocks(),
+  gyroscope(),
+  dustRing(),
   mercury(),
   binary(),
   chirp(),
