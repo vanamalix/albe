@@ -144,6 +144,19 @@ export function haloEnclosed(m: number, a: number, R: number, r: number): number
   return (m * (r - a * Math.atan(r / a))) / (R - a * Math.atan(R / a));
 }
 
+/** Tidal radius of a star of radius R and mass m around a hole of mass M (Rees 1988). */
+export const tidalRadius = (R: number, m: number, M: number): number => R * Math.cbrt(M / m);
+
+/** True if the star is torn apart before reaching the horizon (r_t outside r_s = 2M). */
+export const tornBeforeHorizon = (R: number, m: number, M: number): boolean => tidalRadius(R, m, M) > 2 * M;
+
+/**
+ * Hole mass above which a star is swallowed whole rather than torn (r_t = r_s): M² = R³ / (8m). With
+ * compressed scene radii this is far below the real value: about 15 M☉ for the scene's Sun-like star,
+ * against about 10⁸ M☉ (the Hills mass) for the real Sun.
+ */
+export const swallowMass = (R: number, m: number): number => Math.sqrt((R * R * R) / (8 * m));
+
 /** Central density of that halo. */
 export const haloDensity0 = (m: number, a: number, R: number): number => m / (4 * Math.PI * a * a * (R - a * Math.atan(R / a)));
 

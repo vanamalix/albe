@@ -4,7 +4,7 @@
  */
 import { DOMAIN } from '../physics/fields';
 import { advanceRay, CAPTURE_RATIO, makeRay } from '../physics/light';
-import { haloEnclosed } from '../physics/bodies';
+import { haloEnclosed, tidalRadius, tornBeforeHorizon } from '../physics/bodies';
 import { advanceBodies, type NBodyOptions, type Remnant } from '../physics/nbody';
 import type { Preset } from '../physics/presets';
 import { circularSpeed, dominantSource, probeDt, properTimeRatio, rk4ProbeStep } from '../physics/probes';
@@ -343,7 +343,8 @@ export class World {
 
   /**
    * A star passing inside the tidal radius r_t = R (M/m)^(1/3) of a compact object comes apart (Rees
-   * 1988). If r_t is inside the horizon the star is swallowed whole, as happens for very large holes.
+   * 1988). If r_t is inside the horizon the star is swallowed whole. With compressed scene radii
+   * that first happens near 15 M☉ for a Sun-like star; for the real Sun it is near 10⁸ M☉.
    */
   private tearStars(): void {
     for (let i = this.bodies.length - 1; i >= 0; i--) {
@@ -352,9 +353,9 @@ export class World {
       for (const hole of this.bodies) {
         if (!isCompact(hole) || hole.m <= star.m) continue;
         const R = surfaceRadius(star);
-        const tidal = R * Math.cbrt(hole.m / star.m);
+        const tidal = tidalRadius(R, star.m, hole.m);
         const d = Math.hypot(star.x - hole.x, star.y - hole.y);
-        if (d < tidal && tidal > surfaceRadius(hole)) {
+        if (d < tidal && tornBeforeHorizon(R, star.m, hole.m)) {
           this.shred(star, hole, d);
           break;
         }

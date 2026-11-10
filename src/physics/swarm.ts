@@ -468,6 +468,8 @@ export function spawnDisk(swarm: Swarm, host: Body, opts: DiskOptions, bodies: r
     const vc2 = (ringCount[k] > 0 ? ringPull[k] / ringCount[k] : inwardPull(i, ux, uy)) * R;
     const vc = Math.sqrt(vc2);
     const omega = vc / R;
+    // κ = √2 Ω holds on a flat rotation curve; in the rising core κ → 2Ω, so σ is set a little high
+    // there and the true Q runs up to √2 ≈ 1.41× its nominal value at the centre.
     const kappa = Math.SQRT2 * omega;
     const sigma = opts.mass > 0 ? Math.min(0.45 * vc, (3.36 * opts.q * surface(R)) / Math.max(kappa, 1e-9)) : 0.03 * vc;
     // Asymmetric drift: a disk with random motions rotates a little below the circular speed.

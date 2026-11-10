@@ -40,21 +40,21 @@ Wrangler. Everything is bundled, so nothing loads from a CDN at runtime.
 | Piece | Model | Status |
 |---|---|---|
 | Space view | Flamm paraboloid z(r) = 2√(r_s(r − r_s)) | Exact for one non-rotating black hole, drawn to true scale at ×1. Several masses are a weak-field superposition. |
-| Time view | Φ = −ΣM/r, dτ/dt = √(1+2Φ) | Exact for one non-rotating black hole (static observer). Superposed otherwise. |
-| Tidal view | K = 48M²/r⁶ | Exact for one non-rotating black hole. Summed otherwise. |
+| Time view | Φ = −ΣM/r, dτ/dt = √(1+2Φ) | Exact for one non-rotating black hole (static observer). Superposed otherwise; the clamp at 1+2Φ = 0 is not a common horizon. |
+| Tidal view | K = 8 E_ij E^ij with the tidal tensor summed over masses (48M²/r⁶ for one) | Exact for one non-rotating black hole. Tidal tensors superposed otherwise, so tides interfere. |
 | Lattice | Lines pulled toward masses | Illustrative only. |
-| Massive bodies | N-body gravity plus 1PN Einstein-Infeld-Hoffmann terms, velocity Verlet, adaptive sub-steps | Post-Newtonian expansion. Each pair's correction is capped near merger. |
-| Gravitational radiation | 2.5PN radiation reaction on every pair (Blanchet 2014) | Leading order. Matches the Peters (1964) rates over an orbit. |
+| Massive bodies | N-body gravity plus 1PN Einstein-Infeld-Hoffmann terms, velocity Verlet, adaptive sub-steps | Post-Newtonian expansion, harmonic r. Each pair's correction is capped at half its Newtonian pull: the cap fires from r ≈ 7.2M, so capped binaries have no ISCO and no plunge. |
+| Gravitational radiation | 2.5PN radiation reaction on every pair (Blanchet 2014) | Leading order. Matches the Peters (1964) rates over an orbit. Pairs radiate independently, so quadrupole cross terms are dropped for three or more bodies. |
 | Mergers | Numerical-relativity fits for radiated mass, spin and recoil of non-spinning binaries | Fits. Recoil direction simplified; spin is reported but not simulated. |
 | Waves view | Quadrupole formula with retarded time, then a Kerr ringdown | Quadrupole approximation. Amplitude scaled for display. |
 | Stars and planets | Real mass ratios, compressed radii; exterior formulas outside, uniform-density interior inside | Display scale. Orbit corrections apply only to black holes and neutron stars; light bends around every mass. |
 | Three-body scenes | Newtonian N-body with published initial conditions | Newtonian; unstable orbits lose their pattern, as they should. |
 | Galaxies | Pseudo-isothermal halo, exponential disk near Toomre Q ≈ 1.25, Barnes-Hut self-gravity or test-particle stars, Chandrasekhar friction between halos | Planar, softened and in rescaled units. The sheet draws a galaxy as a uniform sphere (schematic). |
-| Lens view | Thin-lens equation for many masses; exact Schwarzschild bending for one black hole | Thin-lens approximate in general. Flat invented sky, face-on. |
+| Lens view | Exact Schwarzschild bending of each mass, summed; a galaxy uses the softened law 4Mb/(b²+a²) | Exact for one black hole; several masses add their exact angles, leaving nonlinear terms of order M/d. Stars are at compressed radius. Flat invented sky, face-on. |
 | Warp bubble | Alcubierre (1994) metric, York time and Eulerian energy density | Exact metric; a theoretical geometry needing negative energy. |
 | Wormhole and Kerr exhibits | Geodesics on the Ellis and equatorial Kerr geometries | Exact for test particles; hole mass and spin fixed. |
-| Test particles | a = −ΣM r̂/r² (1 + 3L²/r²) in proper time, RK4; dt/dτ = E/(1 − 2M/r) | Orbit and timing exact for one static mass. Several masses are superposed. |
-| Light | Null geodesics d²x/dλ² = −Σ3Mh²d/r⁵, dt/dλ = 1/(1 − 2M/r), RK4 | Exact for one static mass (photon sphere, capture at 3√3 M, Shapiro delay). Several masses are superposed. |
+| Test particles | a = −ΣM r̂/r² (1 + 3L²/r²) in proper time, RK4; dt/dτ = E/(1 − 2M/r) | Orbit and timing exact for one static mass, in Schwarzschild r (bodies are harmonic r, offset M). Several masses are superposed, and particle clocks near a star are kinematic only. |
+| Light | Null geodesics d²x/dλ² = −Σ3Mh²d/r⁵, dt/dλ = 1/(1 − 2M/r), RK4; a galaxy deflects by 4Mb/(b²+a²), the same law as the Lens view | Exact for one static mass (photon sphere, capture at 3√3 M, Shapiro delay). Several masses are superposed. |
 
 ## Reference data
 

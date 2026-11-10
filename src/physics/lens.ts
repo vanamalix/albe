@@ -1,6 +1,6 @@
 /**
  * Gravitational-lens maps for the Lens view. Pure maths, no rendering; the GLSL in
- * src/scene/lensView.tsx mirrors lensMap() and strongLensMap() (keep them in sync).
+ * src/scene/glslChunks.ts and lensView.tsx mirrors lensSkyMap() (a test keeps them in sync).
  *
  * Units G = c = 1. Everything is a length measured in the lens plane: θ is where a ray crosses the
  * plane, β is the point on the sky behind it, mapped back to the plane so that a ray with no mass
@@ -9,11 +9,13 @@
  *   β = θ − Σ θ_E,i² (θ − θ_i) / |θ − θ_i|²        θ_E,i² = 4 M_i D
  *
  * What is exact and what is not:
- *  - Exact: b_c = 3√3 M as the capture threshold of a single Schwarzschild hole, and the bending
- *    angle α̂(b) of schwarzschildDeflection(), used alone when the scene holds one black hole.
- *  - Thin-lens approximation: every scene with more than one mass (or one that is not a black
- *    hole). Bending is the weak-field 4M/b summed over the masses, each treated as isolated, so the
- *    strong-field photon rings are not present and a hole's capture disc is just its own b_c.
+ *  - Exact, for one mass alone: b_c = 3√3 M as the capture threshold, and the bending angle α̂(b) of
+ *    schwarzschildDeflection(), which holds outside any spherical mass by Birkhoff's theorem.
+ *  - Approximate for several masses: the exact angle of each is added as a vector (lensSkyMap), so
+ *    there is no change of law when a second mass appears. Adding them drops the masses' nonlinear
+ *    effect on each other: the leading term is of relative order M/d (M a mass, d its distance to
+ *    the mass the ray is passing). A galaxy has no vacuum exterior and keeps its softened law.
+ *  - lensMap() is the weak-field limit (4M/b only), kept for the closed-form images below.
  *  - Display choice: the geometry is a flat source plane behind a flat lens plane (2D masses, face-on
  *    observer), and D is not a physical distance. Beyond small angles the plane is a stereographic
  *    chart of the sky directions, the only way a flat sky can also receive strongly bent rays.
@@ -149,21 +151,56 @@ export function tableRemainder(table: ArrayLike<number>, x: number): number {
   return table[i0] + (table[i1] - table[i0]) * (i - i0);
 }
 
-/** One mass that is a black hole: the only case the exact deflection is applied to. */
+/** One black hole alone: the only scene where the whole map is exact. */
 export const isStrongLensScene = (sources: readonly Source[]): boolean => sources.length === 1 && isBlackHole(sources[0]);
 
 /**
- * The map for a single black hole with the exact deflection. Past small angles it uses the
- * stereographic chart 2 tan(α̂/2) of the sky, which reduces to the thin-lens α̂ as α̂ → 0 and winds
- * rays that loop the hole round to the correct direction. Returns null inside the capture disc.
+ * Deflection per unit of impact vector for one mass: α̂(b)/b. Times the vector from the mass to the
+ * ray it is the deflection, pointing back at the mass. Mirrors massDeflection() in glslChunks.ts.
+ * Inside a mass's occlusion radius the magnitude is held at its limb value, tapered to the centre,
+ * since the disc hides those rays anyway.
  */
+export function deflectionPerImpact(s: Source, b: number): number {
+  const a = s.soft ?? 0;
+  if (a > 0) return (4 * s.m) / (b * b + a * a);
+  if (s.m <= 0) return 0;
+  const bc = criticalImpact(s.m);
+  const clamped = Math.max(b, occlusionRadius(s), bc * 1.000001);
+  return schwarzschildDeflection(clamped, s.m) / clamped;
+}
+
+/**
+ * Stereographic sky chart: a deflection of size t, as a multiple of itself. It is 2 tan(t/2)/t, so it
+ * tends to 1 for small angles and winds rays bent past 180° round to the correct direction.
+ */
+export function skyChart(t: number): number {
+  if (t < 1e-6) return 1;
+  return (2 * Math.min(4000, Math.max(-4000, Math.tan(t / 2)))) / t;
+}
+
+/**
+ * The map the Lens view draws, for any set of masses: the exact deflection of each mass, added as
+ * vectors, then taken through the sky chart. Null inside a black hole's capture disc.
+ */
+export function lensSkyMap(thX: number, thY: number, sources: readonly Source[], dEff: number): { x: number; y: number } | null {
+  let sx = 0;
+  let sy = 0;
+  for (const s of sources) {
+    const dx = thX - s.x;
+    const dy = thY - s.y;
+    const b = Math.hypot(dx, dy);
+    if (isBlackHole(s) && isCaptured(b, s.m)) return null;
+    const k = deflectionPerImpact(s, b);
+    sx += k * dx;
+    sy += k * dy;
+  }
+  const k = skyChart(Math.hypot(sx, sy)) * dEff;
+  return { x: thX - k * sx, y: thY - k * sy };
+}
+
+/** The map for a single mass (see lensSkyMap). Returns null inside the capture disc. */
 export function strongLensMap(thX: number, thY: number, s: Source, dEff: number): { x: number; y: number } | null {
-  const dx = thX - s.x;
-  const dy = thY - s.y;
-  const b = Math.hypot(dx, dy);
-  if (isCaptured(b, s.m)) return null;
-  const k = (2 * Math.tan(schwarzschildDeflection(b, s.m) / 2) * dEff) / b;
-  return { x: thX - k * dx, y: thY - k * dy };
+  return lensSkyMap(thX, thY, [s], dEff);
 }
 
 /**
@@ -199,10 +236,39 @@ export function lensNote(sources: readonly Source[], maxShaderMasses: number): {
     };
   }
   const dropped = sources.length > maxShaderMasses ? ` Only the first ${maxShaderMasses} masses are drawn.` : '';
-  const holes = sources.some(isBlackHole);
+  const star = sources.some((s) => s.kind === 'star' || s.kind === 'planet' || s.kind === 'wd') ? ` Stars and planets are drawn far bigger than life, so their bending is too: a Sun-like star bends light by ${limbDegrees(0.5, 6)}° at its limb here, 1.75″ in reality.` : '';
+  const galaxy = sources.some((s) => s.kind === 'galaxy') ? ' A galaxy bends by the softened law 4Mb/(b² + a²), the same as the ray tools; its halo is an extended model, not a point.' : '';
+  if (sources.length === 1) {
+    return {
+      title,
+      body: `${sources[0].kind === 'galaxy' ? galaxy.trim() : `This mass bends each ray by its exact Schwarzschild angle outside the surface.${star}`} ${distance}`,
+      tag: `${sources[0].kind === 'galaxy' ? 'softened law' : 'compressed radius'}, ${plane}, face-on`,
+    };
+  }
+  const estimate = nonlinearEstimate(sources);
+  const size = estimate >= 0.1 ? `${(estimate * 100).toFixed(0)}%` : `${(estimate * 100).toFixed(1)}%`;
   return {
     title,
-    body: `β = θ − Σ θ_E² (θ − θ_i) / |θ − θ_i|²: each mass deflects by the weak-field 4M/b and the deflections add. ${holes ? 'Black holes are shadowed at their own b_c = 3√3 M, but the strong-field bending near that edge is not used here, so photon rings are absent. ' : ''}${distance}${dropped}`,
-    tag: `thin lens (weak field), ${holes ? 'no strong-field bending, ' : ''}${plane}, face-on`,
+    body: `Each mass bends a ray by its own exact Schwarzschild angle α̂(b), and the angles add as vectors. Adding them ignores the masses’ nonlinear effect on each other: the neglected terms are of relative order M/d, here up to about ${size}.${galaxy}${star} ${distance}${dropped}`,
+    tag: `superposed: exact bending per mass, added (not exact for several masses), ${plane}, face-on`,
   };
+}
+
+/** The largest M_j / d_ij between any pair: the relative size of the neglected nonlinear terms. */
+export function nonlinearEstimate(sources: readonly Source[]): number {
+  let largest = 0;
+  for (let i = 0; i < sources.length; i++) {
+    for (let j = 0; j < sources.length; j++) {
+      if (i === j) continue;
+      const d = Math.hypot(sources[i].x - sources[j].x, sources[i].y - sources[j].y);
+      if (d > 0) largest = Math.max(largest, sources[j].m / d);
+    }
+  }
+  return largest;
+}
+
+/** Limb deflection of a star of mass m and radius R, in degrees, as drawn at the compressed scale. */
+function limbDegrees(m: number, R: number): string {
+  const b = R / Math.sqrt(1 - (2 * m) / R);
+  return ((schwarzschildDeflection(b, m) * 180) / Math.PI).toFixed(1);
 }

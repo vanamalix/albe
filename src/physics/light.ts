@@ -8,7 +8,8 @@
  * which is exactly u″ + u = 3Mu² in Schwarzschild coordinates. So the photon sphere at 3M, the
  * critical impact parameter 3√3 M, strong deflection, the capture of rays and the Shapiro delay
  * are all exact for one static mass. Several masses are superposed: each still bends a distant
- * ray by the correct 4M/b, but the combined field is an approximation.
+ * ray by the correct 4M/b, but the combined field is an approximation. A galaxy (softening a) is a
+ * Plummer sphere in the weak field, deflecting by 4Mb/(b²+a²), the law the Lens view uses too.
  */
 import { surfaceRadius, type Ray, type Source } from './types';
 
@@ -35,8 +36,21 @@ function deriv(x: number, y: number, vx: number, vy: number, sources: readonly S
   for (const s of sources) {
     const dx = x - s.x;
     const dy = y - s.y;
-    // A galaxy's mass is spread out, so a ray through it is softened instead of scattered by a point.
-    const r2 = dx * dx + dy * dy + (s.soft ?? 0) ** 2 + 1e-12;
+    const a = s.soft ?? 0;
+    if (a > 0) {
+      // A galaxy is spread out: a Plummer sphere's −2∇⊥Φ, which integrates to 4Mb/(b²+a²), the same
+      // law as the Lens view's lensMap(). Transverse only, so the ray's speed stays what it was.
+      const v2 = vx * vx + vy * vy || 1;
+      const along = (dx * vx + dy * vy) / v2;
+      const px = dx - along * vx;
+      const py = dy - along * vy;
+      const s2 = dx * dx + dy * dy + a * a;
+      const f = (-2 * s.m * v2) / (s2 * Math.sqrt(s2));
+      ax += f * px;
+      ay += f * py;
+      continue;
+    }
+    const r2 = dx * dx + dy * dy + 1e-12;
     const h = dx * vy - dy * vx;
     const f = (-3 * s.m * h * h) / (r2 * r2 * Math.sqrt(r2));
     ax += f * dx;
@@ -157,6 +171,7 @@ export function deflectionAngle(m: number, b: number, X: number): number {
     rayStep(ray, Math.max(0.005, 0.01 * r) / Math.hypot(ray.vx, ray.vy), sources);
     if (Math.hypot(ray.x, ray.y) < 2 * m * CAPTURE_RATIO) return NaN;
   }
-  // Deflection toward the mass is positive. Unwrapped so rays bent past 180° still read correctly.
+  // Deflection toward the mass is positive. atan2 wraps past ±180°, so a ray bent further than that
+  // reads wrong here: only the tests use this function, and only on rays that do not loop.
   return -Math.atan2(ray.vy, ray.vx);
 }

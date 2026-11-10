@@ -61,7 +61,7 @@ function Overview() {
         <b>physics</b> tab says exactly which parts are which.
       </p>
       <p>
-        <b>Lens</b> uses the exact Schwarzschild bending only when the scene holds one black hole. With any other set of masses it adds each mass’s weak-field deflection (the thin-lens equation), so close to a black hole the image is approximate and the thin photon rings are missing. The sky is a flat, invented background behind a flat lens, viewed face on, and the distance to it is a display choice rather than a measurement.
+        <b>Lens</b> bends each ray by the exact Schwarzschild angle of each mass and adds the angles. For one black hole that is exact; for several it leaves out the way the masses change each other’s field (relative order M/d, where d is the distance between masses). A galaxy uses a softened law, the same as the ray tools. Near a star, bending and clock rates come from a radius drawn far bigger than life, so they are not the real values. The sky is a flat, invented background behind a flat lens, viewed face on, and the distance to it is a display choice rather than a measurement.
       </p>
 
       <h3>Your privacy</h3>
@@ -164,14 +164,17 @@ function Physics() {
             <span className="tag exact">exact for one mass</span> (static observer, Schwarzschild r), superposed otherwise.
             For slowly moving bodies the geodesic equation reduces to <b>a = −∇Φ</b>: it is the curvature of <i>time</i>, not of
             space, that makes apples fall and planets orbit. The rubber-sheet picture misleads on exactly this point
-            (Middleton &amp; Langston 2014).
+            (Middleton &amp; Langston 2014). Where 1 + 2Φ reaches 0 the superposed rate is clamped at 0, so equal holes closer than about 4M<sub>total</sub> seem to share a saturated
+            region. This is the limit of adding potentials, not a common horizon: the Brill-Lindquist common horizon appears near d ≈ 1.53 M<sub>total</sub>, in a different gauge, and a saturated colour here is no measure of it.
           </p>
 
           <h3>Tidal curvature</h3>
-          <p className="eq">K = R<sub>abcd</sub>R<sup>abcd</sup> = 48 M²/r⁶</p>
+          <p className="eq">K = R<sub>abcd</sub>R<sup>abcd</sup> = 8 E<sub>ij</sub>E<sup>ij</sup>,&nbsp;&nbsp; E<sub>ij</sub> = Σ (M/r³)(δ<sub>ij</sub> − 3 n<sub>i</sub>n<sub>j</sub>)</p>
           <p>
-            The Kretschmann scalar is a coordinate-independent measure of curvature (log-scale colour).{' '}
-            <span className="tag exact">exact for one mass</span>; summed over masses <span className="tag approx">approximate</span>.
+            The Kretschmann scalar is a coordinate-independent measure of curvature (log-scale colour), 48 M²/r⁶ for one mass.{' '}
+            <span className="tag exact">exact for one mass</span>; for several the tidal tensors E<sub>ij</sub> are summed, then squared, so tides
+            interfere: at the midpoint of two equal masses K is 4× one mass, and with two masses at right angles it equals one.{' '}
+            <span className="tag approx">linear superposition of E, static</span>.
             It is finite at the horizon (curvature there can be tiny for large holes) and diverges only at r = 0. Nichols et al.
             (2011) show richer ways to see tidal fields (“tendexes”).
           </p>
@@ -196,7 +199,10 @@ function Physics() {
             harmonic coordinates. A bound pair’s orbit advances by 6πM/(a(1−e²)) per turn at any mass ratio. Integrated with velocity
             Verlet on adaptive sub-steps, with the velocity-dependent terms evaluated twice per step.{' '}
             <span className="tag approx">expansion in M/r</span>: it fails near merger, so each pair’s correction is capped at half its
-            Newtonian pull.
+            Newtonian pull. The cap first fires near r ≈ 7.2M (M the total mass), governs the last 16% of the binary scene and the last third of the
+            Gravitational waves scene, and removes the ISCO: a capped binary has no plunge, it shrinks smoothly to 2M (from 6M to 2M in about 39M of time).
+            That smooth shrink is a feature of the cap, not of general relativity. Bodies are in harmonic coordinates, while test particles use Schwarzschild
+            r (r<sub>Schwarzschild</sub> = r<sub>harmonic</sub> + M, an offset of M at any radius).
           </p>
 
           <h3>Gravitational radiation</h3>
@@ -204,7 +210,9 @@ function Physics() {
           <p>
             The 2.5PN radiation reaction on every pair (Blanchet 2014). Averaged over an orbit it gives the Peters (1964) decay rates,
             including the faster decay of eccentric orbits. <span className="tag approx">leading order</span>. The “merges in” figure uses
-            Peters’ formula, so treat it as an estimate.
+            Peters’ formula, so treat it as an estimate. With three or more masses each pair radiates on its own, so the cross terms of the system’s
+            quadrupole are dropped, an order-one error when masses are comparable: the full N-body reaction needs the system’s fifth quadrupole derivative.{' '}
+            <span className="tag approx">exact form only for two bodies</span>
           </p>
 
           <h3>Mergers</h3>
@@ -222,8 +230,8 @@ function Physics() {
             With derivatives taken in the particle’s own proper time τ, this is the Schwarzschild geodesic equation, and the conserved energy E
             converts proper time to the distant observer’s time. Perihelion advance, the ISCO at 6M, the photon sphere at 3M and the time
             dilation of each clock all follow. <span className="tag exact">exact for one mass</span>; for several masses the terms are summed:{' '}
-            <span className="tag approx">approximate</span>. A distant observer never sees anything cross a horizon, so particles are
-            removed at r = 2.04M. Switch GR off to see Newton’s closed ellipses.
+            <span className="tag approx">approximate</span>. The velocity is dx/dτ for the particle and dx/dt for a moving source, a further approximation for fast
+            sources. A distant observer never sees anything cross a horizon, so particles are removed at r = 2.04M. Switch GR off to see Newton’s closed ellipses.
           </p>
 
           <h3>Light rays</h3>
@@ -232,7 +240,10 @@ function Physics() {
             Null geodesics in Schwarzschild coordinates, equivalent to u″ + u = 3Mu². Distant rays bend by <b>4M/b</b>, twice the Newtonian
             value, as measured in the 1919 eclipse (Dyson, Eddington &amp; Davidson 1920). Close rays bend far more, rays inside b = 3√3 M
             are captured, and light slows in coordinate time (the Shapiro delay). <span className="tag exact">exact for one static mass</span>;
-            superposed for several <span className="tag approx">approximate</span>.
+            superposed for several <span className="tag approx">approximate</span>. The ray tools and the Lens view use the same deflection law: the exact
+            α̂(b) of each mass, summed, with the sum’s neglected nonlinear terms of relative order M/d (about 1% for another equal mass at d = 100M, about 8% at d = 13M).
+            A ray through a galaxy bends by 4Mb/(b²+a²), the Born deflection of a Plummer sphere of scale a; this law, not the dynamical halo, is what both
+            views draw (at b = a it bends about 5× more than the halo’s own projected mass, reaching agreement at the edge).
           </p>
 
           <h3>Stars and planets</h3>
@@ -241,7 +252,9 @@ function Physics() {
             and planet radii are <span className="tag approx">compressed for display</span>. Outside a star the sheet uses the exterior formulas. Inside, the
             Space view uses Schwarzschild’s constant-density interior, which joins the outside smoothly; the Time view uses a uniform sphere’s Newtonian
             potential, and the Tidal view holds its surface value. Post-Newtonian corrections to orbits and test-particle precession apply only to black
-            holes and neutron stars, since a compressed star’s M/r means nothing; light still bends around every mass. Colour comes from a blackbody at the
+            holes and neutron stars, since a compressed star’s M/r means nothing, and particle clocks near a star keep only their kinematic factor. Light still
+            bends around every mass, and the Time view still draws Φ, but those come from the compressed radius: a Sun-like star bends light by 22.9° at its limb here,
+            against 1.75″ for the real Sun, about 47,000× too much, so treat them as a picture of the idea, not the value. Colour comes from a blackbody at the
             star’s temperature. Neutron stars are drawn at their true ratio of radius to r<sub>s</sub>.
           </p>
 
@@ -249,7 +262,8 @@ function Physics() {
           <p>
             Bodies merge when their surfaces touch, and the densest kind wins. A white dwarf pushed past the Chandrasekhar mass (1.44 M☉) collapses to a
             neutron star, which is one real outcome; a neutron star above about 2.3 M☉ collapses to a black hole. A star inside the tidal radius
-            R(M/m)<sup>⅓</sup> of a compact object breaks into test particles (Rees 1988). <span className="tag approx">outcomes simplified</span>
+            R(M/m)<sup>⅓</sup> of a compact object breaks into test particles (Rees 1988). With compressed radii a Sun-like star is swallowed whole by holes above about 15 M☉, whereas
+            for the real Sun that takes about 10⁸ M☉ (the Hills mass). <span className="tag approx">outcomes simplified</span>
           </p>
 
           <h3>Three bodies</h3>
@@ -267,6 +281,8 @@ function Physics() {
             Toomre’s stability limit (Toomre 1964), and the arms grow by themselves. In collisions the stars are test particles, the method of Toomre &amp; Toomre
             (1972), and the halos are rigid, so Chandrasekhar’s dynamical friction (1943) supplies the drag that makes them merge. The lighter of a
             pair feels the heavier halo exactly as its own stars do, so it does not fall away from them, and the heavier takes the equal and opposite reaction.
+            The cluster scene sets friction to 4% of Chandrasekhar’s value so the galaxies do not all sink at once: a display choice, not a measurement. The disk’s
+            velocity dispersion uses κ = √2Ω, right on a flat curve, so inside the rising core the true Q runs up to √2 ≈ 1.41× its nominal value.
             Everything here is in one plane and uses rescaled units. <span className="tag approx">restricted or softened N-body</span>
           </p>
 

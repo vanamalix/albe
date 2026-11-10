@@ -7,10 +7,13 @@
  *     a = -Σ_i M_i d̂ / r² · (1 + 3 L_i² / r²)
  *
  * For a single static mass this is exactly the Schwarzschild geodesic in Schwarzschild
- * coordinates, with the velocity and time derivative taken with respect to the particle's own
+ * coordinates (r is areal, unlike the harmonic r of the bodies in nbody.ts: r_areal = r_harmonic + M),
+ * with the velocity and time derivative taken with respect to the particle's own
  * proper time τ:  r̈ = −M/r² + L²/r³ − 3ML²/r⁴  and  r²φ̇ = L. Coordinate time then follows from
  * the conserved energy, dt/dτ = E/(1 − 2M/r) (see properTimeRatio), so both the orbit's shape and
  * its timing are exact for one mass. For several (moving) masses it is a superposition: approximate.
+ * L_i mixes the probe's dx/dτ with the source's dx/dt: right for slow sources, another approximation
+ * for fast ones.
  *
  * The leading-order perihelion advance per orbit is Δφ = 6πM / (a (1 − e²)).
  */
@@ -103,13 +106,18 @@ export const MAX_TIME_RATIO = 200;
 /**
  * dt/dτ, the distant observer's time per unit of the particle's proper time. E comes from the
  * source with the strongest pull: E² = ṙ² + f (1 + L²/r²), with f = 1 − 2M/r; dt/dτ = E/f.
- * Exact for one static mass. For several, f is the superposed 1 + 2Φ.
+ * Exact for one static mass. For several, f is the superposed 1 + 2Φ. Only compact objects count
+ * in f, the same rule as the force: a compressed star's M/r means nothing, so near one the clock
+ * keeps only its kinematic factor √(1 + v²).
  */
 export function properTimeRatio(p: { x: number; y: number; vx: number; vy: number }, sources: readonly Body[]): number {
   const i = dominantSource(p.x, p.y, sources);
   if (i < 0) return Math.sqrt(1 + p.vx * p.vx + p.vy * p.vy);
   let f = 1;
-  for (const s of sources) f -= (2 * s.m) / (Math.hypot(p.x - s.x, p.y - s.y) + (s.soft ?? 0) + 1e-9);
+  for (const s of sources) {
+    if (!isCompact(s)) continue;
+    f -= (2 * s.m) / (Math.hypot(p.x - s.x, p.y - s.y) + (s.soft ?? 0) + 1e-9);
+  }
   f = Math.max(f, 1 / MAX_TIME_RATIO);
   const s = sources[i];
   const dx = p.x - s.x;

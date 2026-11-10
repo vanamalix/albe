@@ -8,7 +8,9 @@
  *  - Mergers: mass, spin and recoil from numerical-relativity fits for non-spinning binaries.
  *
  * Post-Newtonian expansions fail near merger, so each pair's correction is capped at half of its
- * Newtonian pull. Without the cap the 1PN force turns repulsive at a few M.
+ * Newtonian pull. Without the cap the 1PN force turns repulsive at a few M. The cap first fires near
+ * r = 7M and has no innermost stable circular orbit: capped binaries shrink smoothly to 2M, with no
+ * plunge (the tests state where).
  */
 import { collisionOutcome, haloDensity0, haloEnclosed, haloFlatSpeed } from './bodies';
 import { isBlackHole, isCompact, surfaceRadius, type Body } from './types';
@@ -83,6 +85,8 @@ export function computeAccelerations(bodies: Body[], softening: number): void {
 /** A post-Newtonian correction may not exceed this fraction of the pair's Newtonian pull. */
 const PN_CAP = 0.5;
 
+/** How many times the 1PN cap has limited a correction (read by the tests that state where it fires). */
+export const pnCapFired = { count: 0 };
 let potentials = new Float64Array(64);
 let newtonX = new Float64Array(64);
 let newtonY = new Float64Array(64);
@@ -141,6 +145,7 @@ export function addFirstPostNewtonian(bodies: Body[]): void {
       let cy = -pull * ny * bracket + pull * drive * (A.vy - B.vy) + 3.5 * (B.m / r) * newtonY[b];
       const size = Math.hypot(cx, cy);
       if (size > PN_CAP * pull) {
+        pnCapFired.count++;
         cx *= (PN_CAP * pull) / size;
         cy *= (PN_CAP * pull) / size;
       }
@@ -155,6 +160,10 @@ export function addFirstPostNewtonian(bodies: Body[]): void {
  *   A = (8Mν/5r) ṙ (−(17/3) M/r − 3v²),   B = (8Mν/5r) (3 M/r + v²)
  * Unlike an orbit-averaged drag this handles eccentric orbits and close fly-bys, and over an orbit
  * it reproduces the Peters (1964) decay rates. Linear momentum is conserved.
+ *
+ * Exact only for two bodies: with three or more, each pair radiates on its own, so the cross terms of
+ * the system's quadrupole are dropped (an order-one error for comparable triples). The full N-body
+ * reaction needs the fifth time derivative of the total quadrupole (Burke-Thorne), not done here.
  */
 export function addRadiationReaction(bodies: Body[], boost: number): void {
   const n = bodies.length;

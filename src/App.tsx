@@ -128,7 +128,7 @@ function modeNote(mode: ViewMode, nBodies: number, exag: number): { title: strin
   const curved = mode === 'space' || mode === 'time' || mode === 'tidal';
   const plain = { ...note, body: note.body.replace(', drawn to true scale', '') };
   if (curved && world.bodies.some((b) => b.kind === 'galaxy')) return { ...plain, tag: 'schematic: a galaxy is drawn as a uniform sphere' };
-  if (curved && world.bodies.some((b) => !isBlackHole(b))) return { ...plain, tag: 'exterior formula, uniform sphere inside, sizes compressed' };
+  if (curved && world.bodies.some((b) => !isBlackHole(b))) return { ...plain, body: `${plain.body} Stars and planets are drawn far bigger than life, so the depth and curvature near them are not their real values.`, tag: 'exterior formula, uniform sphere inside, sizes compressed' };
   if (curved && world.bodies.some((b) => b.spin)) return { ...note, tag: 'Schwarzschild: this remnant’s spin is not drawn' };
   return note;
 }
@@ -148,14 +148,14 @@ function baseModeNote(mode: ViewMode, nBodies: number, exag: number, multi: bool
     case 'time':
       return {
         title: 'Time curvature · lapse √(−g_tt)',
-        body: 'Height ∝ Φ, colour = clock rate dτ/dt = √(1 + 2Φ). For slow particles it is this curvature of time, not of space, that drives the motion.',
+        body: `Height ∝ Φ, colour = clock rate dτ/dt = √(1 + 2Φ). For slow particles it is this curvature of time, not of space, that drives the motion.${multi ? ' Where 1 + 2Φ reaches 0 the colour saturates: that is the superposition’s limit, not a common horizon.' : ''}`,
         tag: multi ? 'superposed (approximate)' : 'exact for one mass',
       };
     case 'tidal':
       return {
         title: 'Tidal curvature · Kretschmann scalar',
-        body: 'Colour = log₁₀ of K = 48M²/r⁶: a coordinate-free measure of where spacetime is strongly curved.',
-        tag: multi ? 'summed (approximate)' : 'exact for one mass',
+        body: `Colour = log₁₀ of K = 8 E_ij E^ij, ${multi ? 'with the tidal tensors of the masses added, so tides from two masses reinforce or cancel' : 'which is 48M²/r⁶ for one mass'}: a coordinate-free measure of where spacetime is strongly curved.`,
+        tag: multi ? 'tidal tensors superposed (approximate)' : 'exact for one mass',
       };
     case 'waves':
       return {

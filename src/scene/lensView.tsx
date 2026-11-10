@@ -2,8 +2,8 @@
  * The Lens view: a full-screen pass that, for every pixel, follows the ray back through the current
  * masses to a procedural sky. It solves the lens equation by inverse ray-shooting, which is exact
  * and cheap: β(θ) is a direct formula, so the multiple images, rings and arcs need no root-finding.
- * The maths and what is exact in it are in src/physics/lens.ts; this GLSL mirrors lensMap() and
- * strongLensMap() there.
+ * The maths and what is exact in it are in src/physics/lens.ts; this GLSL mirrors lensSkyMap()
+ * there (src/scene/glslChunks.ts holds the part a test compares with the JavaScript).
  *
  * The observer looks straight down at the (x, y) plane of the simulation, so the camera sets only
  * the centre, the zoom and the azimuth of the image. WebGL 2 only (texelFetch, integer hashing).
@@ -12,9 +12,10 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import { MAX_SHADER_MASSES } from '../physics/fields';
-import { DEFLECTION_TABLE_SIZE, deflectionTable, isStrongLensScene, lensDistance } from '../physics/lens';
+import { DEFLECTION_TABLE_SIZE, deflectionTable, lensDistance } from '../physics/lens';
 import { world } from '../sim/world';
 import { store } from '../state/store';
+import { LENS_GLSL } from './glslChunks';
 import { sharedUniforms } from './shaders';
 
 const vertex = /* glsl */ `
@@ -34,7 +35,6 @@ const fragment = /* glsl */ `
   uniform float uSoftening[MAXM];
   uniform highp sampler2D uDeflection;
   uniform float uDeff;
-  uniform int uStrong;
   uniform vec2 uCentre;
   uniform vec2 uRight;
   uniform vec2 uHalf;
@@ -130,6 +130,8 @@ const fragment = /* glsl */ `
     return mix(a, b, i - float(i0));
   }
 
+  ${LENS_GLSL}
+
   void main() {
     vec2 up = vec2(-uRight.y, uRight.x);
     vec2 p = uCentre + uRight * vNdc.x * uHalf.x + up * vNdc.y * uHalf.y;
@@ -138,42 +140,24 @@ const fragment = /* glsl */ `
     float solid = 1.0;     // 0 on the surface of a star or planet
     vec2 q = p;
 
-    if (uStrong == 1 && uCount == 1) {
-      // One black hole: the exact Schwarzschild bending, wound round a stereographic sky.
-      vec4 m = uMasses[0];
+    // Each mass bends the ray by its own exact angle; the angles add as vectors, then the sky chart
+    // winds them round. A black hole also blacks out its capture disc; a solid body covers its limb.
+    vec2 sum = vec2(0.0);
+    for (int i = 0; i < MAXM; i++) {
+      if (i >= uCount) break;
+      vec4 m = uMasses[i];
       vec2 d = p - m.xy;
-      float bc = BC_FACTOR * m.z;
-      float b = length(d);
-      visible = smoothstep(bc - px, bc + px, b);
-      float clamped = max(b, bc * 1.000001);
-      float x = bc / clamped;
-      float alpha = -log(1.0 - x) + remainder(x);
-      float t = clamp(tan(alpha * 0.5), -4000.0, 4000.0);
-      q = p - uDeff * 2.0 * t * d / clamped;
-    } else {
-      // Thin lens: β = θ − Σ 4 M_i D (θ − θ_i) / |θ − θ_i|². Mirrors lensMap().
-      vec2 pull = vec2(0.0);
-      for (int i = 0; i < MAXM; i++) {
-        if (i >= uCount) break;
-        vec4 m = uMasses[i];
-        vec2 d = p - m.xy;
-        float b2 = dot(d, d);
-        float a = uSoftening[i];
-        if (a > 0.0) {
-          pull += d * 4.0 * m.z / (b2 + a * a);
-          continue;
-        }
-        float rs = 2.0 * m.z;
-        bool hole = m.w <= rs * 1.0001;
-        float occlude = (hole || m.w < 3.0 * m.z) ? BC_FACTOR * m.z : m.w / sqrt(1.0 - rs / m.w);
-        float b = sqrt(b2);
-        float cover = smoothstep(occlude - px, occlude + px, b);
-        if (hole) visible = min(visible, cover);
-        else solid = min(solid, cover);
-        pull += d * 4.0 * m.z / max(b2, occlude * occlude);
-      }
-      q = p - uDeff * pull;
+      float b2 = dot(d, d);
+      float a = uSoftening[i];
+      sum += d * massDeflection(b2, m.z, m.w, a);
+      if (a > 0.0) continue;
+      float occlude = occlusion(m.z, m.w);
+      float b = sqrt(b2);
+      float cover = smoothstep(occlude - px, occlude + px, b);
+      if (m.w <= 2.0 * m.z * 1.0001) visible = min(visible, cover);
+      else solid = min(solid, cover);
     }
+    q = p - uDeff * skyChart(length(sum)) * sum;
 
     // How far a pixel reaches on the sky: lensing shears pixels into long footprints.
     vec2 dq = fwidth(q);
@@ -202,7 +186,6 @@ export function createLensMaterial(): THREE.ShaderMaterial {
       uSoftening: { value: new Float32Array(MAX_SHADER_MASSES) },
       uDeflection: { value: table },
       uDeff: { value: 0 },
-      uStrong: { value: 0 },
       uCentre: { value: new THREE.Vector2() },
       uRight: { value: new THREE.Vector2(1, 0) },
       uHalf: { value: new THREE.Vector2(1, 1) },
@@ -230,7 +213,6 @@ export function setLensMasses(material: THREE.ShaderMaterial, exaggeration: numb
   const n = Math.min(bodies.length, MAX_SHADER_MASSES);
   for (let i = 0; i < n; i++) soft[i] = bodies[i].soft ?? 0;
   u.uDeff.value = lensDistance(bodies) * exaggeration;
-  u.uStrong.value = isStrongLensScene(bodies) ? 1 : 0;
 }
 
 /**

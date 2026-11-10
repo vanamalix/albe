@@ -67,6 +67,22 @@ for (const [name, width, height] of [
       expect(net.shielded, 'nothing goes to Shielded before the button is pressed').toEqual([]);
     });
 
+    test('the Tidal and Lens shaders compile and run with no errors', async ({ page }) => {
+      const errors = watch(page);
+      const net = await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      const title = page.locator('.info-title');
+      for (const [presses, name] of [[2, /Tidal/], [3, /Lens/]] as const) {
+        for (let i = 0; i < presses; i++) await page.keyboard.press('v');
+        await expect(title).toContainText(name);
+        await page.waitForTimeout(1200);
+      }
+      await shot(page, `lens-${name}`);
+      expect(errors).toEqual([]);
+      expect(net.blocked).toEqual([]);
+    });
+
     test('How it works carries the credit and passes axe', async ({ page }) => {
       const errors = watch(page);
       const net = await offline(page);

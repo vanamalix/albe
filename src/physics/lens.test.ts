@@ -169,8 +169,8 @@ describe('occlusion, distance and labels', () => {
     expect(lensNote([hole], 32).tag).toMatch(/exact bending/);
     expect(lensNote([hole], 32).tag).toMatch(/2D source plane/);
     const two = lensNote([hole, { x: 90, y: 0, m: 1 }], 32);
-    expect(two.tag).toMatch(/thin lens/);
-    expect(two.tag).toMatch(/no strong-field/);
+    expect(two.tag).toMatch(/exact bending per mass/);
+    expect(two.tag).toMatch(/not exact for several masses/);
     expect(two.tag).toMatch(/2D source plane/);
     expect(lensNote([], 32).tag).toMatch(/no lens/);
     expect(lensNote(new Array(40).fill(hole), 32).body).toMatch(/first 32/);

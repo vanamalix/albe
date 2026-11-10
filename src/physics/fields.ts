@@ -8,8 +8,10 @@
  *    units) when the exaggeration is 1.
  *  - Lapse dτ/dt = √(1 − 2M/r) = √(1 + 2Φ) with Φ = −M/r: exact for a static observer outside a
  *    single Schwarzschild mass (r is the areal radius).
- *  - Kretschmann scalar K = R_abcd R^abcd = 48 M² / r⁶: exact for a single mass.
- * For several masses these are summed, which is only a weak-field superposition.
+ *  - Kretschmann scalar K = R_abcd R^abcd = 8 E_ij E^ij (vacuum, static), with the tidal tensor E the
+ *    sum over masses: 48 M² / r⁶ for one mass, and interference for several.
+ * For several masses these are superposed, which is only a weak-field approximation. Where Φ is so
+ * deep that 1 + 2Φ ≤ 0, lapse() clamps at 0: a superposition artefact, not a common horizon.
  *
  * A star, planet or galaxy has no horizon, so the exterior formulas stop at its surface. Inside, the
  * sheet follows a uniform sphere: the Schwarzschild interior embedding for space, and the Newtonian
@@ -75,15 +77,30 @@ export function lapse(phi: number): number {
   return Math.sqrt(Math.max(0, Math.min(1, 1 + 2 * phi)));
 }
 
-/** Σ 48 M² / r⁶ (each r clamped at its surface or horizon). */
+/**
+ * K = 8 E_ij E^ij, with the tidal tensor E summed over the masses: each contributes
+ * (M/r³)(δ_ij − 3 n_i n_j) (each r clamped at its surface or horizon). Mirrors tidalK() in
+ * src/scene/glslChunks.ts, and a test holds them to the same value.
+ */
 export function kretschmann(x: number, y: number, sources: readonly Source[]): number {
-  let k = 0;
+  let exx = 0;
+  let eyy = 0;
+  let exy = 0;
+  let ezz = 0;
   for (const s of sources) {
-    const r = Math.max(Math.hypot(x - s.x, y - s.y), fieldRadius(s));
-    const r2 = r * r;
-    k += (48 * s.m * s.m) / (r2 * r2 * r2);
+    const dx = x - s.x;
+    const dy = y - s.y;
+    const d = Math.hypot(dx, dy);
+    const r = Math.max(d, fieldRadius(s));
+    const g = s.m / (r * r * r);
+    const nx = d > 0 ? dx / d : 1;
+    const ny = d > 0 ? dy / d : 0;
+    exx += g * (1 - 3 * nx * nx);
+    eyy += g * (1 - 3 * ny * ny);
+    exy -= g * 3 * nx * ny;
+    ezz += g;
   }
-  return k;
+  return 8 * (exx * exx + eyy * eyy + 2 * exy * exy + ezz * ezz);
 }
 
 /** Height of the drawn sheet at (x, y) in the given mode (mirrors the vertex shader). */

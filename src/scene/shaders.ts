@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { DOMAIN, FLAMM_REF, MAX_SHADER_MASSES, PHI_HEIGHT } from '../physics/fields';
 import { WAVE_DISPLAY_HEIGHT, WAVE_SAMPLES, WAVE_SOFTENING, WAVE_SPACING } from '../sim/waves';
+import { TIDAL_GLSL } from './glslChunks';
 import { world } from '../sim/world';
 
 /** The gravitational-wave history as a 1-pixel-tall float texture, sampled in the vertex shader. */
@@ -147,9 +148,10 @@ export const sheetFragment = /* glsl */ `
     return line * (1.0 - smoothstep(0.08, 0.3, max(w.x, w.y)));
   }
 
+  ${TIDAL_GLSL}
+
   void main() {
     float phi = 0.0;
-    float K = 0.0;
     float minRatio = 1e9;
     for (int i = 0; i < MAXM; i++) {
       if (i >= uCount) break;
@@ -159,10 +161,8 @@ export const sheetFragment = /* glsl */ `
       // Only a real horizon paints the sheet black; a star's sphere covers its own interior.
       if (m.w <= rs * 1.0001) minRatio = min(minRatio, r / rs);
       phi -= sourcePhi(r, m.z, m.w, rs);
-      float rr = max(r, m.w);
-      float r2 = rr * rr;
-      K += 48.0 * m.z * m.z / (r2 * r2 * r2);
     }
+    float K = uMode == 2 ? tidalK(vXY.x, vXY.y) : 0.0;
     float lapse = sqrt(clamp(1.0 + 2.0 * phi, 0.0, 1.0));
     vec3 base;
     float alpha = 1.0;
