@@ -45,9 +45,10 @@ export interface Probe {
   vy: number;
   /**
    * 'follow' uses the global GR/Newtonian toggle; 'newton' is always Newtonian
-   * (used for the comparison "ghost" orbits in presets).
+   * (used for the comparison "ghost" orbits in presets); 'sheet' is a marble rolling freely on the
+   * drawn Flamm surface, a geodesic of space alone (the rubber-sheet myth lesson).
    */
-  model: 'follow' | 'newton';
+  model: 'follow' | 'newton' | 'sheet';
   /** Coordinate time not yet integrated (the probe integrator sub-steps on its own clock). */
   lag: number;
   /** Proper time this particle's own clock has measured. */

@@ -162,6 +162,11 @@ export class WaveBuffer {
     this.version++;
   }
 
+  /** Simulation time of the newest sample (the last of recentStrain()). */
+  get newestTime(): number {
+    return this.nextTime - WAVE_SPACING;
+  }
+
   /** Display gain: the shader multiplies by this too. */
   get gain(): number {
     return this.peak > 0 ? (WAVE_DISPLAY_HEIGHT * 2 * WAVE_SOFTENING) / this.peak : 0;

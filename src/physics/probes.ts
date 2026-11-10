@@ -69,6 +69,57 @@ export function probeAcceleration(
   return minRatio;
 }
 
+/**
+ * A marble on the drawn Space sheet: a geodesic of the spatial metric dl² = dr²/f + r²dφ² of the
+ * dominant compact mass (f = 1 − 2M/r), with no time curvature and no gravity of any other kind. In
+ * the plane, with λ arc length and v = dx/dλ, its acceleration is radial:
+ *
+ *     a_r = M ṙ² / (r² f) − 2M φ̇²        (so r̈ = M ṙ²/(r² f) + f r φ̇²)
+ *
+ * On a surface of revolution r sin ψ is conserved (Clairaut), so a marble started tangent at r₀ can
+ * only roll outward, and one at rest stays at rest.
+ */
+export function sheetAcceleration(x: number, y: number, vx: number, vy: number, sources: readonly Body[], out: ProbeAccel): number {
+  out.ax = 0;
+  out.ay = 0;
+  const i = dominantSource(x, y, sources);
+  if (i < 0) return Infinity;
+  const s = sources[i];
+  const dx = x - s.x;
+  const dy = y - s.y;
+  const r = Math.hypot(dx, dy) + 1e-12;
+  const ratio = r / surfaceRadius(s);
+  if (!isCompact(s)) return ratio;
+  const f = Math.max(1e-6, 1 - (2 * s.m) / r);
+  const rdot = (dx * vx + dy * vy) / r;
+  const phidot = (dx * vy - dy * vx) / (r * r);
+  const ar = (s.m * rdot * rdot) / (r * r * f) - 2 * s.m * phidot * phidot;
+  out.ax = (ar * dx) / r;
+  out.ay = (ar * dy) / r;
+  return ratio;
+}
+
+/** One RK4 step of a sheet marble (sources frozen). Returns the smallest r/R seen. */
+export function rk4SheetStep(p: { x: number; y: number; vx: number; vy: number }, dt: number, sources: readonly Body[]): number {
+  const { x, y, vx, vy } = p;
+  const ratio = sheetAcceleration(x, y, vx, vy, sources, k1);
+  const h = dt / 2;
+  sheetAcceleration(x + vx * h, y + vy * h, vx + k1.ax * h, vy + k1.ay * h, sources, k2);
+  const v2x = vx + k1.ax * h;
+  const v2y = vy + k1.ay * h;
+  sheetAcceleration(x + v2x * h, y + v2y * h, vx + k2.ax * h, vy + k2.ay * h, sources, k3);
+  const v3x = vx + k2.ax * h;
+  const v3y = vy + k2.ay * h;
+  sheetAcceleration(x + v3x * dt, y + v3y * dt, vx + k3.ax * dt, vy + k3.ay * dt, sources, k4);
+  const v4x = vx + k3.ax * dt;
+  const v4y = vy + k3.ay * dt;
+  p.x = x + (dt / 6) * (vx + 2 * v2x + 2 * v3x + v4x);
+  p.y = y + (dt / 6) * (vy + 2 * v2y + 2 * v3y + v4y);
+  p.vx = vx + (dt / 6) * (k1.ax + 2 * k2.ax + 2 * k3.ax + k4.ax);
+  p.vy = vy + (dt / 6) * (k1.ay + 2 * k2.ay + 2 * k3.ay + k4.ay);
+  return ratio;
+}
+
 const k1 = { ax: 0, ay: 0 };
 const k2 = { ax: 0, ay: 0 };
 const k3 = { ax: 0, ay: 0 };
@@ -178,6 +229,12 @@ export function dominantSource(x: number, y: number, sources: readonly { x: numb
   }
   return best;
 }
+
+/**
+ * A particle's clock as it would read now: the proper time integrated so far, plus the coordinate
+ * time not yet integrated (lag, at most one step) at its current rate.
+ */
+export const clockReading = (p: { tau: number; lag: number; rate: number }): number => p.tau + p.lag * p.rate;
 
 /** dτ/dt on a circular Schwarzschild orbit of radius r: √(1 − 3M/r). Zero at and inside 3M. */
 export const circularClockRate = (m: number, r: number): number => Math.sqrt(Math.max(0, 1 - (3 * m) / r));

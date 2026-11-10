@@ -9,6 +9,16 @@
  */
 import type { Body, BodyKind } from './types';
 
+/** GM☉/c² and the nominal solar radius, in metres (IAU 2015 B3). */
+export const SUN_GM_METRES = 1476.625;
+export const SUN_RADIUS_METRES = 6.957e8;
+
+/**
+ * Light bending at the limb of a star at its true size, in arcseconds: 4GM/(c²R), first order, which
+ * is exact to a part in 10⁵ at a real star's M/R.
+ */
+export const trueLimbArcsec = (solarMass: number, solarRadius: number): number => ((4 * SUN_GM_METRES * solarMass) / (SUN_RADIUS_METRES * solarRadius)) * (180 / Math.PI) * 3600;
+
 /** Scene mass of one solar mass. */
 export const SOLAR = 0.5;
 /** Chandrasekhar mass and an upper estimate of the maximum neutron-star mass, in solar masses. */
@@ -25,6 +35,8 @@ export interface BodyType {
   solarMass: number;
   /** Scene radius. Omitted for black holes. */
   radius?: number;
+  /** True radius in solar radii, for the stars whose drawn radius is compressed. */
+  solarRadius?: number;
   /** Effective temperature, for stars. */
   tempK?: number;
   color?: Rgb;
@@ -53,7 +65,7 @@ export function displayRadius(solarRadius: number, solarMass: number): number {
 
 /** Main-sequence rows follow Pecaut & Mamajek (2013, table of 2022); see reference/refs.json. */
 function star(id: string, label: string, solarMass: number, solarRadius: number, tempK: number, blurb: string): BodyType {
-  return { id, label, kind: 'star', solarMass, radius: displayRadius(solarRadius, solarMass), tempK, color: blackbody(tempK), blurb };
+  return { id, label, kind: 'star', solarMass, radius: displayRadius(solarRadius, solarMass), solarRadius, tempK, color: blackbody(tempK), blurb };
 }
 
 export const BODY_TYPES: BodyType[] = [

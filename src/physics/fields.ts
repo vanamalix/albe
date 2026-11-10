@@ -128,6 +128,27 @@ export interface FieldSample {
   insideHorizon: boolean;
 }
 
+/**
+ * How far the weak-field picture is being pushed here: the largest single M/r (the post-Newtonian
+ * expansion parameter) and the 1PN cross term of g_tt between every pair of masses. With U = Σ M_a/r_a,
+ * the 1PN g_tt = −1 + 2U − 2U² + …, whose cross part −4 Σ_{a<b} U_a U_b is what summing the masses
+ * one by one leaves out. Galaxies are extended and are skipped.
+ */
+export function pnSample(x: number, y: number, sources: readonly Source[]): { mOverR: number; cross: number } {
+  let mOverR = 0;
+  let sum = 0;
+  let sumSq = 0;
+  for (const s of sources) {
+    if (s.kind === 'galaxy') continue;
+    const u = s.m / Math.max(Math.hypot(x - s.x, y - s.y), fieldRadius(s));
+    mOverR = Math.max(mOverR, u);
+    sum += u;
+    sumSq += u * u;
+  }
+  // 4 Σ_{a<b} U_a U_b = 2 [(Σ U)² − Σ U²].
+  return { mOverR, cross: 2 * (sum * sum - sumSq) };
+}
+
 export function sampleFields(x: number, y: number, sources: readonly Source[]): FieldSample {
   let r = Infinity;
   let m = 0;

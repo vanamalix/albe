@@ -5,9 +5,10 @@
 import { DOMAIN } from '../physics/fields';
 import { advanceRay, CAPTURE_RATIO, makeRay } from '../physics/light';
 import { haloEnclosed, tidalRadius, tornBeforeHorizon } from '../physics/bodies';
-import { advanceBodies, type NBodyOptions, type Remnant } from '../physics/nbody';
+import { ApsisTracker } from '../physics/measure';
+import { advanceBodies, pnCapFired, type NBodyOptions, type Remnant } from '../physics/nbody';
 import type { Preset } from '../physics/presets';
-import { circularSpeed, dominantSource, probeDt, properTimeRatio, rk4ProbeStep } from '../physics/probes';
+import { circularSpeed, dominantSource, probeDt, properTimeRatio, rk4ProbeStep, rk4SheetStep } from '../physics/probes';
 import { MAX_STARS, spawnDisk, Swarm } from '../physics/swarm';
 import { isCompact, surfaceRadius, type Body, type Probe, type Ray } from '../physics/types';
 import { WaveBuffer } from './waves';
@@ -78,6 +79,25 @@ export interface StepConfig {
   pn?: boolean;
 }
 
+/** A particle removed just outside a horizon: where, when, and its geodesic constants there. */
+export interface Capture {
+  /** Distance to the hole and the hole's mass at removal. */
+  r: number;
+  m: number;
+  /** Distant-observer time and the particle's own clock at removal. */
+  t: number;
+  tau: number;
+  /** E² and L² per unit rest mass, from dx/dτ relative to the hole. */
+  E2: number;
+  L2: number;
+  label?: string;
+  /** Whether it followed the relativistic law (a Newtonian particle has no clock to speak of). */
+  gr: boolean;
+}
+
+/** What the closest-approach pins follow: a test particle about its dominant mass, or a pair. */
+export type PinTarget = { kind: 'probe'; id: number } | { kind: 'pair' } | null;
+
 export class World {
   bodies: Body[] = [];
   probes: Probe[] = [];
@@ -103,6 +123,13 @@ export class World {
   friction = 1;
   /** In the browser, stars may take only part of each frame, so drawing stays smooth. */
   realtime = false;
+  /** Closest-approach pins for the measure tool. */
+  readonly pins = new ApsisTracker();
+  pinTarget: PinTarget = null;
+  /** The most recent particle removed at a horizon. */
+  lastCapture: Capture | null = null;
+  /** Whether the 1PN cap limited any pair during the last step. */
+  capActive = false;
   private swarmRestAt = 0;
   private nextId = 1;
 
@@ -121,6 +148,30 @@ export class World {
     this.ghostIds.clear();
     this.merge = true;
     this.friction = 1;
+    this.pins.reset();
+    this.pinTarget = null;
+    this.lastCapture = null;
+    this.capActive = false;
+  }
+
+  /** Points the pins at a target, clearing old ones. With no argument, picks the scene's natural one. */
+  trackPins(target?: PinTarget): void {
+    this.pins.reset();
+    if (target !== undefined) {
+      this.pinTarget = target;
+      return;
+    }
+    const probe = this.probes.find((p) => p.model === 'follow');
+    if (probe && this.bodies.length >= 1) this.pinTarget = { kind: 'probe', id: probe.id };
+    else if (this.bodies.length === 2 && this.bodies.every(isCompact)) this.pinTarget = { kind: 'pair' };
+    else this.pinTarget = null;
+    // The starting state is the first sample, so a start at periapsis can be the first pin.
+    if (probe && this.pinTarget?.kind === 'probe') {
+      const i = dominantSource(probe.x, probe.y, this.bodies);
+      const s = this.bodies[i];
+      this.pins.observe(probe.x - s.x, probe.y - s.y, probe.vx - s.vx, probe.vy - s.vy, this.simTime);
+    }
+    this.observePair(this.simTime);
   }
 
   loadPreset(p: Preset): void {
@@ -149,6 +200,7 @@ export class World {
         this.trails.set(b.id, t);
       }
     }
+    this.trackPins();
   }
 
   addBody(x: number, y: number, vx: number, vy: number, m: number, traits: BodyTraits = {}): Body | null {
@@ -262,6 +314,7 @@ export class World {
 
   step(dt: number, cfg: StepConfig, opts: NBodyOptions): void {
     if (dt <= 0) return;
+    const capsBefore = pnCapFired.count;
     if (this.swarm.n === 0) {
       this.throttled = this.advance(dt, cfg, opts) < dt * 0.999;
     } else {
@@ -283,6 +336,7 @@ export class World {
       }
       this.throttled = short;
     }
+    this.capActive = pnCapFired.count > capsBefore;
     this.recordTrails();
   }
 
@@ -304,8 +358,9 @@ export class World {
       budget,
       (h) => {
         if (held) this.pin(held);
-        this.advanceProbes(h, cfg.gr);
+        this.advanceProbes(h, cfg.gr, start + elapsed + h);
         elapsed += h;
+        this.observePair(start + elapsed);
         this.waves.advance(start + elapsed, this.bodies);
         this.tearStars();
       },
@@ -389,12 +444,21 @@ export class World {
     b.vy = 0;
   }
 
-  private advanceProbes(h: number, gr: boolean): void {
+  /** Feeds the pair's relative motion to the pins. */
+  private observePair(t: number): void {
+    if (this.pinTarget?.kind !== 'pair' || this.bodies.length !== 2) return;
+    const [a, b] = this.bodies;
+    this.pins.observe(a.x - b.x, a.y - b.y, a.vx - b.vx, a.vy - b.vy, t);
+  }
+
+  private advanceProbes(h: number, gr: boolean, tEnd: number): void {
     const src = this.bodies;
     const dead: number[] = [];
+    const target = this.pinTarget?.kind === 'probe' ? this.pinTarget.id : -1;
     for (const p of this.probes) {
       p.lag += h;
       const useGr = gr && p.model === 'follow';
+      const sheet = p.model === 'sheet';
       let guard = 0;
       for (;;) {
         // The step is in the particle's proper time; `lag` counts the distant observer's time.
@@ -411,10 +475,17 @@ export class World {
         p.rate = 1 / ratio;
         const d = dTau * ratio;
         if (p.lag < d) break;
-        const nearest = rk4ProbeStep(p, dTau, src, useGr);
+        const before = { x: p.x, y: p.y, vx: p.vx, vy: p.vy, tau: p.tau, t: tEnd - p.lag };
+        const nearest = sheet ? rk4SheetStep(p, dTau, src) : rk4ProbeStep(p, dTau, src, useGr);
         p.lag -= d;
         p.tau += dTau;
+        if (p.id === target) {
+          const i = dominantSource(p.x, p.y, src);
+          if (i >= 0) this.pins.observe(p.x - src[i].x, p.y - src[i].y, p.vx - src[i].vx, p.vy - src[i].vy, tEnd - p.lag);
+        }
         if (nearest < (useGr ? CAPTURE_RATIO : 1) || this.insideHorizon(p.x, p.y)) {
+          // The test is made on the state before this step (inside 2.04M), so that is what is recorded.
+          this.recordCapture(before, p.label, useGr);
           dead.push(p.id);
           this.flashes.push({ x: p.x, y: p.y, size: 5, age: 0, kind: 'capture' });
           break;
@@ -430,6 +501,21 @@ export class World {
       this.probes = this.probes.filter((p) => !s.has(p.id));
       for (const id of dead) this.trails.delete(id);
     }
+  }
+
+  private recordCapture(p: { x: number; y: number; vx: number; vy: number; tau: number; t: number }, label: string | undefined, gr: boolean): void {
+    const i = dominantSource(p.x, p.y, this.bodies);
+    if (i < 0) return;
+    const s = this.bodies[i];
+    const dx = p.x - s.x;
+    const dy = p.y - s.y;
+    const r = Math.hypot(dx, dy);
+    const vx = p.vx - s.vx;
+    const vy = p.vy - s.vy;
+    const L = dx * vy - dy * vx;
+    const rdot = (dx * vx + dy * vy) / r;
+    const f = 1 - (2 * s.m) / r;
+    this.lastCapture = { r, m: s.m, t: p.t, tau: p.tau, E2: rdot * rdot + f * (1 + (L * L) / (r * r)), L2: L * L, label, gr };
   }
 
   private insideHorizon(x: number, y: number): boolean {
