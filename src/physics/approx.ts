@@ -123,7 +123,7 @@ export function chipText(id: ChipId, depth: Depth, ctx: ChipContext): ChipText {
         t.body = 'The geodesic is integrated exactly and stopped at the first step inside r = 1.02 r_s, because distant time diverges there.';
         t.eq = 'Δτ = ∫ dr / √(E² − (1 − 2M/r)(1 + L²/r²)),  t ≈ −2M ln(r/2M − 1)';
         t.order = 'No series is truncated: the worldline is cut. What is lost is the last stretch to the horizon.';
-        t.source = 'Schwarzschild geodesics; radial infall in Misner, Thorne & Wheeler (1973) §31.4.';
+        t.source = 'Schwarzschild geodesics; radial infall in Misner, Thorne & Wheeler (1973) ch. 31.';
         t.error = `Δτ = ${left.toFixed(3)} (${(left / c.m).toFixed(3)}M), ${pct(left / Math.max(c.tau, 1e-9))} of the clock’s total.`;
       }
       return t;

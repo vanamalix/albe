@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { chirpMassBetween, chirpMassFrom, chirpMassOf, quadrupoleFrequency, readChirp, strainExtrema } from './chirp';
-import { DEFAULT_NBODY, pairOrbit, petersMergerTime } from './nbody';
+import { DEFAULT_NBODY, pairOrbit, petersMergerTime, pnCapFired } from './nbody';
 import { presetById } from './presets';
 import { World } from '../sim/world';
 import { WAVE_SPACING } from '../sim/waves';
@@ -41,8 +41,13 @@ describe('chirp-mass reading', () => {
     // Peters, circular: T ∝ a⁴, so halving the gap gives 1/16.
     expect(petersMergerTime(m1, m2, sep / 2, 0) / petersMergerTime(m1, m2, sep, 0)).toBeCloseTo(1 / 16, 10);
     const cfg = { gr: true, gw: true, pn: true };
+    let firstCap = 0;
     const reading = (t: number) => {
-      while (world.simTime < t) world.step(2, cfg, DEFAULT_NBODY);
+      while (world.simTime < t) {
+        const before = pnCapFired.count;
+        world.step(2, cfg, DEFAULT_NBODY);
+        if (!firstCap && pnCapFired.count > before) firstCap = world.simTime;
+      }
       const h = world.waves.recentStrain(400);
       const ext = strainExtrema(h);
       const n = ext.length;
@@ -56,6 +61,9 @@ describe('chirp-mass reading', () => {
     const late = reading(1250);
     expect(late[1]).toBeLessThan(1200);
     const r = readChirp([...early, ...late], [1, 1]);
+    // The explainer says "about 14% high".
+    expect(r.chirpMass! / chirpMassOf(m1, m2) - 1).toBeGreaterThan(0.1);
+    expect(r.chirpMass! / chirpMassOf(m1, m2) - 1).toBeLessThan(0.18);
     expect(T0).toBeGreaterThan(1700);
     expect(T0).toBeLessThan(1900);
     expect(early[1] - early[0]).toBeGreaterThan(190);
@@ -70,6 +78,8 @@ describe('chirp-mass reading', () => {
     expect(gap).toBeLessThan(2 * v2);
     // Readings taken after the cap starts climb higher: the cap, not GR, then sets the chirp.
     const capped = readChirp([...early, ...reading(1650)], [1, 1]);
+    expect(firstCap).toBeGreaterThan(1150);
+    expect(firstCap).toBeLessThan(1250);
     expect(capped.chirpMass! / chirpMassOf(m1, m2)).toBeGreaterThan(gap + 1.1);
   });
 });

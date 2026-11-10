@@ -390,13 +390,17 @@ function Dynamic() {
     trails.reset();
     if (s.trails) {
       const probeModel = new Map<number, boolean>();
-      for (const p of world.probes) probeModel.set(p.id, s.gr && p.model === 'follow');
+      const marbles = new Set<number>();
+      for (const p of world.probes) {
+        probeModel.set(p.id, s.gr && p.model === 'follow');
+        if (p.model === 'sheet') marbles.add(p.id);
+      }
       for (const [id, t] of world.trails) {
         if (t.count < 2) continue;
         const isProbe = probeModel.has(id);
         const gr = probeModel.get(id);
         const owner = isProbe ? undefined : bodies.find((b) => b.id === id);
-        const [cr, cg, cb] = world.ghostIds.has(id) ? [0.35, 0.65, 1.0] : !isProbe ? (owner?.color ?? [0.79, 0.82, 0.85]) : gr ? [0.82, 0.6, 0.13] : [0.35, 0.65, 1.0];
+        const [cr, cg, cb] = marbles.has(id) ? [0.25, 0.73, 0.31] : world.ghostIds.has(id) ? [0.35, 0.65, 1.0] : !isProbe ? (owner?.color ?? [0.79, 0.82, 0.85]) : gr ? [0.82, 0.6, 0.13] : [0.35, 0.65, 1.0];
         const amax = isProbe ? 0.75 : 0.9;
         let [px, py] = t.at(0);
         let pz = H(px, py) + LIFT;
@@ -445,6 +449,10 @@ function Dynamic() {
     // Probes.
     for (const p of world.probes) {
       const gr = s.gr && p.model === 'follow';
+      if (p.model === 'sheet') {
+        dots.add(p.x, p.y, H(p.x, p.y) + LIFT + 0.3, 0.25, 0.73, 0.31, 3);
+        continue;
+      }
       // A GR particle reddens as its clock slows relative to a distant observer.
       const slow = gr ? Math.min(1, Math.sqrt(Math.max(0, 1 - p.rate)) * 1.4) : 0;
       dots.add(p.x, p.y, H(p.x, p.y) + LIFT + 0.3, gr ? 1 : 0.5, gr ? 0.8 - 0.55 * slow : 0.78, gr ? 0.35 - 0.15 * slow : 1, 2.6);

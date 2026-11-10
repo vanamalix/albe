@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
 import { BODY_TYPES, bodyType } from './physics/bodies';
-import { MAX_SHADER_MASSES, VIEW_MODES, type ViewMode } from './physics/fields';
-import { lensNote } from './physics/lens';
+import { pnSample, VIEW_MODES, type ViewMode } from './physics/fields';
 import { kickKmPerSecond, pairOrbit } from './physics/nbody';
 import { PRESETS, presetById, surpriseScene, type SceneGroup } from './physics/presets';
-import { circularClockRate } from './physics/probes';
+import { circularClockRate, clockReading } from './physics/probes';
 import { rotationCurve } from './physics/swarm';
 import { isBlackHole, isCompact } from './physics/types';
+import { useDepth } from './state/depth';
+import { DepthSwitch } from './ui/DepthSwitch';
+import { viewCopy } from './ui/viewCopy';
 import { requestCamera, requestStep, Scene, setLabelLayer } from './scene/Scene';
 import { WarpPanel } from './scene/warpView';
 import { world } from './sim/world';
@@ -14,8 +16,20 @@ import { massFromLog, store, TOOLS, useStore, type Settings, type Tool } from '.
 import { About } from './ui/About';
 import { ExhibitPanel } from './ui/ExhibitPanel';
 import { SiteFoot } from './ui/SiteFoot';
+import { loadPreset } from './state/actions';
 import { openExhibit, useExhibit } from './state/exhibit';
 import { IconChevron, IconClear, IconClose, IconFrame, IconInfo, IconLayers, IconPause, IconPlay, IconReset, IconSliders, IconStep, toolIcons } from './ui/icons';
+
+// Panels and tools that only some visitors open: kept out of the first download.
+const WaveScope = lazy(() => import('./ui/WaveScope'));
+const Chips = lazy(() => import('./ui/Chips'));
+const ExplainPanel = lazy(() => import('./ui/ExplainPanel'));
+const MeasurePanel = lazy(() => import('./ui/MeasurePanel'));
+
+/** Opens one right-hand panel (or phone sheet) and closes the others. */
+function openPanel(which: 'settingsOpen' | 'explainOpen' | 'measureOpen', on = true): void {
+  store.set({ settingsOpen: false, explainOpen: false, measureOpen: false, [which]: on });
+}
 
 const MODE_LABEL: Record<ViewMode, string> = { space: 'Space', time: 'Time', tidal: 'Tidal', waves: 'Waves', lattice: 'Lattice', lens: 'Lens', warp: 'Warp' };
 
@@ -65,27 +79,6 @@ const LEGENDS: Partial<Record<ViewMode, { cls: string; low: string; high: string
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
-function loadPreset(id: string): void {
-  const p = presetById(id);
-  world.loadPreset(p);
-  const st = p.settings;
-  openExhibit(st.exhibit ?? null);
-  store.set((s) => ({
-    presetId: p.id,
-    note: p.note,
-    timeScale: st.timeScale,
-    mode: st.mode ?? s.mode,
-    gr: st.gr ?? s.gr,
-    gw: st.gw ?? false,
-    pn: st.pn ?? true,
-    rings: st.rings ?? s.rings,
-    playing: !st.paused,
-    darkMatter: true,
-    selectedId: null,
-    scenesOpen: false,
-  }));
-}
-
 /** Switching scene from the UI also flies the camera back, wherever it had wandered. */
 function openPreset(id: string): void {
   loadPreset(id);
@@ -119,53 +112,6 @@ function fmt(v: number, digits = 3): string {
   const a = Math.abs(v);
   if (a !== 0 && (a < 1e-3 || a >= 1e5)) return v.toExponential(2).replace('e', '×10^').replace('^+', '^');
   return v.toFixed(digits);
-}
-
-function modeNote(mode: ViewMode, nBodies: number, exag: number): { title: string; body: string; tag: string } {
-  const multi = nBodies > 1;
-  const note = baseModeNote(mode, nBodies, exag, multi);
-  // The "exact" claims are about black holes. Anything else on the sheet qualifies them.
-  const curved = mode === 'space' || mode === 'time' || mode === 'tidal';
-  const plain = { ...note, body: note.body.replace(', drawn to true scale', '') };
-  if (curved && world.bodies.some((b) => b.kind === 'galaxy')) return { ...plain, tag: 'schematic: a galaxy is drawn as a uniform sphere' };
-  if (curved && world.bodies.some((b) => !isBlackHole(b))) return { ...plain, body: `${plain.body} Stars and planets are drawn far bigger than life, so the depth and curvature near them are not their real values.`, tag: 'exterior formula, uniform sphere inside, sizes compressed' };
-  if (curved && world.bodies.some((b) => b.spin)) return { ...note, tag: 'Schwarzschild: this remnant’s spin is not drawn' };
-  return note;
-}
-
-function baseModeNote(mode: ViewMode, nBodies: number, exag: number, multi: boolean): { title: string; body: string; tag: string } {
-  switch (mode) {
-    case 'lens':
-      return lensNote(world.bodies, MAX_SHADER_MASSES);
-    case 'warp':
-      return { title: 'Alcubierre metric · York time', body: 'Height and colour show θ = v_s (x_s/r_s) df/dr_s, or the Eulerian energy density T⁰⁰. Both are normalised to their peak; v_s only scales the numbers.', tag: 'field normalised to its peak' };
-    case 'space':
-      return {
-        title: 'Space curvature · Flamm paraboloid',
-        body: `z(r) = 2√(r_s(r − r_s)), the shape of the t = const equatorial slice${exag === 1 ? ', drawn to true scale' : ` (depth ×${exag.toFixed(2)})`}.`,
-        tag: multi ? 'weak-field superposition (approximate)' : 'exact for one mass',
-      };
-    case 'time':
-      return {
-        title: 'Time curvature · lapse √(−g_tt)',
-        body: `Height ∝ Φ, colour = clock rate dτ/dt = √(1 + 2Φ). For slow particles it is this curvature of time, not of space, that drives the motion.${multi ? ' Where 1 + 2Φ reaches 0 the colour saturates: that is the superposition’s limit, not a common horizon.' : ''}`,
-        tag: multi ? 'superposed (approximate)' : 'exact for one mass',
-      };
-    case 'tidal':
-      return {
-        title: 'Tidal curvature · Kretschmann scalar',
-        body: `Colour = log₁₀ of K = 8 E_ij E^ij, ${multi ? 'with the tidal tensors of the masses added, so tides from two masses reinforce or cancel' : 'which is 48M²/r⁶ for one mass'}: a coordinate-free measure of where spacetime is strongly curved.`,
-        tag: multi ? 'tidal tensors superposed (approximate)' : 'exact for one mass',
-      };
-    case 'waves':
-      return {
-        title: 'Gravitational waves · quadrupole',
-        body: nBodies > 1 ? 'What an observer in the orbital plane would measure, h₊ = −Ï_tt(t − r)/r: ripples leave the masses at the speed of light.' : 'Waves need moving masses. Try the Gravitational waves scene, or place two masses in orbit.',
-        tag: 'quadrupole approximation, amplitude scaled',
-      };
-    default:
-      return { title: '3D lattice warp', body: 'Grid lines pulled toward each mass.', tag: 'illustrative only' };
-  }
 }
 
 function Toggle({ k, label, desc }: { k: keyof Settings; label: string; desc?: string }) {
@@ -229,10 +175,18 @@ function orbitNote(ratio: number, m: number, r: number): string {
 
 function Readout() {
   const r = useStore((s) => s.readout);
+  const pinned = useStore((s) => s.readoutPinned);
   const mode = useStore((s) => s.mode);
   if (!r || mode === 'warp') return null;
+  // How far the weak-field picture is being pushed at this point.
+  const pn = pnSample(r.x, r.y, world.bodies);
   return (
-    <div className="readout" aria-live="off">
+    <div className={`readout ${pinned ? 'pinned' : ''}`} aria-live="off">
+      {pinned && (
+        <button className="icon-btn readout-close" aria-label="Close readout" onClick={() => store.set({ readout: null, readoutPinned: false })}>
+          <IconClose />
+        </button>
+      )}
       <div>
         <span>x, y</span>
         <b>
@@ -259,6 +213,18 @@ function Readout() {
         <span>K</span>
         <b>{fmt(r.kretschmann)}</b>
       </div>
+      {!r.insideHorizon && pn.mOverR > 0 && (
+        <div title="Largest single M/r: the post-Newtonian expansion parameter">
+          <span>M/r</span>
+          <b>{fmt(pn.mOverR, 4)}</b>
+        </div>
+      )}
+      {!r.insideHorizon && world.bodies.length > 1 && (
+        <div title="1PN cross term of g_tt between the masses, left out by adding them one by one">
+          <span>4MₐM_b/(rₐr_b)</span>
+          <b>{fmt(pn.cross, 4)}</b>
+        </div>
+      )}
       {Number.isFinite(r.r) && r.hole && !r.insideHorizon && (
         <div>
           <span>Circular orbit</span>
@@ -396,43 +362,6 @@ function RotationScope() {
   );
 }
 
-/** The chirp: face-on strain over recent history, drawn at the rate the stats refresh. */
-function WaveScope() {
-  useStore((s) => s.stats);
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const c = ref.current;
-    const g = c?.getContext('2d');
-    if (!c || !g) return;
-    const w = c.clientWidth * (window.devicePixelRatio || 1);
-    const h = c.clientHeight * (window.devicePixelRatio || 1);
-    if (c.width !== w || c.height !== h) {
-      c.width = w;
-      c.height = h;
-    }
-    g.clearRect(0, 0, w, h);
-    const strain = world.waves.recentStrain(400);
-    let peak = 0;
-    for (const v of strain) peak = Math.max(peak, Math.abs(v));
-    g.strokeStyle = '#d29922';
-    g.lineWidth = 1.5 * (window.devicePixelRatio || 1);
-    g.beginPath();
-    strain.forEach((v, i) => {
-      const x = (i / (strain.length - 1)) * w;
-      const y = h / 2 - (peak > 0 ? v / peak : 0) * h * 0.44;
-      if (i === 0) g.moveTo(x, y);
-      else g.lineTo(x, y);
-    });
-    g.stroke();
-  });
-  return (
-    <figure className="scope">
-      <canvas ref={ref} role="img" aria-label="Recent gravitational-wave strain" />
-      <figcaption>Strain seen face-on, last 800 M of time</figcaption>
-    </figure>
-  );
-}
-
 function compact(v: number): string {
   if (!Number.isFinite(v)) return '∞';
   return v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v.toFixed(0);
@@ -451,7 +380,7 @@ function LiveNumbers({ time }: { time: number }) {
   const settled = pair?.bound && pair.separation > 8 * (world.bodies[0].m + world.bodies[1].m);
   const merger = world.lastMerger;
   const twin = world.ghost.length && world.bodies.length ? Math.hypot(world.bodies[0].x - world.ghost[0].x, world.bodies[0].y - world.ghost[0].y) : null;
-  if (!clocks.length && !pair && !merger && twin === null) return null;
+  if (!clocks.length && !pair && !merger && twin === null && !Number.isFinite(world.pins.advance)) return null;
   return (
     <dl className="live">
       {twin !== null && (
@@ -470,7 +399,7 @@ function LiveNumbers({ time }: { time: number }) {
         <div key={p.id}>
           <dt>{p.label}</dt>
           <dd>
-            {compact(p.tau)} M · ×{p.rate.toFixed(3)}
+            {compact(clockReading(p))} M · ×{p.rate.toFixed(3)}
           </dd>
         </div>
       ))}
@@ -492,6 +421,12 @@ function LiveNumbers({ time }: { time: number }) {
         <div>
           <dt>Turns per orbit</dt>
           <dd>{((pair.advance * 180) / Math.PI).toFixed(1)}°</dd>
+        </div>
+      )}
+      {Number.isFinite(world.pins.advance) && (
+        <div>
+          <dt>Closest point advances (pins)</dt>
+          <dd>{((world.pins.advance * 180) / Math.PI).toFixed(1)}° per orbit</dd>
         </div>
       )}
       {settled && pair && gw && compactPair && (
@@ -516,7 +451,10 @@ function InfoCard({ mode, exag, bodies, probes, time }: { mode: ViewMode; exag: 
   const open = useStore((s) => s.infoOpen);
   const note = useStore((s) => s.note);
   const rings = useStore((s) => s.rings);
-  const mn = modeNote(mode, bodies, exag);
+  const depth = useDepth();
+  void bodies; // the count re-renders the card when masses come and go
+  const mn = viewCopy(mode, depth, world.bodies, exag);
+  const sheet = world.probes.some((p) => p.model === 'sheet');
   const exhibit = useExhibit((s) => s.id);
   const legend = exhibit ? undefined : LEGENDS[mode];
   // Rings are not drawn on the lens view.
@@ -535,8 +473,11 @@ function InfoCard({ mode, exag, bodies, probes, time }: { mode: ViewMode; exag: 
       </h2>
       {open && (
         <div className="info-body">
+          {!exhibit && <DepthSwitch />}
           {!exhibit && <p>{mn.body}</p>}
+          {!exhibit && depth === 'equation' && mn.eq && <p className="eq">{mn.eq}</p>}
           {!exhibit && <span className={`tag ${exact ? 'exact' : 'approx'}`}>{mn.tag}</span>}
+          {!exhibit && depth === 'equation' && mn.ref && <p className="ref">{mn.ref}</p>}
           {legend && (
             <div className="legend">
               <span className="legend-label">{legend.label}</span>
@@ -561,6 +502,12 @@ function InfoCard({ mode, exag, bodies, probes, time }: { mode: ViewMode; exag: 
                   Newtonian
                 </li>
               )}
+              {sheet && (
+                <li>
+                  <i className="swatch green" />
+                  Marble on the sheet
+                </li>
+              )}
               {rings && hasHole && (
                 <li>
                   <i className="swatch dash-gold" />
@@ -575,11 +522,25 @@ function InfoCard({ mode, exag, bodies, probes, time }: { mode: ViewMode; exag: 
               )}
             </ul>
           )}
-          {mode === 'waves' && <WaveScope />}
+          {mode === 'waves' && (
+            <Suspense fallback={null}>
+              <WaveScope />
+            </Suspense>
+          )}
           {mode === 'warp' && <WarpPanel />}
           {world.swarm.selfGravity && world.swarm.n > 0 && <RotationScope />}
           <LiveNumbers time={time} />
           {note && <p className="preset-note">{note}</p>}
+          <div className="card-actions">
+            <button className="btn small" onClick={() => openPanel('explainOpen')}>
+              Explain this scene
+            </button>
+            {world.pinTarget && (
+              <button className="btn small" onClick={() => openPanel('measureOpen')}>
+                Measure the advance
+              </button>
+            )}
+          </div>
         </div>
       )}
     </section>
@@ -630,6 +591,9 @@ function ScenePicker() {
             </section>
           ))}
           <div className="scene-actions">
+            <button className="btn" onClick={() => openPanel('explainOpen')}>
+              Explain
+            </button>
             <button className="btn" onClick={openSurprise}>
               Surprise me
             </button>
@@ -654,6 +618,8 @@ export function App() {
   const playing = useStore((s) => s.playing);
   const aboutOpen = useStore((s) => s.aboutOpen);
   const settingsOpen = useStore((s) => s.settingsOpen);
+  const explainOpen = useStore((s) => s.explainOpen);
+  const measureOpen = useStore((s) => s.measureOpen);
   const stats = useStore((s) => s.stats);
   const exag = useStore((s) => s.exaggeration);
   const webgl = useMemo(supportsWebGL, []);
@@ -672,7 +638,7 @@ export function App() {
         const s = store.get();
         // One layer at a time: the open menu first, the selection last.
         if (s.scenesOpen) store.set({ scenesOpen: false });
-        else if (s.aboutOpen || s.settingsOpen) store.set({ aboutOpen: false, settingsOpen: false });
+        else if (s.aboutOpen || s.settingsOpen || s.explainOpen || s.measureOpen) store.set({ aboutOpen: false, settingsOpen: false, explainOpen: false, measureOpen: false });
         else store.set({ selectedId: null });
         return;
       }
@@ -756,6 +722,12 @@ export function App() {
       <ExhibitPanel />
 
       {settingsOpen && <SettingsPanel />}
+      {(explainOpen || measureOpen) && (
+        <Suspense fallback={null}>
+          {explainOpen && <ExplainPanel />}
+          {measureOpen && <MeasurePanel />}
+        </Suspense>
+      )}
 
       <Readout />
 
@@ -769,6 +741,9 @@ export function App() {
           )}
           <Selection />
           {tool === 'mass' && <MassOption />}
+          <Suspense fallback={null}>
+            <Chips />
+          </Suspense>
           <p className="hint">
             {hint}
             {touchHint}
@@ -804,7 +779,7 @@ export function App() {
             <button className="icon-btn" aria-label="Frame everything (F)" title="Frame everything (F)" onClick={() => requestCamera('frame')}>
               <IconFrame />
             </button>
-            <button className={`icon-btn ${settingsOpen ? 'on' : ''}`} aria-label="Settings" aria-expanded={settingsOpen} title="Settings" onClick={() => store.set({ settingsOpen: !settingsOpen })}>
+            <button className={`icon-btn ${settingsOpen ? 'on' : ''}`} aria-label="Settings" aria-expanded={settingsOpen} title="Settings" onClick={() => openPanel('settingsOpen', !settingsOpen)}>
               <IconSliders />
             </button>
           </div>

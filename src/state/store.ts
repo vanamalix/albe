@@ -51,6 +51,12 @@ export interface Settings {
   presetId: string;
   note: string;
   readout: Readout | null;
+  /** A readout placed by a tap (phones): it stays until dismissed or replaced. */
+  readoutPinned: boolean;
+  /** The scene's explainer panel. */
+  explainOpen: boolean;
+  /** The measure (protractor) card. */
+  measureOpen: boolean;
   stats: { bodies: number; probes: number; rays: number; stars: number; simTime: number; throttled: boolean; fps: number; offscreen: number; offscreenKind: 'mass' | 'particle' };
   /** Bumped to ask the scene to reload the current preset. */
   resetToken: number;
@@ -83,6 +89,9 @@ let state: Settings = {
   presetId: 'single',
   note: '',
   readout: null,
+  readoutPinned: false,
+  explainOpen: false,
+  measureOpen: false,
   stats: { bodies: 0, probes: 0, rays: 0, stars: 0, simTime: 0, throttled: false, fps: 60, offscreen: 0, offscreenKind: 'mass' },
   resetToken: 0,
 };

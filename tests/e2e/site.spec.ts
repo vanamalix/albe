@@ -123,6 +123,125 @@ for (const [name, width, height] of [
       expect(net.shielded).toEqual([]);
     });
 
+    test('the depth switch changes the card, is remembered, and the page works without storage', async ({ page }) => {
+      const errors = watch(page);
+      await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      const info = page.locator('.info');
+      if (!(await info.evaluate((el) => el.classList.contains('open')))) await page.locator('.info-head').click();
+      await expect(info.getByRole('button', { name: 'Equation', pressed: true })).toBeVisible();
+      await expect(info.locator('.eq')).toBeVisible();
+      await info.getByRole('button', { name: 'Words' }).click();
+      await expect(info.locator('.eq')).toHaveCount(0);
+      await expect(info.locator('.info-title')).toHaveText('Space curvature');
+      await info.getByRole('button', { name: 'Numbers' }).click();
+      await expect(info.locator('.info-body > p').first()).toContainText('not 3M');
+      await page.reload();
+      await expect(page.locator('.status')).toContainText('fps');
+      if (!(await info.evaluate((el) => el.classList.contains('open')))) await page.locator('.info-head').click();
+      await expect(info.getByRole('button', { name: 'Numbers', pressed: true })).toBeVisible();
+      expect(await axeViolations(page)).toEqual([]);
+      expect(errors).toEqual([]);
+    });
+
+    test('blocked storage: the card still defaults to Equation and switching still works', async ({ page }) => {
+      const errors = watch(page);
+      await page.addInitScript("Object.defineProperty(window, 'localStorage', { get() { throw new Error('blocked'); } })");
+      await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      const info = page.locator('.info');
+      if (!(await info.evaluate((el) => el.classList.contains('open')))) await page.locator('.info-head').click();
+      await expect(info.getByRole('button', { name: 'Equation', pressed: true })).toBeVisible();
+      await info.getByRole('button', { name: 'Words' }).click();
+      await expect(info.getByRole('button', { name: 'Words', pressed: true })).toBeVisible();
+      expect(errors).toEqual([]);
+    });
+
+    test('Explain opens beside the running scene, with live numbers, and passes axe', async ({ page }) => {
+      const errors = watch(page);
+      const net = await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-menu').getByRole('button', { name: /Black hole clocks/ }).click();
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-actions').getByRole('button', { name: 'Explain' }).click();
+      const panel = page.locator('.panel.explain');
+      await expect(panel).toBeVisible();
+      await expect(panel.getByRole('heading', { name: /Explain · Three clocks/ })).toBeVisible();
+      await expect(panel.getByRole('heading', { name: 'Common picture vs what GR says' })).toBeVisible();
+      const t0 = await panel.locator('dd').first().textContent();
+      await page.waitForTimeout(1500);
+      // The scene keeps running while the explainer is open.
+      await expect.poll(async () => panel.locator('dd').first().textContent()).not.toBe(t0);
+      await panel.getByRole('button', { name: 'Words' }).click();
+      await expect(panel.locator('.eq')).toHaveCount(0);
+      await shot(page, `explain-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+      expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(true);
+      await page.keyboard.press('Escape');
+      await expect(panel).toBeHidden();
+      expect(errors).toEqual([]);
+      expect(net.blocked).toEqual([]);
+    });
+
+    test('the measure tool: pins, a protractor moved by keyboard, and the app’s values on request', async ({ page }) => {
+      const errors = watch(page);
+      await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-menu').getByRole('button', { name: /Mercury precession/ }).click();
+      const info = page.locator('.info');
+      if (!(await info.evaluate((el) => el.classList.contains('open')))) await page.locator('.info-head').click();
+      await info.getByRole('button', { name: 'Measure the advance' }).click();
+      const panel = page.locator('.panel.measure');
+      await expect(panel).toBeVisible();
+      await expect(panel.locator('svg.plan')).toBeVisible();
+      const reading = panel.locator('dd').first();
+      await expect(reading).toHaveText('45.0°');
+      const arm = panel.getByRole('slider', { name: 'Second arm, angle' });
+      await arm.focus();
+      for (let i = 0; i < 10; i++) await page.keyboard.press('ArrowLeft');
+      await expect(reading).toHaveText('35.0°');
+      await panel.getByRole('button', { name: 'Show the app’s values' }).click();
+      await expect(panel).toContainText(/Two closest approaches are needed|Advance from the pins/);
+      await shot(page, `measure-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+      expect(errors).toEqual([]);
+    });
+
+    test('approximation chips appear with their approximation, and the wave cursor reads f', async ({ page }) => {
+      const errors = watch(page);
+      await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      await expect(page.locator('.chip')).toHaveCount(0);
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-menu').getByRole('button', { name: /Binary inspiral/ }).click();
+      await page.locator('.segmented').getByRole('button', { name: 'Lens' }).click();
+      const chip = page.getByRole('button', { name: 'Lens: angles added' });
+      await expect(chip).toBeVisible();
+      await chip.click();
+      const note = page.getByRole('region', { name: /Why is this approximate: Lens/ });
+      await expect(note).toContainText('Neglected:');
+      await expect(note).toContainText('Estimated error:');
+      await shot(page, `chips-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-menu').getByRole('button', { name: /Gravitational waves/ }).click();
+      const info = page.locator('.info');
+      if (!(await info.evaluate((el) => el.classList.contains('open')))) await page.locator('.info-head').click();
+      // Software WebGL runs slowly: keep trying until two extrema have been emitted.
+      await expect(async () => {
+        await info.getByRole('button', { name: 'Mark newest pair' }).click();
+        await expect(info.locator('.scope dl')).toContainText('f, first pair', { timeout: 1000 });
+      }).toPass({ timeout: 40_000 });
+      expect(errors).toEqual([]);
+    });
+
     test('Shielded opens in a sandboxed frame and closes every way, leaving How it works open', async ({ page }) => {
       const errors = watch(page);
       const net = await offline(page);
@@ -176,3 +295,26 @@ for (const [name, width, height] of [
     });
   });
 }
+
+test.describe('phone readout', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  test('a tap in the View tool pins the readout, with M/r, until it is closed', async ({ page }) => {
+    const errors = watch(page);
+    await offline(page);
+    await page.goto('/');
+    await expect(page.locator('.status')).toBeAttached();
+    await page.waitForTimeout(1000);
+    const canvas = page.locator('canvas').first();
+    const box = (await canvas.boundingBox())!;
+    await page.touchscreen.tap(box.x + box.width * 0.55, box.y + box.height * 0.45);
+    const readout = page.locator('.readout');
+    await expect(readout).toBeVisible();
+    await expect(readout).toContainText('M/r');
+    await page.waitForTimeout(500);
+    await expect(readout).toBeVisible();
+    await readout.getByRole('button', { name: 'Close readout' }).click();
+    await expect(readout).toBeHidden();
+    expect(errors).toEqual([]);
+  });
+});

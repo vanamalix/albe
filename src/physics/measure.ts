@@ -4,7 +4,7 @@
  *
  * Exact (one Schwarzschild mass, test particle):
  *  - apsidalAngle(): periapsis-to-periapsis angle from the elliptic integral (Darwin 1959).
- *  - radialFall(): proper and coordinate time for a fall from rest (MTW §31.4, Oppenheimer-Snyder cycloid).
+ *  - radialFall(): proper and coordinate time for a fall from rest (MTW ch. 31, the cycloid).
  *  - properTimeBetween(): ∫ dr/√(E² − f(1 + L²/r²)), the clock time between two radii on one plunge.
  * Approximate, and labelled so: textbookAdvance() is the leading order 6πM/p, and
  * secondOrderAdvance() adds the (M/p)² term.
@@ -182,7 +182,7 @@ export function secondOrderAdvance(m: number, rmin: number, rmax: number): numbe
 
 /**
  * A fall from rest at R into mass m, at radius r (Schwarzschild r): proper time τ and coordinate
- * time t, with r = (R/2)(1 + cos η) (MTW eqs. 31.10). t diverges as r → 2M; τ stays finite.
+ * time t, with r = (R/2)(1 + cos η) (MTW ch. 31). t diverges as r → 2M; τ stays finite.
  */
 export function radialFall(m: number, R: number, r: number): { tau: number; t: number } {
   const eta = Math.acos(Math.max(-1, Math.min(1, (2 * r) / R - 1)));

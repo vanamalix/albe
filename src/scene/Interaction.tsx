@@ -56,6 +56,8 @@ export function Interaction() {
     const ndc = new THREE.Vector2();
     const touches = new Set<number>();
     let downAt: { x: number; y: number; id: number } | null = null;
+    /** A one-finger touch in the View tool: a tap (not a drag) pins the readout there. */
+    let tapAt: { x: number; y: number; id: number } | null = null;
     let lastReadout = 0;
 
     const toWorld = (e: PointerEvent) => {
@@ -82,11 +84,13 @@ export function Interaction() {
       if (e.pointerType === 'touch') {
         touches.add(e.pointerId);
         if (touches.size > 1) {
+          tapAt = null;
           cancel(); // two fingers: the camera gets the gesture
           return;
         }
       }
       const tool = store.get().tool;
+      if (tool === 'view' && e.pointerType === 'touch' && touches.size === 1) tapAt = { x: e.clientX, y: e.clientY, id: e.pointerId };
       if (tool === 'view' || e.button !== 0) return;
       const p = toWorld(e);
       if (!p) return;
@@ -123,11 +127,23 @@ export function Interaction() {
           }
         }
       }
-      if (downAt || (e.target === el && e.pointerType !== 'touch')) readout(p);
+      if (downAt || (e.target === el && e.pointerType !== 'touch' && !store.get().readoutPinned)) readout(p);
     };
 
     const onUp = (e: PointerEvent) => {
       touches.delete(e.pointerId);
+      if (tapAt && e.pointerId === tapAt.id) {
+        const still = Math.hypot(e.clientX - tapAt.x, e.clientY - tapAt.y) < 8;
+        tapAt = null;
+        // Phones have no hover: a tap is how the readout is asked for, and it stays until closed.
+        if (still && e.target === el) {
+          const p = toWorld(e);
+          if (p) {
+            readout(p, true);
+            store.set({ readoutPinned: true });
+          }
+        }
+      }
       if (!downAt || e.pointerId !== downAt.id || !preview.active) return;
       const s = store.get();
       const pix = Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y);
@@ -171,7 +187,7 @@ export function Interaction() {
       if (downAt && e.pointerId === downAt.id) cancel();
     };
     const onLeave = () => {
-      if (!downAt) store.set({ readout: null });
+      if (!downAt && !store.get().readoutPinned) store.set({ readout: null });
     };
 
     el.addEventListener('pointerdown', onDown);
