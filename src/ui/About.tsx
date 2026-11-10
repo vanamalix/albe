@@ -316,6 +316,38 @@ function Physics() {
             and why, with the live numbers to watch.
           </p>
 
+          <h3>Challenges, sound and “not our universe”</h3>
+          <p>
+            <b>Wind the light</b> counts the turns a ray makes round one hole for b = b<sub>c</sub>(1 ± δ). With t = u − 1/(3M) the orbit
+            equation is exactly (dt/dφ)² = ε + t² + 2Mt³, so a deviation from the photon orbit grows as e<sup>φ</sup> and each extra turn
+            needs δ about e<sup>2π</sup> ≈ 535 times smaller, on either side. The count is the app’s RK4 null-geodesic step at 0.4% of r,
+            checked against 0.8%; their difference is the error estimate, which grows about tenfold per decade of δ, and past 0.01 turn
+            the count is withheld. The exact sweep is π + α̂ (elliptic integral) on escape and a quadrature to 2.04M on capture{' '}
+            <span className="tag exact">exact for one mass</span>; Bozza’s strong-deflection limit is shown beside it.
+          </p>
+          <p>
+            <b>Tightest stable orbit</b> launches a test particle with a fixed inward nudge of 0.01c and asks whether it survives five
+            turns. With W(r) = −M/r + L²/(2r²) − ML²/r³ the fate follows from the start alone: for a circular start the edge is 6.388M,
+            a margin beyond the ISCO that scales as the nudge to the 2/3 power <span className="tag exact">exact for one mass</span>.
+          </p>
+          <p>
+            <b>Hit a merger time</b> runs two M = 2 holes off screen with the scene’s own law and sets the result beside Peters’
+            T = (5/256)a⁴/(m₁m₂M), split at the 1PN cap. At a = 35.8 the run merges at 1882 against Peters’ 2005: 1PN terms change the
+            shrink rate by order M/a, and from about 7.2M the cap removes the ISCO, so neither number has the plunge real holes make{' '}
+            <span className="tag approx">1PN + 2.5PN, capped</span>.
+          </p>
+          <p>
+            <b>Listen</b> plays the strain history as sound, with one unit of mass taken as 20 M☉ (or 5 M☉): pitch and duration are
+            true for that mass, about 24 to 196 Hz over 0.19 s for the Gravitational waves pair; loudness is normalised. Nothing
+            plays, and no audio context exists, until it is pressed.
+          </p>
+          <p>
+            <b>Not our universe</b> changes test particles’ laws only, and says so with a chip. A force F ∝ 1/rⁿ (Newton’s at 20M)
+            turns a near-circular orbit by 180°/√(3 − n) between apsides; Bertrand’s theorem says only n = 2 and n = −1 close every
+            bound orbit. Scaling the relativistic term by s = (c/c′)² gives u″ + u = M/L² + 3sMu², Schwarzschild’s equation for M′ = sM,
+            so the ISCO moves to 6sM and the exact advance is the same elliptic integral. Masses, light, clocks and the sheet keep ours.
+          </p>
+
           <h3>Presets</h3>
           <p>
             The Mercury preset exaggerates the effect about a millionfold: a = 40M instead of ≈ 4×10⁷ solar M.
@@ -351,6 +383,8 @@ function Physics() {
             <li>M. S. Morris &amp; K. S. Thorne (1988), Am. J. Phys.; T. Müller (2004), Am. J. Phys.; O. James et al. (2015), Am. J. Phys.; N. Tsukamoto (2016), Phys. Rev. D (wormholes).</li>
             <li>J. M. Bardeen, W. H. Press &amp; S. A. Teukolsky (1972), ApJ; J. D. Schnittman (2014), Phys. Rev. Lett.; L. Resca et al. (2020), Am. J. Phys.; R. Ruffini et al. (2025), Phys. Rev. Lett. (Kerr orbits and the Penrose process).</li>
             <li>C. Darwin (1959), “The gravity field of a particle”, Proc. R. Soc. A 249, 180.</li>
+            <li>V. Bozza (2002), “Gravitational lensing in the strong field limit”, Phys. Rev. D 66, 103001.</li>
+            <li>J. Bertrand (1873), “Théorème relatif au mouvement d’un point attiré vers un centre fixe”, C. R. Acad. Sci. Paris 77, 849.</li>
             <li>C. Cutler &amp; É. É. Flanagan (1994), “Gravitational waves from merging compact binaries”, Phys. Rev. D 49, 2658.</li>
             <li>M. D. Kruskal (1960), “Maximal extension of Schwarzschild metric”, Phys. Rev. 119, 1743.</li>
             <li>C. M. Will (2014), “The confrontation between general relativity and experiment”, Living Rev. Relativ. 17, 4.</li>

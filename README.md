@@ -49,6 +49,30 @@ Wrangler. Everything is bundled, so nothing loads from a CDN at runtime.
   order, the source and a live error estimate at Equation depth.
 - **Wave cursor**: in the Waves view, tap crests or troughs on the strain scope (or Mark newest pair); two
   marks give f, four give ḟ and the leading-order chirp mass.
+- **Listen** (wave scope): the app's own strain history as sound. One unit of mass is taken as 20 M☉ (the
+  Gravitational waves pair is then 60 + 24 M☉: about 24 to 196 Hz over 0.19 s, ending on the ringdown) or 5 M☉
+  (4× higher and shorter). Pitch and duration are true for that mass; loudness is normalised. The AudioContext
+  is created only when Listen is pressed: a plain AudioBuffer, no worklet, nothing fetched.
+- **Challenges** in the Explain panel, each a reading rather than a score (the only thing stored is a
+  per-browser best in localStorage, inside try/catch):
+  - *Wind the light* (Photon sphere, Lensing fan): a log slider sets |b − b_c|/b_c from 10⁻¹ to 10⁻¹³ on
+    either side. The turns round the hole are counted with the app's RK4 null-geodesic step at 0.4% of r and
+    again at 0.8%; their difference is the error estimate, and past 0.01 turn the count is withheld (from
+    about 10⁻⁹). Beside it: the exact sweep (π + α̂ by the elliptic integral, or a quadrature to 2.04M on
+    capture), Bozza's strong-deflection limit, and the turns gained per factor e^{2π} ≈ 535 (exactly 1 in the
+    limit).
+  - *Tightest stable orbit* (Single black hole): radius and speed, then a fixed inward nudge of 0.01c; does it
+    survive five turns? Shown beside the ISCO and the effective potential's exact verdict. For a circular
+    start the edge is 6.388M, a margin beyond 6M that goes as the nudge to the 2/3 power.
+  - *Hit a merger time* (Binary inspiral): pick a target and a separation, run the pair off screen with the
+    scene's own law, and compare with Peters' T = (5/256)a⁴/(m₁m₂M), broken down before and after the 1PN cap
+    (at 35.8: 1882 against 2005).
+- **Not our universe** (Explain panel, any scene with test particles round a hole), headed as such and flagged
+  by a chip while active; every scene load puts our laws back. A force-law exponent n for Newtonian test
+  particles (F ∝ 1/rⁿ, equal to Newton's at 20M) with the apsis angle 180°/√(3 − n), the exact angle for the
+  pinned orbit and Bertrand's theorem; and a scale s = (c/c′)² on the test particles' relativistic term, which
+  is exactly Schwarzschild for M′ = sM (ISCO at 6sM, advance by the same elliptic integral). Masses, light,
+  clocks and the sheet keep our laws.
 - Keyboard: Space pauses, `.` steps, G toggles GR/Newtonian, I opens About, Delete removes the
   selected mass, Esc closes panels.
 - On phones: one finger places objects, two fingers orbit and zoom the camera.
@@ -92,6 +116,9 @@ offline. Nothing from them ships in the app, and only numerical output from REBO
 - `src/physics/measure.ts` (pins and the closed forms they are checked against), `chirp.ts` (the wave cursor's
   maths), `approx.ts` (the chips), each with tests.
 - `src/explain/`: the explainers (lazy-loaded, with tests that pin every figure they show).
+- `src/physics/winding.ts`, `orbitEdge.ts`, `whatif.ts`, `src/sim/mergerRun.ts` and `chirpSound.ts`: the
+  challenges, the "not our universe" laws and the sound, tested in `play.test.ts`. Their panels are in
+  `src/ui/play/`, each its own lazy chunk.
 - `src/ui/`, `src/App.tsx`: the dock, scene picker, panels and keyboard handling. `ExplainPanel`, `MeasurePanel`,
   `Chips` and `WaveScope` load on demand, outside the initial JS budget.
 
