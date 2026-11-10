@@ -1,23 +1,9 @@
 /** Sliders and live numbers for the wormhole and Kerr exhibits. Every figure comes from a tested physics module. */
-import type { CSSProperties, ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 import { extractable, omega, penroseDecay, penroseMaxGain, rIsco, rMarginallyBound, rPhoton, rPlus, R_ERGO_EQUATOR, criticalImpact } from '../physics/kerr';
 import { crossingSweep, ellisJupiters, ellisTide, reflectDeflection, wormholeFate } from '../physics/wormhole';
 import { exhibitStore, penroseMinSpin, useExhibit, type ExhibitId } from '../state/exhibit';
 
-const panel: CSSProperties = {
-  position: 'absolute',
-  right: 'var(--gutter)',
-  top: 'calc(var(--safe-top) + 58px)',
-  width: 300,
-  maxWidth: 'calc(100vw - 2 * var(--gutter))',
-  padding: 14,
-  zIndex: 6,
-  background: 'var(--panel)',
-  border: '1px solid var(--line)',
-  borderRadius: 'var(--radius)',
-  color: 'var(--text)',
-  font: '13px/1.45 system-ui',
-};
 const row: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 12 };
 const sub: CSSProperties = { color: 'var(--muted)', fontSize: 12, marginTop: 8 };
 
@@ -54,7 +40,7 @@ function WormholePanel() {
   const sweep = fate === 'cross' ? crossingSweep(aim * b, b) : reflectDeflection(aim * b, b);
   const tideAtThroat = ellisTide(0, 1, speed);
   return (
-    <section style={panel} aria-label="Wormhole controls">
+    <section className="exhibit-panel" aria-label="Wormhole controls">
       <strong>Ellis wormhole</strong>
       <Slider label="Throat radius b" value={b} min={8} max={60} step={1} display={`${b}`} onChange={(v) => exhibitStore.set({ b: v })} />
       <Slider label="Aim, h / b" value={aim} min={-1.8} max={1.8} step={0.01} display={aim.toFixed(2)} onChange={(v) => exhibitStore.set({ aim: v })} />
@@ -117,7 +103,7 @@ function KerrPanel({ id }: { id: ExhibitId }) {
     );
   }
   return (
-    <section style={panel} aria-label="Kerr black hole controls">
+    <section className="exhibit-panel" aria-label="Kerr black hole controls">
       <strong>{penrose ? 'Penrose process' : id === 'kerr-light' ? 'Light past a spinning hole' : 'Frame dragging'}</strong>
       <Slider label="Spin a / M" value={spin} min={penrose ? penroseMinSpin : 0} max={0.998} step={0.002} display={spin.toFixed(3)} onChange={(v) => exhibitStore.set({ spin: v })} />
       {body}
@@ -125,8 +111,19 @@ function KerrPanel({ id }: { id: ExhibitId }) {
   );
 }
 
+/** On a phone the controls would hide the exhibit, so they start folded away. */
+const isNarrow = (): boolean => typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 720px)').matches;
+
 export function ExhibitPanel() {
   const id = useExhibit((s) => s.id);
+  const [open, setOpen] = useState(() => !isNarrow());
   if (!id) return null;
-  return id === 'wormhole' ? <WormholePanel /> : <KerrPanel id={id} />;
+  return (
+    <div className="exhibit-dock">
+      <button className="btn exhibit-toggle" aria-expanded={open} onClick={() => setOpen(!open)}>
+        {open ? 'Hide controls' : 'Controls'}
+      </button>
+      {open && (id === 'wormhole' ? <WormholePanel /> : <KerrPanel id={id} />)}
+    </div>
+  );
 }
