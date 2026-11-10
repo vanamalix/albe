@@ -3,9 +3,11 @@
  * (or "Mark newest pair") marks the nearest crest or trough; two marks give f, four give ḟ and the
  * leading-order chirp mass. Loaded only in the Waves view.
  */
-import { useEffect, useRef, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { strainExtrema } from '../physics/chirp';
-import { WAVE_SPACING } from '../sim/waves';
+import { isCompact } from '../physics/types';
+import type { ChirpSound } from '../sim/chirpSound';
+import { WAVE_SAMPLES, WAVE_SPACING } from '../sim/waves';
 import { world } from '../sim/world';
 import { addMark, chirpReading, clearMarks, getMarks, useMarks } from '../state/scopeMarks';
 import { useStore } from '../state/store';
@@ -20,6 +22,84 @@ function extremaTimes(): number[] {
 }
 
 const sci = (v: number) => v.toExponential(3).replace('e', '×10^');
+
+/** What one unit of mass is taken to be, in solar masses, for the sound. */
+const UNITS = [20, 5] as const;
+type Unit = (typeof UNITS)[number];
+
+type AudioCtor = typeof AudioContext;
+
+/** The masses on the sheet, in solar masses at the chosen unit. */
+function massesAt(unit: number): string {
+  const holes = world.bodies.filter(isCompact);
+  if (holes.length === 2) return `this pair is ${(holes[0].m * unit).toFixed(0)} + ${(holes[1].m * unit).toFixed(0)} M☉`;
+  if (holes.length === 1) return `the hole now is ${(holes[0].m * unit).toFixed(0)} M☉`;
+  return 'no holes are on the sheet';
+}
+
+/** Listen: the strain history as sound, at the pitch and duration a chosen mass implies. */
+function Listen() {
+  const [unit, setUnit] = useState<Unit>(20);
+  const [state, setState] = useState<{ status: 'idle' | 'playing' | 'played' | 'silent' | 'no-audio'; clip?: ChirpSound }>({ status: 'idle' });
+  const live = useRef<AudioContext | null>(null);
+  // Leaving the Waves view stops the sound and releases the context.
+  useEffect(
+    () => () => {
+      void live.current?.close();
+      live.current = null;
+    },
+    [],
+  );
+  const listen = () => {
+    // The context is made here, inside the press, and nowhere else.
+    const Ctor: AudioCtor | undefined = window.AudioContext ?? (window as unknown as { webkitAudioContext?: AudioCtor }).webkitAudioContext;
+    if (!Ctor) return setState({ status: 'no-audio' });
+    void live.current?.close();
+    const ctx = new Ctor();
+    live.current = ctx;
+    void ctx.resume();
+    const strain = world.waves.recentStrain(WAVE_SAMPLES);
+    const oldest = world.waves.newestTime - (WAVE_SAMPLES - 1) * WAVE_SPACING;
+    import('./chirpAudio')
+      .then(({ playChirp }) => {
+        if (live.current !== ctx) return void ctx.close(); // closed or replaced meanwhile
+        const clip = playChirp(ctx, strain, unit, oldest, () => {
+          if (live.current === ctx) live.current = null;
+          setState((s) => ({ ...s, status: 'played' }));
+        });
+        setState(clip ? { status: 'playing', clip } : { status: 'silent' });
+      })
+      .catch(() => {
+        void ctx.close();
+        setState({ status: 'silent' });
+      });
+  };
+  const c = state.clip;
+  return (
+    <div className="listen">
+      <div className="depth" role="group" aria-label="One unit of mass is">
+        {UNITS.map((u) => (
+          <button key={u} aria-pressed={unit === u} className={unit === u ? 'on' : ''} onClick={() => setUnit(u)}>
+            {u} M☉
+          </button>
+        ))}
+      </div>
+      <button className="btn small" onClick={listen} disabled={state.status === 'playing'}>
+        {state.status === 'playing' ? 'Playing…' : 'Listen'}
+      </button>
+      <p className="ref" aria-live="polite">
+        {state.status === 'no-audio'
+          ? 'This browser has no Web Audio, so there is nothing to play.'
+          : state.status === 'silent'
+            ? 'No signal in the last 2,048 units of time yet.'
+            : c
+              ? `Clip: ${c.seconds.toFixed(2)} s${Number.isFinite(c.fLow) ? `, rising from ${c.fLow.toFixed(0)} to ${c.fHigh.toFixed(0)} Hz` : ', too short yet to read a pitch'}.${c.drops ? ' The pitch falls somewhere along the way: at merger the last orbit and the ringdown need not join smoothly in this model.' : ''}`
+              : ''}{' '}
+        Assumes one unit of mass is {unit} M☉, so {massesAt(unit)}: true pitch and true duration for that mass{unit === 5 ? ', 4× higher and 4× shorter than at 20 M☉, which small speakers reproduce better' : ''}. Loudness is normalised: how the amplitude rises is the simulation’s, the overall level is not. Silent until pressed.
+      </p>
+    </div>
+  );
+}
 
 export default function WaveScope() {
   useStore((s) => s.stats);
@@ -121,6 +201,7 @@ export default function WaveScope() {
           </div>
         )}
       </dl>
+      <Listen />
     </figure>
   );
 }

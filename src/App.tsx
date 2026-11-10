@@ -28,7 +28,8 @@ const MeasurePanel = lazy(() => import('./ui/MeasurePanel'));
 
 /** Opens one right-hand panel (or phone sheet) and closes the others. */
 function openPanel(which: 'settingsOpen' | 'explainOpen' | 'measureOpen', on = true): void {
-  store.set({ settingsOpen: false, explainOpen: false, measureOpen: false, [which]: on });
+  // The scene menu closes too, so it never sits over the panel it opened.
+  store.set({ settingsOpen: false, explainOpen: false, measureOpen: false, scenesOpen: false, [which]: on });
 }
 
 const MODE_LABEL: Record<ViewMode, string> = { space: 'Space', time: 'Time', tidal: 'Tidal', waves: 'Waves', lattice: 'Lattice', lens: 'Lens', warp: 'Warp' };
@@ -95,7 +96,7 @@ function clearAll(): void {
   world.clear();
   openExhibit(null);
   const empty = presetById('empty');
-  store.set({ mode: store.get().mode === 'warp' ? 'space' : store.get().mode, selectedId: null, presetId: empty.id, note: empty.note, timeScale: empty.settings.timeScale, gr: true, gw: false, pn: true, rings: true, darkMatter: true, playing: true, scenesOpen: false });
+  store.set({ mode: store.get().mode === 'warp' ? 'space' : store.get().mode, selectedId: null, presetId: empty.id, note: empty.note, timeScale: empty.settings.timeScale, gr: true, gw: false, pn: true, rings: true, darkMatter: true, forceExponent: 2, grScale: 1, playing: true, scenesOpen: false });
 }
 
 function supportsWebGL(): boolean {

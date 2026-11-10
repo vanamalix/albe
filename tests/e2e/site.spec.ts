@@ -36,6 +36,17 @@ function watch(page: Page) {
   return errors;
 }
 
+/** Opens a scene, then its explainer, and returns the named section of it. */
+async function openExplain(page: Page, scene: RegExp, section: string) {
+  await page.locator('.scene-btn').click();
+  await page.locator('.scene-menu').getByRole('button', { name: scene }).click();
+  await page.locator('.scene-btn').click();
+  await page.locator('.scene-actions').getByRole('button', { name: 'Explain' }).click();
+  const region = page.locator('.panel.explain').getByRole('region', { name: section });
+  await expect(region).toBeVisible();
+  return region;
+}
+
 async function openAbout(page: Page) {
   await page.locator('.about-btn').click();
   await expect(page.locator('.modal')).toBeVisible();
@@ -239,6 +250,134 @@ for (const [name, width, height] of [
         await info.getByRole('button', { name: 'Mark newest pair' }).click();
         await expect(info.locator('.scope dl')).toContainText('f, first pair', { timeout: 1000 });
       }).toPass({ timeout: 40_000 });
+      expect(errors).toEqual([]);
+    });
+
+    test('Wind the light counts turns with the app’s integrator, and withholds the count past its tolerance', async ({ page }) => {
+      const errors = watch(page);
+      await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      const toy = await openExplain(page, /Photon sphere/, 'Wind the light');
+      const k = toy.getByLabel('|b − b_c| / b_c');
+      await k.fill('-8');
+      const row = (name: string | RegExp) => toy.locator('.live div').filter({ hasText: name }).locator('dd');
+      await expect(row('Turns counted (RK4)')).toContainText(/^3\.368/);
+      await expect(row('Exact, π + α̂(b)')).toHaveText('3.3680');
+      await expect(row(/Gained since an aim/)).toHaveText('1.0000 turn');
+      await k.fill('-11');
+      await expect(row('Turns counted (RK4)')).toHaveText('not counted');
+      await expect(row('Exact, π + α̂(b)')).toHaveText('4.4674');
+      await toy.getByRole('button', { name: 'Just inside' }).click();
+      await expect(row('The ray')).toHaveText('falls in');
+      await k.fill('-8');
+      await expect(row('Turns counted (RK4)')).toContainText(/^3\.1499/);
+      await toy.getByRole('button', { name: 'Fire it in the scene' }).click();
+      await shot(page, `wind-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+      expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(true);
+      expect(errors).toEqual([]);
+    });
+
+    test('Tightest stable orbit: a nudged start falls in at 6.3M, survives at 6.5M, and theory puts the edge at 6.388M', async ({ page }) => {
+      const errors = watch(page);
+      await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      const toy = await openExplain(page, /Single black hole/, 'Tightest stable orbit');
+      const r = toy.getByLabel('Start radius');
+      const run = toy.locator('.live div').filter({ hasText: 'Run (app’s RK4)' }).locator('dd');
+      await r.fill('6.3');
+      await toy.getByRole('button', { name: 'Launch with the nudge' }).click();
+      await expect(run).toContainText('falls in');
+      await expect(toy).toContainText('Effective potential says');
+      await r.fill('6.5');
+      await toy.getByRole('button', { name: 'Launch with the nudge' }).click();
+      await expect(run).toContainText('survives 5 turns');
+      await expect(toy.locator('.live div').filter({ hasText: 'Smallest r that survived on this browser' }).locator('dd')).toHaveText('6.50 M');
+      await toy.getByRole('button', { name: /where theory puts the edge/ }).click();
+      await expect(toy).toContainText('r = 6.388 M');
+      await shot(page, `tightest-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+      expect(errors).toEqual([]);
+    });
+
+    test('Hit a merger time: a run at 35.8 sits beside Peters’ 2005, with the gap broken down', async ({ page }) => {
+      const errors = watch(page);
+      await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      const toy = await openExplain(page, /Binary inspiral/, 'Hit a merger time');
+      await toy.getByRole('button', { name: '2,000' }).click();
+      await toy.getByLabel('Separation').fill('35.8');
+      await toy.getByRole('button', { name: 'Run to merger' }).click();
+      const row = (name: string | RegExp) => toy.locator('.live div').filter({ hasText: name }).locator('dd');
+      await expect(row('Merged at (this run)')).toHaveText(/^\d+$/, { timeout: 30_000 });
+      await expect(row(/Peters, circular/)).toHaveText('2005');
+      await expect(row(/From 6M to contact/)).toBeVisible();
+      await expect(toy).toContainText('Where the gap comes from');
+      await shot(page, `merger-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+      expect(errors).toEqual([]);
+    });
+
+    test('Not our universe: a changed force law shows its apsis angle and a chip, and goes back', async ({ page }) => {
+      const errors = watch(page);
+      await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      const panel = await openExplain(page, /Mercury precession/, 'Not our universe');
+      await expect(page.getByRole('button', { name: 'Not our universe' })).toHaveCount(0);
+      await panel.getByLabel('F ∝ 1/rⁿ, n').fill('2.5');
+      await expect(panel.locator('.live div').filter({ hasText: 'near-circular' }).locator('dd')).toHaveText('254.56°');
+      await expect(panel.locator('.live div').filter({ hasText: 'Every bound orbit closes' }).locator('dd')).toHaveText('no');
+      await panel.getByLabel('(c/c′)²').fill('2');
+      await expect(panel.locator('.live div').filter({ hasText: 'ISCO, 6sM' }).locator('dd')).toHaveText('12.00 M');
+      const chip = page.locator('.chip.fiction');
+      await expect(chip).toBeVisible();
+      await page.keyboard.press('Escape');
+      await chip.click();
+      await expect(page.locator('.panel.explain')).toBeHidden();
+      const note = page.getByRole('region', { name: 'Not our universe: what is changed' });
+      await expect(note).toContainText('F ∝ 1/r^2.50');
+      await shot(page, `not-ours-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+      await note.getByRole('button', { name: 'Back to our universe' }).click();
+      await expect(chip).toHaveCount(0);
+      expect(errors).toEqual([]);
+    });
+
+    test('Listen: no AudioContext until pressed, then the strain plays with its mass stated', async ({ page }) => {
+      const errors = watch(page);
+      await offline(page);
+      // Counts AudioContexts made: there must be none until Listen is pressed.
+      await page.addInitScript(`
+        window.__audioContexts = 0;
+        const Real = window.AudioContext;
+        window.AudioContext = class extends Real {
+          constructor(o) {
+            super(o);
+            window.__audioContexts++;
+          }
+        };
+      `);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-menu').getByRole('button', { name: /Gravitational waves/ }).click();
+      const info = page.locator('.info');
+      if (!(await info.evaluate((el) => el.classList.contains('open')))) await page.locator('.info-head').click();
+      const listen = info.locator('.listen');
+      await expect(listen).toContainText('Assumes one unit of mass is 20 M☉, so this pair is 60 + 24 M☉');
+      await expect(listen).toContainText('Loudness is normalised');
+      expect(await page.evaluate('window.__audioContexts')).toBe(0);
+      await page.waitForTimeout(1500);
+      await listen.getByRole('button', { name: 'Listen' }).click();
+      await expect(listen.locator('.ref')).toContainText(/Clip: \d\.\d\d s(, rising from \d+ to \d+ Hz|, too short yet)|No signal/);
+      expect(await page.evaluate('window.__audioContexts')).toBe(1);
+      await listen.getByRole('button', { name: '5 M☉' }).click();
+      await expect(listen).toContainText('4× higher and 4× shorter');
+      expect(await axeViolations(page)).toEqual([]);
       expect(errors).toEqual([]);
     });
 

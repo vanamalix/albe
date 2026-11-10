@@ -386,3 +386,13 @@ export function explainerFor(presetId: string, c: ExplainContext): Explainer {
 }
 
 export const hasOwnExplainer = (presetId: string): boolean => presetId in EXPLAINERS;
+
+/** The self-paced challenges an explainer offers: each shows a physics result, not a score. */
+export type ToyId = 'wind' | 'tightest' | 'merger';
+
+const TOYS: Record<string, ToyId[]> = { photon: ['wind'], lensing: ['wind'], single: ['tightest'], binary: ['merger'] };
+
+export const toysFor = (presetId: string): ToyId[] => TOYS[presetId] ?? [];
+
+/** Whether to offer the "Not our universe" switches: a scene with test particles round a compact mass. */
+export const offersWhatIf = (c: ExplainContext): boolean => c.world.probes.some((p) => p.model !== 'sheet') && c.world.bodies.some(isCompact);

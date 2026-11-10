@@ -2,13 +2,22 @@
  * The scene's explainer: notes to read at your own pace while the scene keeps running. Loaded on
  * demand; a side panel on wide screens and a sheet on phones.
  */
-import { explainerFor, resolve, type AppApi, type ExplainContext } from '../explain/content';
+import { lazy, Suspense } from 'react';
+import { explainerFor, offersWhatIf, resolve, toysFor, type AppApi, type ExplainContext, type ToyId } from '../explain/content';
 import { world } from '../sim/world';
 import { loadPreset } from '../state/actions';
 import { useDepth } from '../state/depth';
 import { store, useStore } from '../state/store';
 import { DepthSwitch } from './DepthSwitch';
 import { IconClose } from './icons';
+
+// Each challenge is its own chunk, fetched only when its scene's explainer is open.
+const TOY: Record<ToyId, ReturnType<typeof lazy>> = {
+  wind: lazy(() => import('./play/WindLight')),
+  tightest: lazy(() => import('./play/TightestOrbit')),
+  merger: lazy(() => import('./play/MergerTime')),
+};
+const NotOurUniverse = lazy(() => import('./play/NotOurUniverse'));
 
 const app: AppApi = {
   restart: (gr) => {
@@ -78,6 +87,19 @@ export default function ExplainPanel() {
               </button>
             ))}
           </div>
+        )}
+        {toysFor(presetId).length > 0 && (
+          <Suspense fallback={<p className="ref">Loading…</p>}>
+            {toysFor(presetId).map((id) => {
+              const Toy = TOY[id];
+              return <Toy key={id} />;
+            })}
+          </Suspense>
+        )}
+        {offersWhatIf(c) && (
+          <Suspense fallback={null}>
+            <NotOurUniverse />
+          </Suspense>
         )}
         {e.reading.length > 0 && (
           <>

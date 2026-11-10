@@ -11,6 +11,7 @@
   --accent-2: #79c0ff;
   --exact: #3fb950;
   --approx: #d29922;
+  --fiction: #bc8cff;
   --danger: #f85149;
   --gutter: 16px;
   --radius: 6px;
@@ -1380,4 +1381,55 @@ output {
   right: 2px;
   width: 36px;
   height: 36px;
+}
+
+/* Challenges in the Explain panel, and the "Not our universe" switches */
+.toy {
+  margin-top: 16px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+.toy h4 {
+  margin: 12px 0 2px;
+  font-size: 0.82rem;
+  color: #c9d1d9;
+}
+.toy .depth {
+  flex-wrap: wrap;
+}
+.toy .live dd {
+  overflow-wrap: anywhere;
+}
+.not-ours {
+  margin-top: 18px;
+  padding: 4px 10px 8px;
+  border: 1px dashed var(--fiction);
+  border-radius: var(--radius-sm);
+}
+.not-ours h3,
+.chip-note.fiction h2 {
+  color: var(--fiction);
+}
+.chip.fiction {
+  border-color: var(--fiction);
+  color: var(--fiction);
+}
+.chip.fiction.on {
+  background: rgba(188, 140, 255, 0.16);
+}
+.dot.fiction {
+  color: var(--fiction);
+}
+.listen {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.listen .depth {
+  margin: 0;
+}
+.listen .ref {
+  flex-basis: 100%;
 }
