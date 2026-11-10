@@ -20,6 +20,7 @@ import type { Depth } from '../state/depth';
 import type { World } from '../sim/world';
 import { viewCopy } from '../ui/viewCopy';
 import { dustExplainer, gyroExplainer } from './classics';
+import { collapseExplainer, cosmosExplainer, microlensExplainer, shadowExplainer } from './deep';
 import { balancedExplainer, euclidExplainer } from './geometry';
 
 export interface ExplainContext {
@@ -139,6 +140,10 @@ const EXPLAINERS: Record<string, Explainer> = {
   mp: balancedExplainer,
   gyro: gyroExplainer,
   dust: dustExplainer,
+  shadow: shadowExplainer,
+  microlens: microlensExplainer,
+  frw: cosmosExplainer,
+  collapse: collapseExplainer,
   single: {
     title: 'Single black hole',
     seeing: 'A hole of M = 4 on the true Flamm geometry. Gold traces a relativistic rosette; blue started the same way under Newton and closes. The dashed rings are the photon sphere (3M) and the innermost stable circular orbit (6M).',

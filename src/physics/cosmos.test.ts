@@ -5,6 +5,7 @@ import { ageAt, comovingDistance, conformalAt, E2, hasBigBang, history, hubbleTi
 import { criticalImpact, delta } from './kerr';
 import { fallWorldline } from './kruskal';
 import { binary, binaryImages, binaryMagnification, closestApproach, criticalAndCaustic, lensEquation, lightCurve, mapAt, pointImages, pointMagnification, shootMap, type C } from './microlens';
+import { FRW_DEFAULTS } from '../state/exhibit';
 import { beta2, criticalCurve, etaOf, lyapunov, SCHWARZSCHILD_SHADOW_RADIUS, shadowSize, visibleRadii, xiOf } from './shadow';
 
 const DEG = Math.PI / 180;
@@ -248,6 +249,11 @@ describe('FRW universes', () => {
     const p = planck2018();
     expect(omegaRadiation(67.4) * 0.674 ** 2).toBeCloseTo(4.18e-5, 6);
     expect(ageAt(p, 1) * hubbleTimeGyr(p.H0)).toBeCloseTo(13.8, 1);
+  });
+
+  it('the exhibit’s default Ω_r is the CMB value, and its Ω_Λ makes the default flat', () => {
+    expect(FRW_DEFAULTS.or).toBeCloseTo(omegaRadiation(FRW_DEFAULTS.H0), 6);
+    expect(FRW_DEFAULTS.om + FRW_DEFAULTS.ol + FRW_DEFAULTS.or).toBeCloseTo(1, 12);
   });
 
   it('a bounce instead of a big bang is detected (Ω_Λ large, little matter)', () => {

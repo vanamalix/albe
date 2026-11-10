@@ -71,6 +71,10 @@ const SCENE_COPY: Record<string, { title: string; blurb: string }> = {
   'kerr-light': { title: 'Light past a spinning hole', blurb: 'A lopsided capture window' },
   euclid: { title: 'Euclid’s postulates', blurb: 'Switch one off; measure albe’s folds' },
   mp: { title: 'Two balanced holes', blurb: 'Exact superposition, chaotic light' },
+  shadow: { title: 'Black hole shadow', blurb: 'Kerr critical curve and photon rings' },
+  microlens: { title: 'Microlensing', blurb: 'Drag a star behind an unseen lens' },
+  collapse: { title: 'Collapse to a black hole', blurb: 'The horizon forms before the surface arrives' },
+  frw: { title: 'Expanding universe', blurb: 'Horizons, and galaxies faster than light' },
   lensing: { title: 'Lensing fan', blurb: 'A fan of light bends around a mass' },
   photon: { title: 'Photon sphere', blurb: 'Light caught orbiting a black hole' },
   empty: { title: 'Empty space', blurb: 'Flat spacetime: build your own' },
@@ -557,7 +561,7 @@ function InfoCard({ mode, exag, bodies, probes, time }: { mode: ViewMode; exag: 
   );
 }
 
-const SCENE_GROUPS: SceneGroup[] = ['Relativity', 'Geometry', 'Three bodies', 'Stars and planets', 'Galaxies', 'Exotic', 'Sandbox'];
+const SCENE_GROUPS: SceneGroup[] = ['Relativity', 'Geometry', 'Cosmology', 'Three bodies', 'Stars and planets', 'Galaxies', 'Exotic', 'Sandbox'];
 
 function ScenePicker() {
   const open = useStore((s) => s.scenesOpen);

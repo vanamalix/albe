@@ -95,7 +95,7 @@ export function criticalCurve(a: number, i: number, n = 240): CriticalPoint[] {
   if (a < SPIN_FLOOR) {
     return Array.from({ length: 2 * n }, (_, k) => {
       const t = (k / (2 * n)) * 2 * Math.PI;
-      return { r: 3, alpha: SCHWARZSCHILD_SHADOW_RADIUS * Math.cos(t), beta: SCHWARZSCHILD_SHADOW_RADIUS * Math.sin(t), gamma: Math.PI };
+      return { r: 3, alpha: SCHWARZSCHILD_SHADOW_RADIUS * Math.cos(t), beta: -SCHWARZSCHILD_SHADOW_RADIUS * Math.sin(t), gamma: Math.PI }; // clockwise, like the spinning case
     });
   }
   const [r0, r1] = visibleRadii(a, i);

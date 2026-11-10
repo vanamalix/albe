@@ -271,6 +271,82 @@ for (const [name, width, height] of [
       expect(net.blocked).toEqual([]);
     });
 
+    test('Shadow, microlensing, expanding universe and collapse: each exhibit draws, reads out and explains itself', async ({ page }) => {
+      test.setTimeout(150_000);
+      const errors = watch(page);
+      const net = await offline(page);
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+      const open = async (scene: RegExp, region: string) => {
+        await page.locator('.scene-btn').click();
+        await page.locator('.scene-menu').getByRole('button', { name: scene }).click();
+        await expect(page.locator('.exhibit-dock')).toBeAttached();
+        const toggle = page.locator('.exhibit-toggle');
+        if ((await toggle.isVisible()) && (await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+        const panel = page.getByRole('region', { name: region });
+        await expect(panel).toBeVisible();
+        return panel;
+      };
+      const dd = (panel: ReturnType<Page['locator']>, name: string | RegExp) => panel.locator('.live div').filter({ hasText: name }).locator('dd');
+
+      const shadow = await open(/Black hole shadow/, 'Black hole shadow controls');
+      await expect(shadow.locator('svg.shadow-plan')).toBeVisible();
+      await shadow.getByLabel('Spin a / M').fill('0');
+      await expect(dd(shadow, 'Width × height')).toHaveText('10.392 × 10.392 M');
+      await expect(dd(shadow, 'Lyapunov')).toHaveText('3.142 … 3.142');
+      await shadow.getByRole('button', { name: 'Fastest spin, edge-on' }).click();
+      await expect(dd(shadow, 'Width × height')).toHaveText('9.108 × 10.392 M');
+      await expect(dd(shadow, 'M87*: EHT ring')).toHaveText('42 ± 3 μas');
+      await shot(page, `shadow-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+
+      const lens = await open(/Microlensing/, 'Microlensing controls');
+      await expect(dd(lens, /Closest approach/)).toHaveText('0.282 θ_E');
+      await expect(dd(lens, 'Point lens peak')).toHaveText('3.653');
+      await lens.getByRole('button', { name: /Track handle/ }).focus();
+      await page.keyboard.press('ArrowUp');
+      await expect(dd(lens, /Closest approach/)).toHaveText('0.301 θ_E');
+      await lens.getByRole('button', { name: 'A planet: q = 0.001' }).click();
+      await expect(lens).toContainText('rays per pixel unlensed', { timeout: 30_000 });
+      await expect(dd(lens, 'Images now')).toHaveText(/^[35]$/);
+      await shot(page, `microlens-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+
+      const frw = await open(/Expanding universe/, 'Expanding universe controls');
+      await expect(dd(frw, 'Age today')).toHaveText('13.791 Gyr');
+      await expect(dd(frw, /faster than light today beyond/)).toHaveText('z = 1.482');
+      await expect(dd(frw, /recession now/)).toHaveText(/^1\.19\dc · 1\.20\dc$/);
+      await frw.getByRole('button', { name: 'Comoving distance' }).click();
+      await frw.getByRole('button', { name: 'Einstein-de Sitter' }).click();
+      await expect(dd(frw, 'Age today')).toHaveText('9.672 Gyr');
+      await expect(dd(frw, /Event horizon then/)).toHaveText('none');
+      await frw.getByRole('button', { name: 'de Sitter', exact: true }).click();
+      await expect(dd(frw, 'Age today')).toHaveText('∞ (no beginning)');
+      await frw.getByRole('button', { name: 'Planck 2018' }).click();
+      await shot(page, `universe-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+
+      const os = await open(/Collapse to a black hole/, 'Collapse controls');
+      await expect(os.locator('svg.collapse-plan')).toBeVisible();
+      await expect(dd(os, 'Event horizon forms at the centre')).toHaveText('τ = 30.57 M');
+      await expect(dd(os, 'Surface crosses r = 2M')).toHaveText('τ = 33.70 M');
+      await os.getByLabel('Dust’s proper time τ').fill('0.3');
+      await expect(dd(os, 'Event horizon r')).toHaveText('not yet formed');
+      await shot(page, `collapse-${name}`);
+      expect(await axeViolations(page)).toEqual([]);
+      // The explainer, at Equation depth by default, with its references.
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-actions').getByRole('button', { name: 'Explain' }).click();
+      const ex = page.locator('.panel.explain');
+      await expect(ex.getByRole('heading', { name: /Explain · Collapse to a black hole/ })).toBeVisible();
+      await expect(ex).toContainText('π − 3χ₀');
+      await expect(ex).toContainText('Oppenheimer & H. Snyder (1939)');
+      expect(await axeViolations(page)).toEqual([]);
+      expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(true);
+      expect(errors).toEqual([]);
+      expect(net.blocked).toEqual([]);
+    });
+
     test('without WebGL the page still carries the credit and passes axe', async ({ page }) => {
       await page.addInitScript('HTMLCanvasElement.prototype.getContext = () => null');
       const net = await offline(page);

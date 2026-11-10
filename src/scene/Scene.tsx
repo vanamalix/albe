@@ -133,6 +133,10 @@ const KerrExhibit = lazy(() => import('./KerrExhibit').then((m) => ({ default: m
 const WormholeExhibit = lazy(() => import('./WormholeExhibit').then((m) => ({ default: m.WormholeExhibit })));
 const EuclidExhibit = lazy(() => import('./EuclidExhibit').then((m) => ({ default: m.EuclidExhibit })));
 const BalancedExhibit = lazy(() => import('./BalancedExhibit').then((m) => ({ default: m.BalancedExhibit })));
+const ShadowExhibit = lazy(() => import('./DeepExhibits').then((m) => ({ default: m.ShadowExhibit })));
+const MicrolensExhibit = lazy(() => import('./DeepExhibits').then((m) => ({ default: m.MicrolensExhibit })));
+const CosmosExhibit = lazy(() => import('./DeepExhibits').then((m) => ({ default: m.CosmosExhibit })));
+const CollapseExhibit = lazy(() => import('./DeepExhibits').then((m) => ({ default: m.CollapseExhibit })));
 
 function WarpHost() {
   const active = useStore((s) => s.mode === 'warp');
@@ -793,6 +797,10 @@ export function Scene() {
         {x === 'wormhole' && <WormholeExhibit />}
         {x === 'euclid' && <EuclidExhibit />}
         {x === 'mp' && <BalancedExhibit />}
+        {x === 'shadow' && <ShadowExhibit />}
+        {x === 'microlens' && <MicrolensExhibit />}
+        {x === 'frw' && <CosmosExhibit />}
+        {x === 'collapse' && <CollapseExhibit />}
         {(x === 'kerr-drag' || x === 'kerr-penrose' || x === 'kerr-light') && <KerrExhibit id={x} />}
       </Suspense>
       {!x && <Lattice />}

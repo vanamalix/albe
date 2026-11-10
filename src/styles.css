@@ -1634,3 +1634,172 @@ output {
 .scope canvas.potential-plot {
   height: 120px;
 }
+
+/* Shadow, microlensing, expanding universe and collapse panels */
+.key.wide {
+  grid-template-columns: 1fr;
+}
+.key.wide li {
+  flex-wrap: wrap;
+}
+.shadow-plan .axis {
+  stroke: rgba(201, 209, 217, 0.18);
+  stroke-width: 0.03;
+}
+.shadow-plan .ref-circle {
+  fill: none;
+  stroke: #8b949e;
+  stroke-width: 0.05;
+  stroke-dasharray: 0.25 0.2;
+}
+.shadow-plan .curve {
+  fill: rgba(1, 4, 9, 0.85);
+  stroke: #d29922;
+  stroke-width: 0.09;
+}
+.shadow-plan .centre {
+  fill: #58a6ff;
+}
+.shadow-plan text {
+  fill: #c9d1d9;
+  font-size: 0.55px;
+}
+.lens-plane {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1;
+  margin: 8px auto;
+  border-radius: 8px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+}
+.lens-plane .ml-map,
+.lens-plane .ml-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.lens-plane .ml-map {
+  image-rendering: pixelated;
+}
+.ml-overlay {
+  touch-action: none;
+  cursor: crosshair;
+}
+.ml-overlay .einstein {
+  fill: none;
+  stroke: rgba(201, 209, 217, 0.5);
+  stroke-width: 0.012;
+  stroke-dasharray: 0.04 0.03;
+}
+.ml-overlay .caustic {
+  fill: #f85149;
+}
+.ml-overlay .lens {
+  fill: #8b949e;
+}
+.ml-overlay .track {
+  stroke: rgba(240, 230, 160, 0.75);
+  stroke-width: 0.014;
+}
+.ml-overlay .source {
+  fill: #f0f6fc;
+}
+.ml-overlay .handle {
+  fill: rgba(88, 166, 255, 0.35);
+  stroke: #58a6ff;
+  stroke-width: 0.015;
+  cursor: grab;
+}
+.ml-overlay .handle:focus-visible {
+  outline: none;
+  stroke: #f0f6fc;
+  stroke-width: 0.03;
+}
+.chart {
+  display: block;
+  width: 100%;
+  max-width: 340px;
+  margin: 8px auto;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+}
+.chart .axes line {
+  stroke: rgba(201, 209, 217, 0.35);
+  stroke-width: 1;
+}
+.chart text {
+  fill: #c9d1d9;
+  font-size: 9px;
+}
+.chart .axis-label {
+  fill: #8b949e;
+}
+.chart .series {
+  fill: none;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+.chart .gold {
+  stroke: #d29922;
+}
+.chart .thick {
+  stroke-width: 2.6;
+}
+.chart .red {
+  stroke: #f85149;
+}
+.chart .blue {
+  stroke: #58a6ff;
+}
+.chart .dash {
+  stroke-dasharray: 4 3;
+}
+.chart .pale {
+  stroke: rgba(240, 230, 160, 0.7);
+}
+.chart .grey {
+  stroke: #8b949e;
+}
+.chart .now {
+  stroke: rgba(240, 246, 252, 0.55);
+  stroke-width: 1;
+}
+.chart .shown {
+  stroke: #58a6ff;
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+.collapse-plan {
+  aspect-ratio: 4 / 3;
+}
+.collapse-plan .star {
+  fill: rgba(139, 148, 158, 0.28);
+  stroke: none;
+}
+.collapse-plan .surface {
+  stroke: #f0f6fc;
+  stroke-width: 0.014;
+}
+.collapse-plan .centre-line {
+  stroke: rgba(201, 209, 217, 0.5);
+}
+.collapse-plan .apparent {
+  stroke: #f85149;
+  stroke-width: 0.016;
+}
+.collapse-plan .form {
+  fill: #d29922;
+}
+.swatch.pale {
+  color: rgba(240, 230, 160, 0.7);
+}
+.swatch.thick-gold {
+  color: #d29922;
+  border-top-width: 4px;
+}
+.swatch.dash-red {
+  border-top-style: dashed;
+}

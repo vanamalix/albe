@@ -42,7 +42,7 @@ export interface PresetDisk extends DiskOptions {
   host: number;
 }
 
-export type SceneGroup = 'Relativity' | 'Geometry' | 'Three bodies' | 'Stars and planets' | 'Galaxies' | 'Exotic' | 'Sandbox';
+export type SceneGroup = 'Relativity' | 'Geometry' | 'Cosmology' | 'Three bodies' | 'Stars and planets' | 'Galaxies' | 'Exotic' | 'Sandbox';
 
 export interface Preset {
   id: string;
@@ -826,6 +826,10 @@ export const PRESETS: Preset[] = [
   exhibitScene('kerr-penrose', 'Penrose process', 'kerr-penrose', 120, 'One fragment falls in with negative energy; the other leaves with more than the parent had.'),
   exhibitScene('kerr-light', 'Light past a spinning hole', 'kerr-light', 120, 'The capture window is lopsided.'),
   exhibitScene('mp', 'Two balanced holes (charged)', 'mp', 60, 'Two extremally charged black holes (Q = M): electric push cancels gravitational pull, so they hold still and their fields add exactly. Light scattered between them is chaotic.'),
+  exhibitScene('shadow', 'Black hole shadow', 'shadow', 60, 'The edge of a spinning hole’s shadow, as a distant telescope would see it: Bardeen’s exact critical curve for the spin and viewing angle you set, with the photon-ring ladder that converges on it.', 'Relativity'),
+  exhibitScene('microlens', 'Microlensing light curve', 'microlens', 60, 'A star drifts behind a lens too small to resolve, and only its brightness changes. Drag the star’s track; the light curve redraws. Switch to a binary lens to see caustics.', 'Relativity'),
+  exhibitScene('collapse', 'Collapse to a black hole', 'collapse', 60, 'A ball of dust at rest collapses under its own weight (Oppenheimer and Snyder 1939, exact). The event horizon forms at the centre before the surface reaches 2M, and grows out to meet it.', 'Relativity'),
+  exhibitScene('frw', 'Expanding universe', 'frw', 60, 'A homogeneous universe with the matter, radiation, curvature and Λ you choose. Galaxies sit still on the comoving grid while space expands; some recede faster than light today and are still seen.', 'Cosmology'),
   exhibitScene('euclid', 'Euclid’s postulates', 'euclid', 60, 'Switch off one of Euclid’s five postulates to see a geometry where it fails, then measure albe’s own folds the same way: drag the triangle and compare its angles with the curvature inside.', 'Geometry'),
   empty(),
 ];
