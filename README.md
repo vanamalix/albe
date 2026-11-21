@@ -2,7 +2,7 @@
 
 **albe** (for Albert Einstein) is an interactive visualiser of curved spacetime. You place masses, test particles and
 light rays, and the geometry updates live while you watch. It's served at `albe.vananomad.com` (Cloudflare Workers and
-Static Assets, open to anyone with the link). Made for Wesley from NYU.
+Static Assets, open to anyone with the link).
 
 It's built with Vite, React 19 and TypeScript, with three.js through @react-three/fiber and @react-three/drei, plus
 Vitest and Wrangler. Everything is bundled, so nothing loads from a CDN at runtime.
