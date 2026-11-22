@@ -4,11 +4,13 @@
  */
 import { useMemo, useState } from 'react';
 import { compact, fallAt, fallWorldline, tortoise, uvProduct } from '../../physics/kruskal';
+import { CLOCKS_FALL_R } from '../../physics/presets';
 import { clockReading } from '../../physics/probes';
 import { isBlackHole } from '../../physics/types';
 import { world } from '../../sim/world';
 import { useDepth } from '../../state/depth';
 import { useStore } from '../../state/store';
+import { inM } from './format';
 
 const FALLER = 'Falling from rest';
 
@@ -18,7 +20,8 @@ export default function Kruskal() {
   const [framed, setFramed] = useState(true);
   const hole = world.bodies.find(isBlackHole);
   const M = hole?.m ?? 4;
-  const R = 100;
+  // The scene's faller starts at rest this far out; in units of M it follows the hole's mass.
+  const R = CLOCKS_FALL_R;
   const line = useMemo(() => fallWorldline(M, R, 600), [M]);
   // Centred: shift the time origin (U → U·V_c, V → V/V_c, a boost, which is an isometry) so the
   // horizon crossing sits at V = 1. The diagram is the same; only where t = 0 falls moves.
@@ -59,7 +62,7 @@ export default function Kruskal() {
         {depth === 'words'
           ? 'albe has to stop the falling clock just outside the horizon, because its sheet uses the distant observer’s time, which never gets there. This diagram uses coordinates that do: light always moves at 45°, and the clock carries on through the horizon to the singularity in a finite time of its own.'
           : depth === 'numbers'
-            ? `Let go at 25M, the clock reaches r = 0 after ${total.toFixed(1)} of its own time (M = ${M}); the horizon about ${(cross.tau).toFixed(1)}. The distant time t of each line through the centre is fixed, and every one of them, for any t, meets the horizon only at the centre point.`
+            ? `Let go at ${inM(R, M)} (r = ${R}), the clock reaches r = 0 after ${total.toFixed(1)} of its own time (M = ${M}); the horizon about ${(cross.tau).toFixed(1)}. The distant time t of each line through the centre is fixed, and every one of them, for any t, meets the horizon only at the centre point.`
             : 'Kruskal: UV = −(r/2M − 1)e^{r/2M}, with U = −e^{−(t − r*)/4M}, V = e^{(t + r*)/4M} outside. Along the fall from rest at R, v = t + r* obeys dv/dτ = 1/(E + √(E² − f)), finite through r = 2M, so V = e^{v/4M} and U = (UV)/V continue to UV = 1 (r = 0). Drawn as the standard Penrose diagram, Ũ = arctan U, Ṽ = arctan V. “Centred” first shifts t, which multiplies U and divides V by one constant: an isometry, so it is the same diagram with t = 0 moved.'}
       </p>
       <div className="depth" role="group" aria-label="Diagram scale">

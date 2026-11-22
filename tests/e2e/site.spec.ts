@@ -147,6 +147,63 @@ for (const [name, width, height] of [
       expect(net.blocked).toEqual([]);
     });
 
+    test('a lazy part that fails to load (a redeploy, or offline) shows a reload message and leaves the app working', async ({ page }) => {
+      test.setTimeout(150_000);
+      const uncaught: string[] = [];
+      page.on('pageerror', (e) => uncaught.push(String(e)));
+      await offline(page);
+      // As after a redeploy: these hashed chunks of the old build are gone.
+      const gone = /\/assets\/(Kruskal|About|DeepExhibits)-[\w-]+\.js$/;
+      const refused: string[] = [];
+      await page.route(gone, (route) => {
+        refused.push(route.request().url());
+        return route.abort();
+      });
+      await page.goto('/');
+      await expect(page.locator('.status')).toContainText('fps');
+
+      // A toy inside Explain: the message takes its place; the rest of the explainer stays.
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-menu').getByRole('button', { name: /Black hole clocks/ }).click();
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-actions').getByRole('button', { name: 'Explain' }).click();
+      const explain = page.locator('.panel.explain');
+      await expect(explain.locator('.load-failed')).toHaveText(/This part didn’t load\. Reload the page\./);
+      await expect(explain.locator('.load-failed').getByRole('button', { name: 'Reload' })).toBeVisible();
+      await expect(explain.getByRole('heading', { name: /Explain · / })).toBeVisible();
+      await expect(explain.getByRole('region', { name: 'Kruskal and Penrose diagram' })).toHaveCount(0);
+      await expect(page.locator('.load-notice')).toHaveCount(0);
+      expect(await axeViolations(page)).toEqual([]);
+      await shot(page, `load-failed-${name}`);
+      await page.getByRole('button', { name: 'Close explainer' }).click();
+
+      // A whole panel (How it works): nowhere to show it in place, so the page-wide notice says so.
+      await page.locator('.about-btn').click();
+      const notice = page.locator('.load-notice');
+      await expect(notice).toHaveText(/didn’t load\. Reload the page\./);
+      await expect(page.locator('.modal')).toHaveCount(0);
+      expect(await page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(true);
+
+      // Inside the 3D view: the exhibit is missing, and the rest of the app still runs.
+      await page.locator('.scene-btn').click();
+      await page.locator('.scene-menu').getByRole('button', { name: /Black hole shadow/ }).click();
+      await expect(page.locator('.exhibit-dock')).toBeAttached();
+      await expect(page.locator('canvas').first()).toBeVisible();
+      await expect(page.getByRole('heading', { name: 'albe', level: 1 })).toBeVisible();
+      const play = page.locator('.dock .icon-btn.play');
+      const before = await play.getAttribute('aria-label');
+      await play.click();
+      await expect(play).not.toHaveAttribute('aria-label', before ?? '');
+      await expect(notice).toBeVisible();
+
+      expect(refused.length).toBeGreaterThan(0);
+      expect(uncaught).toEqual([]);
+      await notice.getByRole('button', { name: 'Reload' }).click();
+      await expect(page.locator('.status')).toContainText('fps');
+      await expect(page.locator('.load-notice')).toHaveCount(0);
+      expect(uncaught).toEqual([]);
+    });
+
     test('Euclid: switching off postulate 5 bends the angle sum, and the folds are measured the same way', async ({ page }) => {
       const errors = watch(page);
       const net = await offline(page);

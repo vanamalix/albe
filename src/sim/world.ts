@@ -299,8 +299,9 @@ export class World {
     // Inside a halo only the mass within r counts; stars have no relativistic orbit here.
     const pull = s.kind === 'galaxy' ? haloEnclosed(s.m, s.soft ?? 1, s.radius ?? 1, r) : s.m;
     const useGr = gr && isCompact(s);
-    // A changed law applies to test particles only, and not inside a galaxy's halo.
-    const probeLaw = s.kind === 'galaxy' ? OUR_LAW : law;
+    // A changed law applies to test particles only, and not inside a galaxy's halo. A GR particle
+    // keeps the inverse square (n = 2) everywhere, as probeAcceleration has it; only s acts on it.
+    const probeLaw = s.kind === 'galaxy' ? OUR_LAW : gr ? { n: 2, s: law.s } : law;
     let v = newMass > 0 ? circularSpeed(pull + newMass, r, false) : circularSpeed(pull, r, useGr, probeLaw);
     if (!Number.isFinite(v)) v = circularSpeed(pull, r, false, probeLaw);
     if (newMass > 0) {

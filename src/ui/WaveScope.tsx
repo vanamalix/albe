@@ -8,6 +8,7 @@ import { strainExtrema } from '../physics/chirp';
 import { isCompact } from '../physics/types';
 import type { ChirpSound } from '../sim/chirpSound';
 import { WAVE_SAMPLES, WAVE_SPACING } from '../sim/waves';
+import { closeAudio } from './closeAudio';
 import { world } from '../sim/world';
 import { addMark, chirpReading, clearMarks, getMarks, useMarks } from '../state/scopeMarks';
 import { useStore } from '../state/store';
@@ -45,7 +46,7 @@ function Listen() {
   // Leaving the Waves view stops the sound and releases the context.
   useEffect(
     () => () => {
-      void live.current?.close();
+      closeAudio(live.current);
       live.current = null;
     },
     [],
@@ -54,7 +55,7 @@ function Listen() {
     // The context is made here, inside the press, and nowhere else.
     const Ctor: AudioCtor | undefined = window.AudioContext ?? (window as unknown as { webkitAudioContext?: AudioCtor }).webkitAudioContext;
     if (!Ctor) return setState({ status: 'no-audio' });
-    void live.current?.close();
+    closeAudio(live.current);
     const ctx = new Ctor();
     live.current = ctx;
     void ctx.resume();
@@ -62,15 +63,18 @@ function Listen() {
     const oldest = world.waves.newestTime - (WAVE_SAMPLES - 1) * WAVE_SPACING;
     import('./chirpAudio')
       .then(({ playChirp }) => {
-        if (live.current !== ctx) return void ctx.close(); // closed or replaced meanwhile
+        if (live.current !== ctx) return closeAudio(ctx); // closed or replaced meanwhile
         const clip = playChirp(ctx, strain, unit, oldest, () => {
           if (live.current === ctx) live.current = null;
           setState((s) => ({ ...s, status: 'played' }));
         });
+        // No signal: playChirp has closed the context, so it is no longer ours to close.
+        if (!clip && live.current === ctx) live.current = null;
         setState(clip ? { status: 'playing', clip } : { status: 'silent' });
       })
       .catch(() => {
-        void ctx.close();
+        closeAudio(ctx);
+        if (live.current === ctx) live.current = null;
         setState({ status: 'silent' });
       });
   };

@@ -117,16 +117,16 @@ export interface ShadowSize {
   width: number;
   /** Tallest vertical extent, 2 β_max. */
   height: number;
-  /** Mean diameter: twice the mean distance from the centroid, over angle (the EHT-style average). */
+  /** Mean diameter: twice the mean distance from the midpoint of the horizontal extent, over angle (the EHT-style average). */
   meanDiameter: number;
-  /** Horizontal centroid offset (the shift toward the receding side). */
+  /** Horizontal offset of the midpoint (α_min + α_max)/2, not the centroid: the shift toward the receding side. */
   shift: number;
   /** Least and greatest Lyapunov exponent round the curve. */
   gammaMin: number;
   gammaMax: number;
 }
 
-/** Sizes of a critical curve; the mean diameter averages the radius over polar angle about the centroid. */
+/** Sizes of a critical curve; the mean diameter averages the radius over polar angle about the midpoint of the horizontal extent. */
 export function shadowSize(curve: readonly CriticalPoint[]): ShadowSize {
   let aMin = Infinity;
   let aMax = -Infinity;

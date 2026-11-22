@@ -4,12 +4,13 @@
  * fetched; the context is closed when the clip ends.
  */
 import { chirpSound, type ChirpSound } from '../sim/chirpSound';
+import { closeAudio } from './closeAudio';
 
 /** Plays the strain as sound. Returns what was played, or null (and closes ctx) when there is no signal. */
 export function playChirp(ctx: AudioContext, strain: ArrayLike<number>, solarPerUnit: number, oldestTime: number, onEnd: () => void): ChirpSound | null {
   const clip = chirpSound(strain, solarPerUnit, ctx.sampleRate, oldestTime);
   if (!clip) {
-    void ctx.close();
+    closeAudio(ctx);
     return null;
   }
   const buffer = ctx.createBuffer(1, clip.samples.length, ctx.sampleRate);
@@ -18,7 +19,7 @@ export function playChirp(ctx: AudioContext, strain: ArrayLike<number>, solarPer
   source.buffer = buffer;
   source.connect(ctx.destination);
   source.onended = () => {
-    if (ctx.state !== 'closed') void ctx.close();
+    closeAudio(ctx);
     onEnd();
   };
   source.start();

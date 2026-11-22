@@ -4,7 +4,7 @@
  * reaches us although it recedes faster than light. From src/physics/cosmology.ts.
  */
 import { useMemo } from 'react';
-import { ageAt, at, E2, hasBigBang, history, hubbleTimeGyr, omegaK, recession, superluminalRedshift, type Cosmos } from '../../physics/cosmology';
+import { ageAt, at, E2, hasBigBang, history, hubbleTimeGyr, omegaK, particleHorizon, recession, superluminalRedshift, type Cosmos } from '../../physics/cosmology';
 import { useDepth } from '../../state/depth';
 import { exhibitStore, FRW_DEFAULTS, useExhibit } from '../../state/exhibit';
 import { Axes, Choice, Live, Slider, fx, runs, type Frame } from './kit';
@@ -82,13 +82,14 @@ export default function CosmosPanel() {
   const idx = h.t.map((_, k) => k);
   const back = h.eta.map((e) => h.eta0 - e);
   const cone = idx.map((k) => (h.t[k] <= h.t0 ? D(back, k) : NaN));
-  const particle = h.infinitePast ? [] : idx.map((k) => D(h.eta, k));
+  // Infinite when the conformal time since a = 0 diverges, which can happen with a finite age (Milne).
+  const particle = h.particleInfinite ? [] : idx.map((k) => D(h.eta, k));
   const event = Number.isFinite(h.etaEnd) ? idx.map((k) => D(h.eta.map((e) => h.etaEnd - e), k)) : [];
   const hubble = idx.map((k) => (h.adot[k] > 0 ? (proper ? h.a[k] / h.adot[k] : 1 / h.adot[k]) * tH : NaN));
   const galaxy = idx.map((k) => (proper ? h.a[k] : 1) * r.chi * tH);
   const etaE = h.eta0 - r.chi;
   const photon = idx.map((k) => (h.eta[k] >= etaE && h.t[k] <= h.t0 ? (proper ? h.a[k] : 1) * (r.chi - (h.eta[k] - etaE)) * tH : NaN));
-  const xMax = Math.min(120, Math.max(20, 1.25 * Math.max(r.chi * tH, Number.isFinite(h.eta0) && !h.infinitePast ? h.eta0 * tH : 0, (h.etaEnd - h.eta0) * tH || 0)));
+  const xMax = Math.min(120, Math.max(20, 1.25 * Math.max(r.chi * tH, !h.particleInfinite ? h.eta0 * tH : 0, (h.etaEnd - h.eta0) * tH || 0)));
   const f: Frame = { x0: 0, x1: Number.isFinite(xMax) ? xMax : 60, y0: 0, y1: tEnd };
   const xt = [0, 1, 2, 3, 4].map((k) => Math.round((k * f.x1) / 4));
   const yt = [0, 1, 2, 3].map((k) => Math.round((k * tEnd) / 3));
@@ -164,7 +165,7 @@ export default function CosmosPanel() {
           ['Age today', h.infinitePast ? '∞ (no beginning)' : `${fx(ageAt(p, 1) * tH, 3)} Gyr`],
           ['Fate', h.fate === 'crunch' ? `big crunch at ${fx(tEnd, 1)} Gyr` : Number.isFinite(h.etaEnd) ? 'expands forever, accelerating' : 'expands forever, decelerating'],
           [`At t = ${Math.min(st.frwT, tEnd).toFixed(2)} Gyr: a, H`, `${fx(a, 3)} · ${fx((p.H0 * adot) / a, 1)} km/s/Mpc`],
-          ['Particle horizon then (proper)', h.infinitePast ? '∞' : `${fx(a * eta * tH, 2)} Gly`],
+          ['Particle horizon then (proper)', h.particleInfinite ? '∞' : `${fx(particleHorizon(h, t) * tH, 2)} Gly`],
           ['Event horizon then (proper)', Number.isFinite(h.etaEnd) ? `${fx(a * (h.etaEnd - eta) * tH, 2)} Gly` : 'none'],
           ['Hubble radius c/H then', adot > 0 ? `${fx((a / adot) * tH, 2)} Gly` : '—'],
           ['Receding faster than light today beyond', `z = ${fx(zSL, 3)}`],

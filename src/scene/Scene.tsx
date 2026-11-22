@@ -1,6 +1,6 @@
 import { OrbitControls, Stars } from '@react-three/drei';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
+import { lazy, useCallback, useEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { DOMAIN, heightAt, MAX_SHADER_MASSES, sampleFields, type ViewMode } from '../physics/fields';
@@ -12,6 +12,7 @@ import { store, useStore } from '../state/store';
 import { Interaction, preview } from './Interaction';
 import { LensView } from './lensView';
 import { useExhibit } from '../state/exhibit';
+import { Lazy } from '../ui/LazyBoundary';
 import { CORE_CELL, fitDistance, frameObjects, gridScale, MAX_CAMERA_DISTANCE, planeAxis, snapTo } from './plane';
 import {
   bodyFragment,
@@ -792,7 +793,8 @@ export function Scene() {
       <FitCamera />
       {mode === 'lens' ? <LensView /> : <Stars radius={4000} depth={1200} count={4000} factor={40} saturation={0} fade speed={0.3} />}
       {!x && <Sheet />}
-      <Suspense fallback={null}>
+      {/* Inside the canvas a failed part shows nothing; the page-wide notice says so. */}
+      <Lazy quiet>
         <WarpHost />
         {x === 'wormhole' && <WormholeExhibit />}
         {x === 'euclid' && <EuclidExhibit />}
@@ -802,7 +804,7 @@ export function Scene() {
         {x === 'frw' && <CosmosExhibit />}
         {x === 'collapse' && <CollapseExhibit />}
         {(x === 'kerr-drag' || x === 'kerr-penrose' || x === 'kerr-light') && <KerrExhibit id={x} />}
-      </Suspense>
+      </Lazy>
       {!x && <Lattice />}
       <Dynamic />
       <Controls />

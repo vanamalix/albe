@@ -3,6 +3,8 @@
  * simulation actually emits.
  */
 import { describe, expect, it } from 'vitest';
+import contentSource from '../explain/content.ts?raw';
+import aboutSource from '../ui/About.tsx?raw';
 import { chirpMassBetween, chirpMassFrom, chirpMassOf, quadrupoleFrequency, readChirp, strainExtrema } from './chirp';
 import { DEFAULT_NBODY, pairOrbit, petersMergerTime, pnCapFired } from './nbody';
 import { presetById } from './presets';
@@ -61,9 +63,15 @@ describe('chirp-mass reading', () => {
     const late = reading(1250);
     expect(late[1]).toBeLessThan(1200);
     const r = readChirp([...early, ...late], [1, 1]);
-    // The explainer says "about 14% high".
-    expect(r.chirpMass! / chirpMassOf(m1, m2) - 1).toBeGreaterThan(0.1);
-    expect(r.chirpMass! / chirpMassOf(m1, m2) - 1).toBeLessThan(0.18);
+    // The explainer and How it works quote this overshoot to the nearest per cent.
+    const over = r.chirpMass! / chirpMassOf(m1, m2) - 1;
+    expect(over).toBeGreaterThan(0.14);
+    expect(over).toBeLessThan(0.16);
+    for (const [file, text] of [['content.ts', contentSource], ['About.tsx', aboutSource]]) {
+      const quoted = [...text.matchAll(/about (\d+)% (?:high|above the true)/g)].map((m) => +m[1]);
+      expect(quoted.length, file).toBeGreaterThan(0);
+      for (const q of quoted) expect(q, file).toBe(Math.round(100 * over));
+    }
     expect(T0).toBeGreaterThan(1700);
     expect(T0).toBeLessThan(1900);
     expect(early[1] - early[0]).toBeGreaterThan(190);

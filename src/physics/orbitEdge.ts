@@ -41,8 +41,10 @@ export interface NudgedRun {
  * Runs a particle from (r, 0) with tangential speed v and the nudge, round a hole of mass m at rest
  * at the origin, with the app's own RK4 proper-time step (η = 0.01, as in the scene). It falls in at
  * the first step inside 2.04M, as the scene's particles do, and flies off past 200 r while unbound.
+ * `gr` is the scene's GR switch: on, the particle is gold (inverse square plus s times the
+ * relativistic term, n unused); off, it is Newtonian under F ∝ 1/rⁿ.
  */
-export function nudgedRun(m: number, rOverM: number, v: number, law: ProbeLaw = OUR_LAW, nudge = NUDGE): NudgedRun {
+export function nudgedRun(m: number, rOverM: number, v: number, law: ProbeLaw = OUR_LAW, nudge = NUDGE, gr = true): NudgedRun {
   const src: Body[] = [{ id: 0, x: 0, y: 0, vx: 0, vy: 0, m, ax: 0, ay: 0 }];
   const r0 = rOverM * m;
   const p = { x: r0, y: 0, vx: -nudge, vy: v };
@@ -51,7 +53,6 @@ export function nudgedRun(m: number, rOverM: number, v: number, law: ProbeLaw = 
   let rMin = rOverM;
   let rMax = rOverM;
   let steps = 0;
-  const gr = law.s > 0;
   while (steps < 400_000) {
     const ratio = rk4ProbeStep(p, probeDt(p, src, 0.01), src, gr, law);
     steps++;

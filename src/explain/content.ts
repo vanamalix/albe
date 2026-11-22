@@ -322,7 +322,7 @@ const EXPLAINERS: Record<string, Explainer> = {
     ],
     exact: ['ℳ from f and ḟ is exact for the leading-order chirp; a test recovers it to ten digits from an ideal signal.'],
     approx: [
-      'The orbit has 1PN terms that the leading-order formula assumes away, so a reading from crests marked before t ≈ 1200 comes out about 14% high, the same order as v² ≈ 0.1. That gap is real physics the formula leaves out, not noise.',
+      'The orbit has 1PN terms that the leading-order formula assumes away, so a reading from crests marked before t ≈ 1200 comes out about 15% high, the same order as v² ≈ 0.1. That gap is real physics the formula leaves out, not noise.',
       'From about t = 1200 the 1PN cap acts, and readings that use later crests climb higher still.',
       'Strain is the quadrupole formula, scaled for display; the scope plots shape, not size.',
     ],

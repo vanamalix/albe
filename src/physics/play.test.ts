@@ -8,8 +8,8 @@ import { schwarzschildDeflection, B_CRIT, STRONG_LIMIT_BBAR } from './lens';
 import { ApsisTracker, apsidalAngle } from './measure';
 import { DEFAULT_NBODY } from './nbody';
 import { circularV, effectivePotential, effectiveVerdict, NUDGE, nudgedEdge, nudgedRun } from './orbitEdge';
-import { presetById } from './presets';
-import { circularSpeed, OUR_LAW, probeDt, rk4ProbeStep } from './probes';
+import { CLOCKS_FALL_R, presetById } from './presets';
+import { circularSpeed, OUR_LAW, probeAcceleration, probeDt, rk4ProbeStep } from './probes';
 import { captureSweep, exactSweep, strongLimitSweep, TURN_FACTOR, windReading, windRay, WIND_TOLERANCE } from './winding';
 import { apsisAngle, nearCircularApsis, scaledApsidalAngle } from './whatif';
 import { chirpSound, PEAK_LEVEL, SUN_TIME_S } from '../sim/chirpSound';
@@ -17,6 +17,7 @@ import { MergerRun, petersCircular, petersSeparation } from '../sim/mergerRun';
 import { ringdownMode, WAVE_SAMPLES, WAVE_SPACING } from '../sim/waves';
 import { World } from '../sim/world';
 import type { Body } from './types';
+import { inM } from '../ui/play/format';
 
 const deg = (r: number) => (r * 180) / Math.PI;
 const hole = (m: number): Body[] => [{ id: 0, x: 0, y: 0, vx: 0, vy: 0, m, ax: 0, ay: 0 }];
@@ -101,7 +102,7 @@ describe('tightest stable orbit', () => {
     // With GR off and another force law, the verdict uses that law's potential: under F ∝ 1/r (a
     // logarithmic potential) nothing escapes, though Newton's energy would say it does.
     const fast = 0.55; // above Newton's escape speed √(2M/r) = 0.5 at r = 8M
-    expect(nudgedRun(1, 8, fast, { n: 1, s: 0 }).fate).toBe('survives');
+    expect(nudgedRun(1, 8, fast, { n: 1, s: 0 }, NUDGE, false).fate).toBe('survives');
     expect(effectiveVerdict(1, 8, fast, -NUDGE, 0, 1)).toBe('survives');
     expect(effectiveVerdict(1, 8, fast, -NUDGE, 0)).toBe('flies off');
     // Without the nudge a circular start just inside 6M still coasts round.
@@ -260,3 +261,50 @@ describe('hear the chirp', () => {
     expect(clip.drops).toBe(false);
   }, 60000);
 });
+
+describe('the force-law and 1/c² switches act as their copy says', () => {
+  const star: Body = { id: 0, x: 0, y: 0, vx: 0, vy: 0, m: 1, ax: 0, ay: 0, kind: 'star', radius: 2 };
+  const hole: Body = { id: 1, x: 0, y: 0, vx: 0, vy: 0, m: 1, ax: 0, ay: 0 };
+  const law = { n: 1.5, s: 1 };
+
+  it('gold (GR) particles keep Newton’s inverse square near a star; blue ones feel the changed law', () => {
+    const out = { ax: 0, ay: 0 };
+    probeAcceleration(40, 0, 0, 0.1, [star], true, out, law);
+    expect(out.ax).toBeCloseTo(-1 / 40 ** 2, 12);
+    probeAcceleration(40, 0, 0, 0.1, [star], false, out, law);
+    expect(out.ax).toBeCloseTo(-(1 / 40 ** 2) * Math.pow(20 / 40, -0.5), 12);
+    // Round a hole, a gold particle feels (1 + 3sL²/r²)/r² whatever n is.
+    probeAcceleration(40, 0, 0, 0.1, [hole], true, out, law);
+    expect(out.ax).toBeCloseTo(-(1 / 40 ** 2) * (1 + (3 * (40 * 0.1) ** 2) / 40 ** 2), 12);
+  });
+
+  it('a gold particle placed by a star is given the circular speed of the law it will feel', () => {
+    const w = new World();
+    w.bodies = [{ ...star }];
+    const [, vGold] = w.autoVelocity(40, 0, 0, true, law);
+    const [, vBlue] = w.autoVelocity(40, 0, 0, false, law);
+    expect(vGold).toBeCloseTo(Math.sqrt(1 / 40), 12);
+    expect(vBlue).toBeCloseTo(circularSpeed(1, 40, false, law), 12);
+  });
+
+  it('Tightest Orbit with GR on and (c/c′)² = 0 runs the scene’s particle: Newton’s 1/r², not the changed law', () => {
+    const v = circularV(8, 0) * 1.02;
+    const scene = nudgedRun(1, 8, v, { n: 2, s: 0 }, NUDGE, true);
+    const run = nudgedRun(1, 8, v, { n: 1.5, s: 0 }, NUDGE, true);
+    expect(run).toEqual(scene);
+    // With GR off the particle is Newtonian and does feel n.
+    expect(nudgedRun(1, 8, v, { n: 1.5, s: 0 }, NUDGE, false).rMax).not.toBeCloseTo(scene.rMax, 3);
+  });
+});
+
+describe('Kruskal toy', () => {
+  it('states the release radius from the scene’s faller and the hole’s mass, not a fixed 25M', () => {
+    const p = presetById('clocks');
+    const faller = p.probes.find((q) => q.label === 'Falling from rest')!;
+    expect(Math.hypot(faller.x - p.bodies[0].x, faller.y - p.bodies[0].y)).toBe(CLOCKS_FALL_R);
+    expect(inM(CLOCKS_FALL_R, p.bodies[0].m)).toBe('25M');
+    expect(inM(CLOCKS_FALL_R, 5)).toBe('20M');
+    expect(inM(CLOCKS_FALL_R, 3)).toBe('33.33M');
+  });
+});
+

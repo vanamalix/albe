@@ -1,7 +1,7 @@
 /** Kerr shadow, microlensing, FRW universes and Oppenheimer-Snyder collapse, against closed forms. */
 import { describe, expect, it } from 'vitest';
 import { apparentHorizonChi, eventHorizonChi, etaAtTau, kruskalChart, massInside, radiiAt, scaleFactor, shellRadius, star, surfaceRadius, tauOf } from './collapse';
-import { ageAt, comovingDistance, conformalAt, E2, hasBigBang, history, hubbleTimeGyr, omegaRadiation, planck2018, recession, superluminalRedshift, type Cosmos } from './cosmology';
+import { ageAt, at, comovingDistance, conformalAt, E2, hasBigBang, history, hubbleTimeGyr, omegaRadiation, particleHorizon, planck2018, recession, superluminalRedshift, type Cosmos } from './cosmology';
 import { criticalImpact, delta } from './kerr';
 import { fallWorldline } from './kruskal';
 import { binary, binaryImages, binaryMagnification, closestApproach, criticalAndCaustic, lensEquation, lightCurve, mapAt, pointImages, pointMagnification, shootMap, type C } from './microlens';
@@ -219,6 +219,30 @@ describe('FRW universes', () => {
     expect(h.etaEnd - h.eta0).toBeCloseTo(1, 4);
     const k = h.t.findIndex((t) => t > 1.5);
     expect(h.a[k]).toBeCloseTo(Math.exp(h.t[k] - h.t0), 4);
+  });
+
+  it('a finite age with an infinite conformal past: Milne and Ω_Λ = Ω_k = 0.5 have an infinite particle horizon', () => {
+    // Milne (empty, Ω_k = 1): a = H₀t, so t₀ = 1/H₀ and η − η₀ = ln a, which diverges as a → 0.
+    const milne: Cosmos = { H0: 70, om: 0, ol: 0, or: 0 };
+    expect(ageAt(milne, 1)).toBeCloseTo(1, 8);
+    expect(conformalAt(milne, 1)).toBe(Infinity);
+    const hm = history(milne, 2);
+    expect(hm.infinitePast).toBe(false);
+    expect(hm.particleInfinite).toBe(true);
+    for (const k of [0, 60, 120, 200]) expect(hm.eta[k] - hm.eta0).toBeCloseTo(Math.log(hm.a[k]), 4);
+    for (const t of [hm.t[0], 0.5, hm.t0, hm.t0 + 1]) expect(particleHorizon(hm, t)).toBe(Infinity);
+    // Λ with open curvature and nothing else: also a finite age (∫ da/(aE) converges, E ≈ √Ω_k/a),
+    // and again ∫ da/(a²E) ≈ ∫ da/(a√Ω_k) diverges at a = 0.
+    const open: Cosmos = { H0: 70, om: 0, ol: 0.5, or: 0 };
+    expect(Number.isFinite(ageAt(open, 1))).toBe(true);
+    const ho = history(open, 2);
+    expect(ho.particleInfinite).toBe(true);
+    for (const t of [ho.t[0], ho.t0, ho.t0 + 1]) expect(particleHorizon(ho, t)).toBe(Infinity);
+    // With matter it is finite: Einstein-de Sitter today, a·η = 2c/H₀.
+    const eds = history({ H0: 70, om: 1, ol: 0, or: 0 }, 2);
+    expect(eds.particleInfinite).toBe(false);
+    expect(particleHorizon(eds, eds.t0)).toBeCloseTo(2, 4);
+    expect(particleHorizon(eds, 0.3)).toBeCloseTo(at(eds, 0.3, 'a') * at(eds, 0.3, 'eta'), 10);
   });
 
   it('radiation only: t₀ = 1/2H₀; open matter: the closed form with acosh', () => {

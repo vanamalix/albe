@@ -102,4 +102,5 @@ export function Axes({ f, xLabel, yLabel, xTicks, yTicks }: { f: Frame; xLabel: 
   );
 }
 
-export const fx = (v: number, d = 2): string => (Number.isFinite(v) ? v.toFixed(d) : '∞');
+/** Fixed decimals; ±∞ as infinity, and NaN (an undefined value) as a dash, never as ∞ or "NaN". */
+export const fx = (v: number, d = 2): string => (Number.isFinite(v) ? v.toFixed(d) : Number.isNaN(v) ? '–' : v > 0 ? '∞' : '−∞');
