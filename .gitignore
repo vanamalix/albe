@@ -12,3 +12,6 @@ test-results/
 playwright-report/
 screenshots/
 .ship-denylist
+
+# command-guard hook event log (local only)
+.claude/hook-events.jsonl
