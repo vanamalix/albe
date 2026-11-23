@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "app": "albe",
+  "commandGuard": {"sweep":{"when":"always"},"discard":{"when":"always"},"push":{"wipRefs":["refs/wip/"]},"gatePipes":{"scripts":[],"bins":[],"commands":["compliance.sh","tier.sh"]}},
   "docs": "docs/governance",
   "privacy": { "patterns": ".privacy-patterns", "allow": ".privacy-allow", "denylist": ".ship-denylist" },
   "runtimeData": [".dev.vars"],
