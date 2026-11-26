@@ -54,4 +54,4 @@ albe is public, with no login, data, cookies or analytics; `noindex` stays on (o
 only, plus `data:` and `blob:` images and one exception: `frame-src https://staticcdn.co.nz` for the Shielded site button
 (hub `docs/platform/SITE-CREDIT.md`). The frame is created only when a visitor presses the button, with Shielded's sandbox
 and no referrer, and `embed.js` is never loaded. HSTS has no `includeSubDomains` (kept from before the shared baseline).
-Change headers in `headers.config.ts` and run `npm run headers`; never hand-edit `public/_headers`.
+Change headers in `headers.config.ts` and run `pnpm run headers`; never hand-edit `public/_headers`.

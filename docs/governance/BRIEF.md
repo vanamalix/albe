@@ -21,7 +21,7 @@
 
 ```
 Goal:        <one sentence: the outcome, and why it matters>
-Tier:        <T0-T3, from npx vn-tier --files <planned paths>>
+Tier:        <T0-T3, from pnpm exec vn-tier --files <planned paths>>
 IN scope:    <what to do>
 OUT scope:   <what not to touch or decide; who else is working where>
 Write scope: <exact paths / globs; nothing else may be written>

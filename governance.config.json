@@ -10,8 +10,8 @@
     { "name": "privacy", "description": "privacy and secret scan of every tracked file", "quick": true, "always": true, "run": "node_modules/.bin/vn-privacy-scan --tracked" },
     { "name": "shell", "description": "shell scripts parse", "quick": true, "builtin": "shell_syntax", "paths": ["**/*.sh", ".githooks/**"] },
     { "name": "runtime-data", "description": "runtime data stays untracked and ignored", "quick": true, "builtin": "runtime_data_ignored" },
-    { "name": "check", "description": "typecheck, tests, build and JS budget", "quick": true, "always": true, "requires": { "commands": ["npm"] }, "missing": "npm not installed", "run": "npm run check" },
-    { "name": "e2e", "description": "Playwright and axe at 390px and 1280px, against wrangler so the real _headers apply", "quick": false, "requires": { "commands": ["npm"] }, "missing": "npm not installed", "run": "npm run test:e2e", "paths": ["index.html", "src/**", "public/**", "tests/e2e/**", "vite.config.ts", "headers.config.ts", "scripts/headers.ts", "playwright.config.ts", "package.json", "package-lock.json", "wrangler.jsonc"] }
+    { "name": "check", "description": "typecheck, tests, build and JS budget", "quick": true, "always": true, "requires": { "commands": ["pnpm"] }, "missing": "pnpm not installed", "run": "pnpm run check" },
+    { "name": "e2e", "description": "Playwright and axe at 390px and 1280px, against wrangler so the real _headers apply", "quick": false, "requires": { "commands": ["pnpm"] }, "missing": "pnpm not installed", "run": "pnpm run test:e2e", "paths": ["index.html", "src/**", "public/**", "tests/e2e/**", "vite.config.ts", "headers.config.ts", "scripts/headers.ts", "playwright.config.ts", "package.json", "pnpm-lock.yaml", "wrangler.jsonc"] }
   ],
   "tiers": {
     "default": "T2",
@@ -19,7 +19,7 @@
       { "id": "T0", "title": "docs", "paths": ["**/*.md", "docs/**"], "gates": ["privacy"], "componentGates": false, "testsFirst": false, "review": "none", "rollout": "none", "approvals": [] },
       { "id": "T1", "title": "UI and styling", "paths": ["**/*.css", "**/*.svg", "index.html"], "gates": ["privacy"], "componentGates": true, "testsFirst": false, "review": "self", "rollout": "none", "approvals": [] },
       { "id": "T2", "title": "logic, API, tooling", "paths": [], "gates": ["privacy"], "componentGates": true, "testsFirst": true, "review": "independent", "rollout": "standard", "approvals": [] },
-      { "id": "T3", "title": "auth, schema, alerting, crypto, deploy, gates", "paths": ["**/wrangler.jsonc", "**/_headers", "headers.config.ts", "scripts/headers.ts", "package.json", "package-lock.json", ".npmrc", ".github/**", ".githooks/**", ".claude/**", "CLAUDE.md", "governance.config.json", ".privacy-patterns", ".privacy-allow"], "gates": ["privacy"], "componentGates": true, "testsFirst": true, "review": "independent", "rollout": "standard", "approvals": ["prod-deploy"] }
+      { "id": "T3", "title": "auth, schema, alerting, crypto, deploy, gates", "paths": ["**/wrangler.jsonc", "**/_headers", "headers.config.ts", "scripts/headers.ts", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml", ".npmrc", ".github/**", ".githooks/**", ".claude/**", "CLAUDE.md", "governance.config.json", ".privacy-patterns", ".privacy-allow"], "gates": ["privacy"], "componentGates": true, "testsFirst": true, "review": "independent", "rollout": "standard", "approvals": ["prod-deploy"] }
     ]
   },
   "review": { "fromTier": "T3", "trailers": ["Reviewed-by:", "Tier: T3 reviewed"], "enforcement": "warn" },

@@ -22,7 +22,7 @@ Steps 1-3 and 5-7 are the same in every mode; step 4 depends on it.
    uncommitted edits would ship with it):
    ```sh
    git fetch origin && git worktree add --detach /tmp/release-<sha> <sha>
-   cd /tmp/release-<sha> && npm ci
+   cd /tmp/release-<sha> && pnpm install --frozen-lockfile
    ```
    Remove it afterwards: `git worktree remove /tmp/release-<sha>`.
 3. **Migrations before code** (staging first, where there is one). Apply database migrations, then
@@ -73,7 +73,7 @@ Steps 1-3 and 5-7 are the same in every mode; step 4 depends on it.
 ## App rules
 
 There is no CI yet (it needs a registry token secret, the owner's to add), so in step 1 of the runbook the green check is a
-local `npm run check` and `npm run test:e2e` on that commit. No staging environment and no scheduled triggers; `workers_dev` and `preview_urls` stay off, so there is no preview. Before
-a deploy: `npm run check` and `npm run test:e2e`. A production deploy (`npm run deploy`) is the owner's, every time.
+local `pnpm run check` and `pnpm run test:e2e` on that commit. No staging environment and no scheduled triggers; `workers_dev` and `preview_urls` stay off, so there is no preview. Before
+a deploy: `pnpm run check` and `pnpm run test:e2e`. A production deploy (`pnpm run deploy`) is the owner's, every time.
 Afterwards `https://albe.vananomad.com/` must return the page with the CSP from `public/_headers`. Rollback: redeploy the
 previous commit.

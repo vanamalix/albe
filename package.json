@@ -16,9 +16,9 @@
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
-    "test:e2e": "npm run build && playwright test",
-    "check": "npm run typecheck && npm run test && npm run build && npm run budget",
-    "deploy": "npm run build && wrangler deploy"
+    "test:e2e": "pnpm run build && playwright test",
+    "check": "pnpm run typecheck && pnpm run test && pnpm run build && pnpm run budget",
+    "deploy": "pnpm run build && wrangler deploy"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
@@ -40,9 +40,11 @@
     "@vanamalix/governance": "0.4.0",
     "@vanamalix/testing": "0.1.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "three-stdlib": "^2.36.1",
     "typescript": "~5.9.3",
     "vite": "^8.3.5",
     "vitest": "^5.0.5",
     "wrangler": "^4.156.0"
-  }
+  },
+  "packageManager": "pnpm@10.18.0"
 }

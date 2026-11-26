@@ -1,0 +1,7 @@
+packages:
+  - .
+
+# pnpm 10 skips dependency install scripts unless listed here.
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
