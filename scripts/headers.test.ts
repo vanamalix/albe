@@ -12,7 +12,7 @@ const directive = (name: string) =>
     ?.slice(name.length + 1);
 
 describe('public/_headers', () => {
-  it('is exactly what the edge baseline generates (run npm run headers after a change)', () => {
+  it('is exactly what the edge baseline generates (run pnpm run headers after a change)', () => {
     expect(text).toBe(renderHeaders());
   });
 

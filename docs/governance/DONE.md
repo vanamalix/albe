@@ -5,11 +5,11 @@ when every line below that applies is true, with evidence (command and exit code
 
 ## Checklist
 
-1. **Tier known.** `npx vn-tier` run on the change; its requirements are met (TIERS.md).
+1. **Tier known.** `pnpm exec vn-tier` run on the change; its requirements are met (TIERS.md).
 2. **Tests.** New behaviour has a test. A bug fix has a test **seen failing before the fix** and passing
    after: revert or break the fix on purpose, show the failure, restore, show green. Report the
    mutation and the failing test name. No test was weakened, skipped or deleted to go green.
-3. **Gates exit 0.** `npx vn-compliance --only <gates vn-tier printed>` (or `--quick`), run to a log
+3. **Gates exit 0.** `pnpm exec vn-compliance --only <gates vn-tier printed>` (or `--quick`), run to a log
    and judged by exit code, never piped into `tail`/`head`. A SKIP names the missing toolchain and is
    not a pass. A failure in code you did not touch is reported, not hidden or "fixed" in passing.
 4. **Docs.** Every doc sentence and UI string describing the changed behaviour is updated (grep for

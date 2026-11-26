@@ -75,16 +75,16 @@ libraries ran offline. Nothing from them ships in the app, and only numerical ou
 ## Scripts
 
 ```sh
-npm install
-npm run dev        # Vite dev server
-npm run typecheck  # tsc
-npm test           # Vitest physics tests
-npm run check      # typecheck + test + build + JS budget
-npm run test:e2e   # Playwright and axe at 390px and 1280px, against wrangler
-npm run headers    # regenerate public/_headers from headers.config.ts
-npm run build      # -> dist/
-npx wrangler dev   # serve dist/ with _headers (CSP etc.) like production
-npm run deploy     # build + wrangler deploy (owner only)
+pnpm install
+pnpm run dev        # Vite dev server
+pnpm run typecheck  # tsc
+pnpm test           # Vitest physics tests
+pnpm run check      # typecheck + test + build + JS budget
+pnpm run test:e2e   # Playwright and axe at 390px and 1280px, against wrangler
+pnpm run headers    # regenerate public/_headers from headers.config.ts
+pnpm run build      # -> dist/
+pnpm exec wrangler dev   # serve dist/ with _headers (CSP etc.) like production
+pnpm run deploy     # build + wrangler deploy (owner only)
 ```
 
 ## Deploy

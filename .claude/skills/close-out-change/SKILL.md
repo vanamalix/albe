@@ -10,7 +10,7 @@ description: Use before calling a code, config or documentation change finished 
 ## 1. Tier first
 
 ```bash
-npx vn-tier --files <the paths you changed>     # or: npx vn-tier  (staged)
+pnpm exec vn-tier --files <the paths you changed>     # or: pnpm exec vn-tier  (staged)
 ```
 
 It prints the tier (T0 docs, T1 UI, T2 logic/API/tooling, T3 auth/schema/alerting/crypto/deploy/gates),
@@ -23,10 +23,10 @@ Everything below follows from that output. Tiers and paths: `docs/governance/TIE
 Run exactly the gates `vn-tier` printed, to a log, then read the status:
 
 ```bash
-npx vn-compliance --only <gates> > /tmp/x-gates.log 2>&1; echo "gates exit=$?"
+pnpm exec vn-compliance --only <gates> > /tmp/x-gates.log 2>&1; echo "gates exit=$?"
 ```
 
-Never `npm test | tail`: a pipe returns the exit code of `tail`. Report the table. A gate that failed
+Never `pnpm test | tail`: a pipe returns the exit code of `tail`. Report the table. A gate that failed
 in code you did not touch is a report, not something to fix or hide. A SKIP is not a pass; say which
 toolchain was missing.
 

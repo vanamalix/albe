@@ -17,7 +17,7 @@ export default defineConfig({
     launchOptions: { args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] },
   },
   webServer: {
-    command: `npx wrangler dev --port ${PORT}`,
+    command: `pnpm exec wrangler dev --port ${PORT}`,
     url: `http://localhost:${PORT}/`,
     reuseExistingServer: false,
     env: { WRANGLER_SEND_METRICS: 'false' },

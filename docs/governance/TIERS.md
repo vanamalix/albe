@@ -3,7 +3,7 @@
 Every change gets a risk tier. The tier decides which gates run, who reviews, how it reaches
 production (a staging soak, or a watched production rollout where there is no staging), and whose OK it
 needs before production. The tiers, the path globs and the approvals are data in
-`governance.config.json`; `vn-tier` (from @vanamalix/governance, run as `npx vn-tier`) applies
+`governance.config.json`; `vn-tier` (from @vanamalix/governance, run as `pnpm exec vn-tier`) applies
 them, so the rule and the tool cannot drift.
 
 ## How a change is tiered
@@ -13,11 +13,11 @@ them, so the rule and the tool cannot drift.
 - Because the highest match wins, a broad glob in a higher tier **shadows** narrower globs below it
   (a `app/**` in T2 would turn every T1 `app/**/*.css` into T2). So the default tier lists **no paths**
   (`"paths": []`): T0 and T1 list their exceptions, T3 lists the risky paths, everything else is T2.
-  Check a new glob with `npx vn-tier --files <a path it should match>`.
+  Check a new glob with `pnpm exec vn-tier --files <a path it should match>`.
 - The change takes the highest tier of its files. One T3 file makes the whole commit T3.
 - Globs are repo-relative: `**` any depth (including none), `*` within one path segment, `?` one
   character, `{a,b}` alternatives. `**/*.md` matches `README.md` at the root.
-- Run `npx vn-tier` (staged), `npx vn-tier --range A..B`, or `npx vn-tier --files ...`.
+- Run `pnpm exec vn-tier` (staged), `pnpm exec vn-tier --range A..B`, or `pnpm exec vn-tier --files ...`.
   It prints the tier, the files at that tier, and what the change needs.
 
 ## The tiers
@@ -42,7 +42,7 @@ fields: production-live). `vn-tier` prints the requirement in the words of the m
 
 ### What each requirement means
 
-- **Gates**: `npx vn-compliance --only <list>` with the list `vn-tier` prints. The exit code is the
+- **Gates**: `pnpm exec vn-compliance --only <list>` with the list `vn-tier` prints. The exit code is the
   verdict; a SKIP (toolchain missing, or a workspace whose dependencies are not installed) is reported,
   never counted as a pass. With `VN_GATES_STRICT=1` (the default when `CI=true`) a workspace skip is a FAIL.
 - **Tests first**: a bug fix comes with a test that was seen failing before the fix and passing after
@@ -51,7 +51,7 @@ fields: production-live). `vn-tier` prints the requirement in the words of the m
   findings with proof (ISBAR.md); the writer, or another agent with that write scope, fixes.
 - **Review evidence (T3)**: the commit message carries a trailer naming the review:
   `Reviewed-by: <reviewer agent or role>` or `Tier: T3 reviewed`. The commit-msg hook (`vn-tier --hook`)
-  checks each commit; `npx vn-tier --range origin/main..HEAD --strict` checks a branch before it
+  checks each commit; `pnpm exec vn-tier --range origin/main..HEAD --strict` checks a branch before it
   is pushed or merged (exit 3 when a T3 commit lacks the trailer). `review.enforcement` in the config starts at `warn` (prints what is missing, never stops a
   commit); the owner may switch it to `block`.
 - **Standard rollout** (no staging): the owner's OK, a dry run (`wrangler deploy --dry-run`), the
