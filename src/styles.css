@@ -1803,3 +1803,39 @@ output {
 .swatch.dash-red {
   border-top-style: dashed;
 }
+
+/* A lazily loaded part that did not arrive (LazyBoundary.tsx). */
+.load-failed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(210, 153, 34, 0.5);
+  border-radius: var(--radius-sm);
+  background: rgba(210, 153, 34, 0.08);
+  font-size: 0.85rem;
+}
+.load-failed p,
+.load-notice p {
+  margin: 0;
+}
+.load-notice {
+  position: fixed;
+  top: var(--safe-top);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--gutter));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 14px;
+  border: 1px solid rgba(210, 153, 34, 0.6);
+  border-radius: var(--radius);
+  background: var(--panel-solid);
+  font-size: 0.9rem;
+  z-index: 20;
+}

@@ -2,6 +2,7 @@
 import { presetById } from '../physics/presets';
 import { world } from '../sim/world';
 import { openExhibit } from './exhibit';
+import { clearMarks } from './scopeMarks';
 import { store } from './store';
 
 export function loadPreset(id: string): void {
@@ -9,6 +10,8 @@ export function loadPreset(id: string): void {
   world.loadPreset(p);
   const st = p.settings;
   openExhibit(st.exhibit ?? null);
+  // The wave cursor's marks belong to the scene they were placed on.
+  clearMarks();
   store.set((s) => ({
     presetId: p.id,
     note: p.note,

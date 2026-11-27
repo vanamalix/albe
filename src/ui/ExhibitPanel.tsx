@@ -1,5 +1,6 @@
 /** Sliders and live numbers for the wormhole and Kerr exhibits. Every figure comes from a tested physics module. */
-import { lazy, Suspense, useState, type CSSProperties, type ReactNode } from 'react';
+import { lazy, useState, type CSSProperties, type ReactNode } from 'react';
+import { Lazy } from './LazyBoundary';
 import { extractable, omega, penroseDecay, penroseMaxGain, rIsco, rMarginallyBound, rPhoton, rPlus, R_ERGO_EQUATOR, criticalImpact } from '../physics/kerr';
 import { crossingSweep, ellisJupiters, ellisTide, reflectDeflection, wormholeFate } from '../physics/wormhole';
 import { exhibitStore, penroseMinSpin, useExhibit, type ExhibitId } from '../state/exhibit';
@@ -130,12 +131,12 @@ function Controls({ id }: { id: ExhibitId }) {
   const Deep = DEEP[id];
   if (Deep)
     return (
-      <Suspense fallback={null}>
+      <Lazy>
         <Deep />
-      </Suspense>
+      </Lazy>
     );
   if (id === 'euclid' || id === 'mp')
-    return <Suspense fallback={null}>{id === 'euclid' ? <EuclidPanel /> : <BalancedPanel />}</Suspense>;
+    return <Lazy>{id === 'euclid' ? <EuclidPanel /> : <BalancedPanel />}</Lazy>;
   return <KerrPanel id={id} />;
 }
 

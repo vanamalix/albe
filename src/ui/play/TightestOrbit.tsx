@@ -35,6 +35,8 @@ export default function TightestOrbit() {
   const [best, setBest] = useState(() => readBest('tightest'));
   const [theory, setTheory] = useState(false);
   const s = gr ? grScale : 0;
+  // As in the scene: a GR (gold) particle keeps the inverse square, so the force law acts only with GR off.
+  const nLaw = gr ? 2 : n;
   const ours = gr && grScale === 1;
   useEffect(() => {
     if (!tried || !tried.ours || tried.run.fate !== 'survives' || (best !== null && tried.rOverM >= best)) return;
@@ -53,11 +55,10 @@ export default function TightestOrbit() {
     );
   }
   const m = hole.m;
-  const vCirc = circularSpeed(1, rOverM, s > 0, { n, s });
+  const vCirc = circularSpeed(1, rOverM, s > 0, { n: nLaw, s });
   const launch = () => {
-    const law = { n, s };
-    const run = nudgedRun(m, rOverM, v, law);
-    setTried({ rOverM, v, run, exact: effectiveVerdict(m, rOverM, v, -NUDGE, s, n), ours });
+    const run = nudgedRun(m, rOverM, v, { n: nLaw, s }, NUDGE, gr);
+    setTried({ rOverM, v, run, exact: effectiveVerdict(m, rOverM, v, -NUDGE, s, nLaw), ours });
     world.probes = world.probes.filter((p) => p.label !== LABEL);
     world.addProbe(hole.x + rOverM * m, hole.y, hole.vx - NUDGE, hole.vy + v, 'follow', LABEL);
   };

@@ -173,7 +173,7 @@ export function CosmosExhibit() {
     const ring = (chi: number, c: readonly number[], alpha: number, dashed: boolean) => {
       if (Number.isFinite(chi) && chi > 0 && chi * k * tH < 400) circle(lines, 'xy', 0, 0, chi * k * tH * GLY, c, alpha, dashed);
     };
-    if (!h.infinitePast) ring(eta, GOLD, 0.9, false); // particle horizon
+    if (!h.particleInfinite) ring(eta, GOLD, 0.9, false); // particle horizon (infinite when η diverges at a = 0)
     if (Number.isFinite(h.etaEnd)) ring(h.etaEnd - eta, RED, 0.8, true); // event horizon
     if (adot > 0) ring(1 / adot, BLUE, 0.6, true); // Hubble sphere, comoving c/(aH) = c/ȧ
     // The galaxy at redshift z today and its photon, on the +x axis.

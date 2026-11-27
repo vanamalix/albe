@@ -205,6 +205,9 @@ function eccentric(): Preset {
   };
 }
 
+/** Where the Clocks scene lets its falling clock go from rest, in code units (25M round its M = 4 hole). */
+export const CLOCKS_FALL_R = 100;
+
 function clocks(): Preset {
   const M = 4;
   const near = 8 * M;
@@ -218,7 +221,7 @@ function clocks(): Preset {
     probes: [
       { x: near, y: 0, vx: 0, vy: circularSpeed(M, near, true), model: 'follow', label: 'Close orbit, 8M' },
       { x: -far, y: 0, vx: 0, vy: -circularSpeed(M, far, true), model: 'follow', label: 'Wide orbit, 30M' },
-      { x: 0, y: 100, vx: 0, vy: 0, model: 'follow', label: 'Falling from rest' },
+      { x: 0, y: CLOCKS_FALL_R, vx: 0, vy: 0, model: 'follow', label: 'Falling from rest' },
     ],
     fans: [],
     settings: { timeScale: 40, mode: 'time', gr: true, gw: false, rings: true },

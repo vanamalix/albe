@@ -308,7 +308,7 @@ function Physics() {
           <p>
             The <b>wave cursor</b> marks extrema of the face-on strain: neighbouring ones are half a period apart. Two readings of f give
             the chirp mass through f<sup>−8/3</sup> falling linearly at (256/5)π<sup>8/3</sup>ℳ<sup>5/3</sup> (Cutler &amp; Flanagan 1994){' '}
-            <span className="tag approx">leading order</span>. In the Gravitational waves scene it reads about 14% above the true ℳ = 1.62
+            <span className="tag approx">leading order</span>. In the Gravitational waves scene it reads about 15% above the true ℳ = 1.62
             before the 1PN cap acts: the orbit’s 1PN terms, of order v² ≈ 0.1, are what the formula leaves out.
           </p>
           <p>

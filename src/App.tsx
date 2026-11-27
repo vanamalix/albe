@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef } from 'react';
+import { lazy, useCallback, useEffect, useMemo, useRef } from 'react';
 import { BODY_TYPES, bodyType } from './physics/bodies';
 import { pnSample, VIEW_MODES, type ViewMode } from './physics/fields';
 import { kickKmPerSecond, pairOrbit } from './physics/nbody';
@@ -13,6 +13,7 @@ import { requestCamera, requestStep, Scene, setLabelLayer } from './scene/Scene'
 import { world } from './sim/world';
 import { massFromLog, store, TOOLS, useStore, type Settings, type Tool } from './state/store';
 import { SiteFoot } from './ui/SiteFoot';
+import { Lazy, LoadNotice } from './ui/LazyBoundary';
 import { loadPreset } from './state/actions';
 import { openExhibit, useExhibit } from './state/exhibit';
 import { IconChevron, IconClear, IconClose, IconFrame, IconInfo, IconLayers, IconPause, IconPlay, IconReset, IconSliders, IconStep, toolIcons } from './ui/icons';
@@ -533,14 +534,14 @@ function InfoCard({ mode, exag, bodies, probes, time }: { mode: ViewMode; exag: 
             </ul>
           )}
           {mode === 'waves' && (
-            <Suspense fallback={null}>
+            <Lazy>
               <WaveScope />
-            </Suspense>
+            </Lazy>
           )}
           {mode === 'warp' && (
-            <Suspense fallback={null}>
+            <Lazy>
               <WarpPanel />
-            </Suspense>
+            </Lazy>
           )}
           {world.swarm.selfGravity && world.swarm.n > 0 && <RotationScope />}
           <LiveNumbers time={time} />
@@ -734,17 +735,17 @@ export function App() {
 
       <InfoCard mode={mode} exag={exag} bodies={stats.bodies} probes={stats.probes} time={stats.simTime} />
       {exhibit && (
-        <Suspense fallback={null}>
+        <Lazy quiet>
           <ExhibitPanel />
-        </Suspense>
+        </Lazy>
       )}
 
       {settingsOpen && <SettingsPanel />}
       {(explainOpen || measureOpen) && (
-        <Suspense fallback={null}>
-          {explainOpen && <ExplainPanel />}
-          {measureOpen && <MeasurePanel />}
-        </Suspense>
+        <>
+          <Lazy quiet>{explainOpen && <ExplainPanel />}</Lazy>
+          <Lazy quiet>{measureOpen && <MeasurePanel />}</Lazy>
+        </>
       )}
 
       <Readout />
@@ -759,9 +760,9 @@ export function App() {
           )}
           <Selection />
           {tool === 'mass' && <MassOption />}
-          <Suspense fallback={null}>
+          <Lazy quiet>
             <Chips />
-          </Suspense>
+          </Lazy>
           <p className="hint">
             {hint}
             {touchHint}
@@ -810,10 +811,11 @@ export function App() {
       </div>
 
       {aboutOpen && (
-        <Suspense fallback={null}>
+        <Lazy quiet>
           <About />
-        </Suspense>
+        </Lazy>
       )}
+      <LoadNotice />
     </div>
   );
 }

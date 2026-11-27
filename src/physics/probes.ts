@@ -43,7 +43,7 @@ export const OUR_LAW: ProbeLaw = { n: 2, s: 1 };
 export const POWER_LAW_RADIUS = 20;
 
 /**
- * Acceleration of a test particle. Returns the smallest r_i / R_i seen, with R_i the source's surface
+ * Acceleration of a test particle; `gr` is the particle's own model (gold when true). Returns the smallest r_i / R_i seen, with R_i the source's surface
  * or horizon (values < 1 mean the probe has hit it). Only compact objects get the relativistic term:
  * stars are drawn at a compressed scale, so their M/r means nothing physically.
  */
@@ -75,9 +75,13 @@ export function probeAcceleration(
     const ratio = r / surfaceRadius(s);
     if (ratio < minRatio) minRatio = ratio;
     let f = s.m / (r2 * r);
-    if (gr && isCompact(s)) {
-      const L = dx * (vy - s.vy) - dy * (vx - s.vx);
-      f *= 1 + (3 * law.s * L * L) / r2;
+    if (gr) {
+      // A GR test particle keeps the inverse square everywhere (the changed n is for Newtonian
+      // particles only); round a compact mass it adds the relativistic term, scaled by s.
+      if (isCompact(s)) {
+        const L = dx * (vy - s.vy) - dy * (vx - s.vx);
+        f *= 1 + (3 * law.s * L * L) / r2;
+      }
     } else if (law.n !== 2) {
       f *= Math.pow((POWER_LAW_RADIUS * s.m) / r, law.n - 2);
     }

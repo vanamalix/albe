@@ -13,3 +13,6 @@ export function sci(v: number, digits = 1): string {
 }
 
 export const deg = (rad: number): number => (rad * 180) / Math.PI;
+
+/** A radius in units of M: 100 round M = 4 is "25M", round M = 3 "33.33M". */
+export const inM = (r: number, M: number): string => `${+(r / M).toFixed(2)}M`;

@@ -2,7 +2,7 @@
  * The scene's explainer: notes to read at your own pace while the scene keeps running. Loaded on
  * demand; a side panel on wide screens and a sheet on phones.
  */
-import { lazy, Suspense } from 'react';
+import { lazy } from 'react';
 import { explainerFor, offersWhatIf, resolve, toysFor, type AppApi, type ExplainContext, type ToyId } from '../explain/content';
 import { world } from '../sim/world';
 import { loadPreset } from '../state/actions';
@@ -10,6 +10,7 @@ import { useDepth } from '../state/depth';
 import { store, useStore } from '../state/store';
 import { DepthSwitch } from './DepthSwitch';
 import { IconClose } from './icons';
+import { Lazy } from './LazyBoundary';
 
 // Each challenge is its own chunk, fetched only when its scene's explainer is open.
 const TOY: Record<ToyId, ReturnType<typeof lazy>> = {
@@ -93,17 +94,21 @@ export default function ExplainPanel() {
           </div>
         )}
         {toysFor(presetId).length > 0 && (
-          <Suspense fallback={<p className="ref">Loading…</p>}>
+          <>
             {toysFor(presetId).map((id) => {
               const Toy = TOY[id];
-              return <Toy key={id} />;
+              return (
+                <Lazy key={id} fallback={<p className="ref">Loading…</p>}>
+                  <Toy />
+                </Lazy>
+              );
             })}
-          </Suspense>
+          </>
         )}
         {offersWhatIf(c) && (
-          <Suspense fallback={null}>
+          <Lazy>
             <NotOurUniverse />
-          </Suspense>
+          </Lazy>
         )}
         {e.reading.length > 0 && (
           <>

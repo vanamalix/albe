@@ -109,6 +109,12 @@ export interface History {
   fate: 'forever' | 'crunch';
   /** True when the past has no finite age within the table (de Sitter-like): t starts at aMin. */
   infinitePast: boolean;
+  /**
+   * True when the conformal time since a = 0 diverges, so the particle horizon is infinite and eta
+   * is counted from today (eta0 = 0). Not the same as infinitePast: Milne, or Λ with open curvature
+   * and no matter or radiation, has a finite age but ∫ da/(a²E) ≈ ∫ da/(a√Ω_k) diverges at a = 0.
+   */
+  particleInfinite: boolean;
 }
 
 /**
@@ -175,7 +181,12 @@ export function history(p: Cosmos, tFuture = 3, nPast = 240): History {
     tailEta = Infinity;
   }
   // Ran out of time without a crunch or a Λ-driven run-away: no event horizon (still decelerating).
-  return { t, a, eta, adot, t0, eta0, etaEnd: tailEta, fate, infinitePast };
+  return { t, a, eta, adot, t0, eta0, etaEnd: tailEta, fate, infinitePast, particleInfinite: !Number.isFinite(etaNow) };
+}
+
+/** Proper distance to the particle horizon at time t, a(t)η(t) in c/H₀; Infinity when η diverges at a = 0. */
+export function particleHorizon(h: History, t: number): number {
+  return h.particleInfinite ? Infinity : at(h, t, 'a') * at(h, t, 'eta');
 }
 
 /** Linear interpolation of a History field at time t. */
